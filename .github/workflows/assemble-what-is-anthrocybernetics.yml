@@ -1,0 +1,65 @@
+name: Assemble What Is Anthrocybernetics HAIO
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .haio-upload/what-is-anthrocybernetics.b64
+      - .github/workflows/assemble-what-is-anthrocybernetics.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: assemble-what-is-anthrocybernetics
+  cancel-in-progress: false
+
+jobs:
+  assemble:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and verify demo
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          source_file=".haio-upload/what-is-anthrocybernetics.b64"
+          target_dir="what-is-anthrocybernetics"
+          target_file="$target_dir/index.html"
+          expected_sha="aec3bafe43dc01d452f4c682385ff1adc0e081b0a2dc9f228c0df702871600df"
+
+          test -s "$source_file"
+          mkdir -p "$target_dir"
+          base64 --decode "$source_file" | gzip --decompress > "$target_file"
+
+          actual_sha="$(sha256sum "$target_file" | awk '{print $1}')"
+          test "$actual_sha" = "$expected_sha"
+          test "$(wc -c < "$target_file")" -eq 59061
+          grep -qi '<!doctype html' "$target_file"
+
+          echo "Verified $target_file ($actual_sha)"
+
+      - name: Commit published demo
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add what-is-anthrocybernetics/index.html
+
+          if git diff --cached --quiet; then
+            echo "No demo changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Publish What Is Anthrocybernetics HAIO demo"
+          git push origin HEAD:main
