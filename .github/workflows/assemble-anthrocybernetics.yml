@@ -1,0 +1,74 @@
+name: Assemble Anthrocybernetics HAIO
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .haio-upload/anthrocybernetics/**
+      - .github/workflows/assemble-anthrocybernetics.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: assemble-anthrocybernetics-haio
+  cancel-in-progress: false
+
+jobs:
+  assemble:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and verify HTML
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          source_dir=".haio-upload/anthrocybernetics"
+          target_dir="anthrocybernetics"
+          target_file="$target_dir/index.html"
+          expected_sha="b011cb118c079c6bcaf1efd4faaba7b1d0065be7afdf47fb92c7d2a631550206"
+
+          for part in 00 01 02 03 04 05 06; do
+            test -s "$source_dir/part-$part"
+          done
+
+          mkdir -p "$target_dir"
+          cat "$source_dir"/part-* | base64 --decode | gzip --decompress > "$target_file"
+
+          actual_sha="$(sha256sum "$target_file" | awk '{print $1}')"
+          if [[ "$actual_sha" != "$expected_sha" ]]; then
+            echo "Checksum mismatch: expected $expected_sha, got $actual_sha" >&2
+            exit 1
+          fi
+
+          grep -qi '<!doctype html' "$target_file"
+          test "$(wc -c < "$target_file")" -eq 158232
+
+          rm -rf "$source_dir"
+          echo "Published $target_file ($actual_sha)"
+
+      - name: Commit reconstructed demo
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A anthrocybernetics .haio-upload
+
+          if git diff --cached --quiet; then
+            echo "No reconstructed changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Publish Anthrocybernetics HAIO demo"
+          git push origin HEAD:main
