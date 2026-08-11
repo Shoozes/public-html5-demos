@@ -1,12 +1,6 @@
 name: Assemble Anthrocybernetics HAIO
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - .haio-upload/anthrocybernetics/**
-      - .github/workflows/assemble-anthrocybernetics.yml
   workflow_dispatch:
 
 permissions:
@@ -37,7 +31,7 @@ jobs:
           target_file="$target_dir/index.html"
           expected_sha="b011cb118c079c6bcaf1efd4faaba7b1d0065be7afdf47fb92c7d2a631550206"
 
-          for part in 00 01 02 03 04 05 06; do
+          for part in 00 01 02 03-00 03-01 03-02 03-03 04 05 06; do
             test -s "$source_dir/part-$part"
           done
 
