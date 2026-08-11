@@ -4,6 +4,7 @@ A public GitHub Pages collection for browser-ready HTML-all-in-one demos, experi
 
 - Gallery: https://shoozes.github.io/public-html5-demos/
 - Anthrocybernetics demo: https://shoozes.github.io/public-html5-demos/anthrocybernetics/
+- Ghojualamanchu explainer: https://shoozes.github.io/public-html5-demos/ghojualamanchu/
 
 ## Repository contract
 
@@ -50,3 +51,9 @@ https://shoozes.github.io/public-html5-demos/my-demo/
 A mobile-first interactive presentation explaining feedback loops, the five observation lenses, evidence labels, and what actually moves when a cloud agent is ported to a local model.
 
 Open it at `anthrocybernetics/index.html` or through the public gallery.
+
+### Ghojualamanchu Explained
+
+A separate mobile-first interactive explainer focused on what the Ghojualamanchu project is actually doing: an existing language model organized by prompts, memory, tools, scheduled jobs, and nine biologically named software roles. It includes signal routing, a daily rhythm, a portable seed/transplant demonstration, and a clear separation between implementation and metaphorical or consciousness claims.
+
+Open it at `ghojualamanchu/index.html` or through the public gallery.
