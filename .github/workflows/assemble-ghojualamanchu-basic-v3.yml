@@ -1,0 +1,93 @@
+name: Publish Simplified Ghojualamanchu Demo
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .haio-upload/ghojualamanchu-basic-v3/**
+      - .github/workflows/assemble-ghojualamanchu-basic-v3.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-ghojualamanchu-basic-v3
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and verify HAIO
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          source_dir=".haio-upload/ghojualamanchu-basic-v3"
+          target_dir="ghojualamanchu"
+          target_file="$target_dir/index.html"
+          workflow_file=".github/workflows/assemble-ghojualamanchu-basic-v3.yml"
+          expected_sha="d6fbeb0bd3c26cce1efcf43b1835d57c0be0284797737f7acb02578b8378266e"
+          expected_bytes="135741"
+
+          for part in "$source_dir"/part-00-0{0..5}; do
+            test -s "$part"
+            test "$(wc -c < "$part")" -eq 1000
+          done
+
+          test "$(wc -c < "$source_dir/part-01")" -eq 10000
+          test "$(wc -c < "$source_dir/part-02")" -eq 10000
+          test "$(wc -c < "$source_dir/part-03")" -eq 10000
+          test "$(wc -c < "$source_dir/part-04")" -eq 7428
+
+          mkdir -p "$target_dir"
+          cat "$source_dir"/part-00-0{0..5} \
+              "$source_dir/part-01" \
+              "$source_dir/part-02" \
+              "$source_dir/part-03" \
+              "$source_dir/part-04" \
+            | base64 --decode \
+            | gzip --decompress \
+            > "$target_file"
+
+          actual_sha="$(sha256sum "$target_file" | awk '{print $1}')"
+          actual_bytes="$(wc -c < "$target_file")"
+
+          test "$actual_sha" = "$expected_sha"
+          test "$actual_bytes" = "$expected_bytes"
+          grep -qi '<!doctype html' "$target_file"
+          grep -q 'An AI assistant framework' "$target_file"
+          grep -q 'The agent kit moves. The model does not.' "$target_file"
+
+          rm -rf "$source_dir"
+          rm -f "$workflow_file"
+
+          echo "Verified $target_file"
+          echo "SHA-256: $actual_sha"
+          echo "Bytes: $actual_bytes"
+
+      - name: Commit simplified demo
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes to publish."
+            exit 0
+          fi
+
+          git commit -m "Publish simplified Ghojualamanchu basic view"
+          git push origin HEAD:main
