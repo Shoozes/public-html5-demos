@@ -1,0 +1,84 @@
+name: Assemble Ghojualamanchu HAIO
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .haio-upload/ghojualamanchu/**
+      - .github/workflows/assemble-ghojualamanchu.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: assemble-ghojualamanchu-haio
+  cancel-in-progress: false
+
+jobs:
+  assemble:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and verify HTML
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          source_dir=".haio-upload/ghojualamanchu"
+          target_dir="ghojualamanchu"
+          target_file="$target_dir/index.html"
+          expected_sha="b678d9eb7ee2045f8dcc5c7f5df17532fa346a5c07f251770b458539e21f4cda"
+          expected_size="106603"
+
+          for part in 00 01 02 03 04 05 06; do
+            test -s "$source_dir/part-$part"
+          done
+
+          mkdir -p "$target_dir"
+          cat "$source_dir"/part-* | base64 --decode | gzip --decompress > "$target_file"
+
+          actual_sha="$(sha256sum "$target_file" | awk '{print $1}')"
+          actual_size="$(wc -c < "$target_file")"
+
+          if [[ "$actual_sha" != "$expected_sha" ]]; then
+            echo "Checksum mismatch: expected $expected_sha, got $actual_sha" >&2
+            exit 1
+          fi
+
+          if [[ "$actual_size" != "$expected_size" ]]; then
+            echo "Size mismatch: expected $expected_size, got $actual_size" >&2
+            exit 1
+          fi
+
+          grep -qi '<!doctype html' "$target_file"
+          grep -qi '<title>Ghojualamanchu' "$target_file"
+
+          rm -rf "$source_dir"
+          rm -f .github/workflows/assemble-ghojualamanchu.yml
+
+          echo "Published $target_file ($actual_sha, $actual_size bytes)"
+
+      - name: Commit published demo
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A ghojualamanchu .haio-upload .github/workflows/assemble-ghojualamanchu.yml
+
+          if git diff --cached --quiet; then
+            echo "No reconstructed changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Publish Ghojualamanchu interactive explainer"
+          git push origin HEAD:main
