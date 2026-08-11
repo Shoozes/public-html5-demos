@@ -1,0 +1,4387 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080b14">
+  <meta name="color-scheme" content="dark">
+  <title>Anthrocybernetics Guided Presentation</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/compromise@14.16.0/builds/compromise.js" defer></script>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+    }
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg: #060812;
+      --shell: #0b1020;
+      --panel: rgba(18, 25, 43, 0.88);
+      --panel-soft: rgba(255, 255, 255, 0.045);
+      --panel-strong: rgba(20, 29, 50, 0.97);
+      --line: rgba(190, 208, 255, 0.14);
+      --line-strong: rgba(190, 208, 255, 0.28);
+      --text: #f4f7ff;
+      --muted: #aeb8cf;
+      --quiet: #77839f;
+      --phase: #ffb15a;
+      --field: #54d8c9;
+      --arc: #ef7698;
+      --form: #a88cff;
+      --lattice: #6eb8ff;
+      --grounded: #72d6b1;
+      --hypothesized: #f0be65;
+      --interpretive: #b49bff;
+      --accent: #8ab8ff;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 50% -10%, rgba(80, 111, 202, 0.22), transparent 40%),
+        var(--bg);
+      overscroll-behavior: none;
+    }
+
+    body {
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    button, textarea, input { font: inherit; }
+    button { color: inherit; }
+    a { color: #a9ccff; }
+
+    button:focus-visible,
+    textarea:focus-visible,
+    input:focus-visible {
+      outline: 2px solid #9ac6ff;
+      outline-offset: 2px;
+    }
+
+    [data-advanced] { display: none !important; }
+    body.advanced-mode [data-advanced] { display: var(--advanced-display, block) !important; }
+
+    .deck-shell {
+      width: min(100%, 500px);
+      height: 100dvh;
+      display: grid;
+      grid-template-rows: auto 2px minmax(0, 1fr) auto;
+      background:
+        linear-gradient(180deg, rgba(14, 20, 35, 0.98), rgba(8, 12, 22, 0.99)),
+        var(--shell);
+      border-inline: 1px solid rgba(255, 255, 255, 0.05);
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .deck-topbar {
+      min-height: 66px;
+      padding: calc(10px + var(--safe-top)) 14px 10px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-kicker,
+    .slide-kicker {
+      margin: 0 0 4px;
+      color: var(--muted);
+      font-size: 0.66rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .deck-topbar h1 {
+      margin: 0;
+      font-size: 1.02rem;
+      line-height: 1.1;
+      letter-spacing: -0.018em;
+    }
+
+    .mode-switch {
+      display: inline-grid;
+      grid-template-columns: auto auto;
+      align-items: center;
+      gap: 8px;
+      min-height: 36px;
+      padding: 5px 7px 5px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 750;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .mode-switch input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .switch-rail {
+      position: relative;
+      width: 34px;
+      height: 20px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.07);
+      transition: background 160ms ease, border-color 160ms ease;
+    }
+
+    .switch-rail::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #dbe7ff;
+      transition: transform 160ms ease, background 160ms ease;
+    }
+
+    .mode-switch input:checked + .switch-rail {
+      background: rgba(110, 184, 255, 0.22);
+      border-color: rgba(110, 184, 255, 0.55);
+    }
+
+    .mode-switch input:checked + .switch-rail::after {
+      transform: translateX(14px);
+      background: #8fc4ff;
+    }
+
+    .progress-track {
+      position: relative;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .progress-track span {
+      display: block;
+      width: 16.666%;
+      height: 100%;
+      background: linear-gradient(90deg, #76aaff, #aa8fff);
+      transition: width 240ms ease;
+    }
+
+    .deck-viewport {
+      position: relative;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: 18px 16px 22px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      opacity: 0;
+      transform: translateX(4%);
+      pointer-events: none;
+      transition: opacity 220ms ease, transform 220ms ease;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(160, 185, 235, 0.24) transparent;
+    }
+
+    .slide.is-active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    .slide-header {
+      margin-bottom: 16px;
+    }
+
+    .slide-number {
+      display: inline-flex;
+      min-height: 24px;
+      align-items: center;
+      padding: 0 9px;
+      margin-bottom: 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.035);
+      color: var(--muted);
+      font-size: 0.66rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .slide h2 {
+      max-width: 13ch;
+      margin: 0;
+      font-size: clamp(1.8rem, 8vw, 2.55rem);
+      line-height: 0.98;
+      letter-spacing: -0.045em;
+    }
+
+    .slide .lead {
+      max-width: 42ch;
+      margin: 13px 0 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+      line-height: 1.55;
+    }
+
+    .slide[data-slide="2"] h2 {
+      max-width: 16ch;
+      font-size: clamp(1.75rem, 7.2vw, 2.2rem);
+    }
+
+    .slide[data-slide="2"] .lead {
+      margin-top: 9px;
+      font-size: 0.84rem;
+    }
+
+    .hero-callout,
+    .plain-callout,
+    .prompt-card,
+    .visual-card,
+    .lens-reading,
+    .evidence-card,
+    .transplant-card,
+    .takeaway-card,
+    .advanced-panel {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(20, 28, 48, 0.9), rgba(13, 19, 34, 0.93));
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.18);
+    }
+
+    .feedback-visual {
+      position: relative;
+      min-height: 280px;
+      margin-top: 20px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(107, 155, 255, 0.16), transparent 42%),
+        rgba(8, 12, 23, 0.72);
+    }
+
+    .feedback-visual svg {
+      display: block;
+      width: 100%;
+      height: 280px;
+    }
+
+    .flow-line {
+      fill: none;
+      stroke: rgba(141, 185, 255, 0.65);
+      stroke-width: 2;
+      stroke-dasharray: 8 10;
+      animation: flow 4s linear infinite;
+    }
+
+    .flow-line.return {
+      stroke: rgba(182, 145, 255, 0.6);
+      animation-direction: reverse;
+    }
+
+    @keyframes flow { to { stroke-dashoffset: -72; } }
+
+    .feedback-node {
+      position: absolute;
+      top: 50%;
+      width: 104px;
+      min-height: 76px;
+      transform: translateY(-50%);
+      display: grid;
+      place-items: center;
+      padding: 12px;
+      border: 1px solid var(--line-strong);
+      border-radius: 18px;
+      background: rgba(16, 23, 40, 0.94);
+      text-align: center;
+    }
+
+    .feedback-node.people { left: 18px; }
+    .feedback-node.tools { right: 18px; }
+
+    .feedback-node strong,
+    .feedback-core strong {
+      display: block;
+      font-size: 0.88rem;
+    }
+
+    .feedback-node span,
+    .feedback-core span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.68rem;
+      line-height: 1.35;
+    }
+
+    .feedback-core {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 105px;
+      min-height: 105px;
+      transform: translate(-50%, -50%);
+      display: grid;
+      place-items: center;
+      padding: 14px;
+      border: 1px solid rgba(139, 188, 255, 0.48);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(74, 119, 195, 0.48), rgba(18, 27, 48, 0.98));
+      text-align: center;
+      box-shadow: 0 0 50px rgba(92, 149, 255, 0.2);
+    }
+
+    .plain-callout {
+      margin-top: 16px;
+      padding: 15px 16px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.48;
+    }
+
+    .plain-callout strong { color: var(--text); }
+
+    .prompt-card {
+      padding: 14px;
+    }
+
+    .prompt-label-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 9px;
+    }
+
+    .prompt-label-row label {
+      font-size: 0.82rem;
+      font-weight: 760;
+    }
+
+    .micro-copy {
+      color: var(--quiet);
+      font-size: 0.65rem;
+      line-height: 1.35;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 148px;
+      resize: vertical;
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(5, 8, 16, 0.72);
+      color: var(--text);
+      font-size: 0.86rem;
+      line-height: 1.5;
+    }
+
+    .example-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.045);
+      cursor: pointer;
+      transition: transform 130ms ease, background 130ms ease, border-color 130ms ease, opacity 130ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      border-color: var(--line-strong);
+      background: rgba(255, 255, 255, 0.075);
+    }
+
+    button:active:not(:disabled) { transform: translateY(1px); }
+    button:disabled { opacity: 0.35; cursor: default; }
+
+    .example-button {
+      min-height: 34px;
+      padding: 0 11px;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 700;
+    }
+
+    .example-button[aria-pressed="true"] {
+      border-color: rgba(110, 184, 255, 0.5);
+      background: rgba(110, 184, 255, 0.12);
+      color: #d9e9ff;
+    }
+
+    .primary-button,
+    .secondary-button,
+    .compact-button {
+      min-height: 42px;
+      padding: 0 15px;
+      border-radius: 13px;
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .primary-button {
+      width: 100%;
+      margin-top: 12px;
+      border-color: rgba(125, 178, 255, 0.56);
+      background: linear-gradient(135deg, rgba(74, 126, 210, 0.95), rgba(74, 168, 178, 0.93));
+      color: #06101b;
+    }
+
+    .secondary-button { color: var(--muted); }
+    .compact-button { min-height: 34px; padding: 0 10px; border-radius: 10px; }
+
+    .three-step {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .three-step div {
+      min-height: 74px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .three-step strong {
+      display: block;
+      color: #dfe9ff;
+      font-size: 0.72rem;
+    }
+
+    .three-step span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 0.64rem;
+      line-height: 1.35;
+    }
+
+    .system-summary {
+      margin: 0 0 12px;
+      padding: 12px 14px;
+      border-left: 3px solid #76aaff;
+      border-radius: 0 12px 12px 0;
+      background: rgba(110, 155, 235, 0.08);
+      color: var(--muted);
+      font-size: 0.76rem;
+      line-height: 1.5;
+    }
+
+    .visual-card {
+      position: relative;
+      height: clamp(255px, 31dvh, 290px);
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 46%, rgba(80, 121, 207, 0.14), transparent 43%),
+        rgba(7, 11, 20, 0.88);
+    }
+
+    #stage,
+    #fallback-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    #stage canvas { display: block; width: 100%; height: 100%; }
+
+    .stage-tools {
+      --advanced-display: flex;
+      position: absolute;
+      z-index: 8;
+      top: 10px;
+      right: 10px;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .runtime-badge {
+      min-height: 30px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(6, 9, 16, 0.76);
+      color: var(--muted);
+      font-size: 0.62rem;
+      font-weight: 750;
+      backdrop-filter: blur(10px);
+    }
+
+    .stage-hint {
+      position: absolute;
+      z-index: 6;
+      left: 11px;
+      top: 10px;
+      max-width: 55%;
+      padding: 7px 9px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      background: rgba(6, 9, 16, 0.68);
+      color: var(--muted);
+      font-size: 0.62rem;
+      line-height: 1.35;
+      backdrop-filter: blur(10px);
+      pointer-events: none;
+    }
+
+    .node-detail {
+      position: absolute;
+      z-index: 9;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 9px;
+      align-items: center;
+      min-height: 54px;
+      padding: 9px 11px;
+      border: 1px solid var(--line-strong);
+      border-radius: 13px;
+      background: rgba(9, 13, 24, 0.93);
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.32);
+      backdrop-filter: blur(12px);
+    }
+
+    .node-detail[hidden] { display: none; }
+    .node-swatch { width: 9px; height: 34px; border-radius: 999px; box-shadow: 0 0 18px currentColor; }
+    .node-detail strong { display: block; font-size: 0.72rem; }
+    .node-detail span { display: block; margin-top: 3px; color: var(--muted); font-size: 0.64rem; line-height: 1.35; }
+
+    .label-3d {
+      padding: 2px 5px;
+      border-radius: 6px;
+      background: rgba(7, 10, 18, 0.74);
+      color: #e6edff;
+      font-size: 9px;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+      transition: opacity 140ms ease;
+      text-shadow: 0 1px 4px #000;
+    }
+
+    .anchor-label {
+      color: var(--label-color);
+      letter-spacing: 0.08em;
+      background: rgba(6, 9, 16, 0.82);
+    }
+
+    .lens-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .lens-button {
+      min-width: 0;
+      min-height: 38px;
+      padding: 0 3px;
+      border-radius: 11px;
+      color: var(--muted);
+      font-size: 0.57rem;
+      font-weight: 820;
+      letter-spacing: 0.04em;
+    }
+
+    .lens-button[aria-selected="true"] {
+      border-color: color-mix(in srgb, var(--lens-color) 72%, white 0%);
+      background: color-mix(in srgb, var(--lens-color) 14%, transparent);
+      color: var(--text);
+      box-shadow: inset 0 -2px 0 var(--lens-color);
+    }
+
+    .lens-reading {
+      margin-top: 10px;
+      padding: 13px 14px;
+      border-color: color-mix(in srgb, var(--active-lens-color) 42%, var(--line));
+    }
+
+    .lens-reading-key {
+      color: var(--active-lens-color);
+      font-size: 0.64rem;
+      font-weight: 850;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .lens-reading strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.88rem;
+    }
+
+    .lens-reading p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.7rem;
+      line-height: 1.43;
+    }
+
+    .advanced-panel {
+      margin-top: 12px;
+      padding: 13px;
+      background: rgba(12, 17, 30, 0.95);
+    }
+
+    .advanced-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .advanced-heading strong { font-size: 0.72rem; }
+    .advanced-heading span { color: var(--quiet); font-size: 0.62rem; }
+
+    .score-grid { display: grid; gap: 6px; }
+    .score-row { display: grid; grid-template-columns: 54px 1fr 28px; gap: 8px; align-items: center; }
+    .score-label { color: var(--muted); font-size: 0.59rem; font-weight: 800; }
+    .score-track { height: 5px; overflow: hidden; border-radius: 999px; background: rgba(255, 255, 255, 0.06); }
+    .score-fill { height: 100%; border-radius: inherit; background: var(--score-color); }
+    .score-value { color: var(--quiet); font-size: 0.59rem; font-variant-numeric: tabular-nums; text-align: right; }
+
+    .advanced-actions,
+    .portable-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 11px;
+    }
+
+    .evidence-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    .evidence-tab {
+      min-height: 42px;
+      padding: 0 5px;
+      border-radius: 12px;
+      color: var(--muted);
+      font-size: 0.59rem;
+      font-weight: 840;
+      letter-spacing: 0.035em;
+    }
+
+    .evidence-tab[aria-selected="true"] {
+      border-color: color-mix(in srgb, var(--evidence-color) 70%, white 0%);
+      background: color-mix(in srgb, var(--evidence-color) 13%, transparent);
+      color: var(--text);
+      box-shadow: inset 0 -2px 0 var(--evidence-color);
+    }
+
+    .evidence-card {
+      margin-top: 10px;
+      padding: 18px;
+      min-height: 235px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .evidence-card h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      letter-spacing: -0.025em;
+    }
+
+    .evidence-definition {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.48;
+    }
+
+    .evidence-copy {
+      margin-top: 17px;
+      padding: 14px;
+      border-left: 3px solid var(--evidence-color);
+      border-radius: 0 13px 13px 0;
+      background: color-mix(in srgb, var(--evidence-color) 8%, transparent);
+      color: #e8edfb;
+      font-size: 0.78rem;
+      line-height: 1.52;
+    }
+
+    .evidence-rule {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 0.74rem;
+      line-height: 1.48;
+      text-align: center;
+    }
+
+    .transplant-card { padding: 16px; }
+
+    .transplant-flow {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 76px minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+      min-height: 190px;
+    }
+
+    .system-block,
+    .bundle-block {
+      display: grid;
+      place-items: center;
+      min-height: 112px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(6, 10, 19, 0.65);
+      text-align: center;
+    }
+
+    .system-block strong,
+    .bundle-block strong { font-size: 0.78rem; }
+    .system-block span,
+    .bundle-block span { display: block; margin-top: 5px; color: var(--muted); font-size: 0.62rem; line-height: 1.35; }
+
+    .bundle-block {
+      position: relative;
+      min-height: 88px;
+      border-color: rgba(126, 181, 255, 0.42);
+      background: radial-gradient(circle, rgba(77, 123, 206, 0.25), rgba(10, 15, 27, 0.85));
+    }
+
+    .bundle-block::before,
+    .bundle-block::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: 18px;
+      border-top: 1px dashed rgba(143, 188, 255, 0.62);
+    }
+
+    .bundle-block::before { right: 100%; }
+    .bundle-block::after { left: 100%; }
+
+    .portable-parts {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .portable-part {
+      min-height: 64px;
+      padding: 11px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .portable-part strong { display: block; font-size: 0.7rem; }
+    .portable-part span { display: block; margin-top: 4px; color: var(--muted); font-size: 0.62rem; line-height: 1.35; }
+
+    .portable-explanation {
+      margin: 13px 0 0;
+      color: var(--muted);
+      font-size: 0.75rem;
+      line-height: 1.5;
+    }
+
+    .seed-preview {
+      max-height: 200px;
+      margin: 10px 0 0;
+      padding: 12px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #070a12;
+      color: #c8d6ef;
+      font: 0.64rem/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-wrap;
+    }
+
+    .takeaway-card {
+      padding: 20px;
+      background:
+        radial-gradient(circle at 85% 0%, rgba(112, 162, 255, 0.16), transparent 36%),
+        linear-gradient(180deg, rgba(20, 28, 48, 0.94), rgba(12, 18, 32, 0.96));
+    }
+
+    .takeaway-quote {
+      margin: 0;
+      font-size: clamp(1.2rem, 5.8vw, 1.65rem);
+      line-height: 1.25;
+      letter-spacing: -0.03em;
+    }
+
+    .takeaway-grid {
+      display: grid;
+      gap: 8px;
+      margin-top: 17px;
+    }
+
+    .takeaway-grid div {
+      padding: 12px 13px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .takeaway-grid strong { display: block; font-size: 0.73rem; }
+    .takeaway-grid span { display: block; margin-top: 4px; color: var(--muted); font-size: 0.68rem; line-height: 1.42; }
+
+    .peer-review-note {
+      margin-top: 14px;
+      padding: 14px;
+      border-left: 3px solid #a88cff;
+      border-radius: 0 13px 13px 0;
+      background: rgba(168, 140, 255, 0.08);
+      color: var(--muted);
+      font-size: 0.74rem;
+      line-height: 1.5;
+    }
+
+    .footer-note {
+      margin: 14px 0 0;
+      color: var(--quiet);
+      font-size: 0.62rem;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    .deck-nav {
+      min-height: 66px;
+      padding: 9px 12px calc(9px + var(--safe-bottom));
+      display: grid;
+      grid-template-columns: 78px minmax(0, 1fr) 92px;
+      align-items: center;
+      gap: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.055);
+      background: rgba(8, 12, 22, 0.96);
+      backdrop-filter: blur(16px);
+    }
+
+    .nav-button {
+      min-height: 40px;
+      padding: 0 12px;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      font-weight: 800;
+    }
+
+    .nav-button.next {
+      border-color: rgba(126, 181, 255, 0.46);
+      background: rgba(83, 135, 219, 0.19);
+    }
+
+    .deck-status {
+      min-width: 0;
+      display: grid;
+      justify-items: center;
+      gap: 5px;
+    }
+
+    .progress-dots {
+      display: flex;
+      gap: 5px;
+    }
+
+    .progress-dot {
+      width: 7px;
+      height: 7px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(195, 211, 248, 0.2);
+    }
+
+    .progress-dot.is-active { background: #8ebdff; transform: scale(1.2); }
+
+    .slide-status {
+      max-width: 100%;
+      overflow: hidden;
+      color: var(--quiet);
+      font-size: 0.59rem;
+      line-height: 1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(76px + var(--safe-bottom));
+      z-index: 100;
+      max-width: min(calc(100% - 24px), 460px);
+      padding: 9px 12px;
+      border: 1px solid var(--line-strong);
+      border-radius: 11px;
+      background: rgba(13, 18, 31, 0.97);
+      color: var(--text);
+      font-size: 0.68rem;
+      line-height: 1.35;
+      text-align: center;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.42);
+      transform: translate(-50%, 16px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease, transform 160ms ease;
+    }
+
+    .toast.visible { opacity: 1; transform: translate(-50%, 0); }
+
+
+    /* Guided focus overlay stays above every app layer without intercepting input. */
+    #guided-focus-ring {
+      position: fixed;
+      z-index: 2147483000;
+      display: none;
+      pointer-events: none;
+      border: 2px solid rgba(255, 207, 92, 0.98);
+      border-radius: 14px;
+      box-shadow:
+        0 0 0 1px rgba(255, 235, 171, 0.34) inset,
+        0 0 16px rgba(255, 194, 52, 0.92),
+        0 0 42px rgba(255, 175, 20, 0.56);
+      transform: translateZ(0);
+      will-change: left, top, width, height, opacity, box-shadow;
+      isolation: isolate;
+    }
+
+    #guided-focus-ring.is-visible {
+      display: block;
+      animation: guided-gold-pulse 1.8s ease-in-out infinite;
+    }
+
+    #guided-focus-ring.is-stage {
+      border-width: 3px;
+      border-radius: 18px;
+    }
+
+    #guided-focus-ring::before,
+    #guided-focus-ring::after {
+      content: "";
+      position: absolute;
+      inset: -7px;
+      border: 1px solid rgba(255, 205, 91, 0.62);
+      border-radius: inherit;
+      opacity: 0;
+      animation: guided-gold-wave 1.8s ease-out infinite;
+    }
+
+    #guided-focus-ring::after {
+      animation-delay: 0.6s;
+    }
+
+    @keyframes guided-gold-pulse {
+      0%, 100% {
+        opacity: 0.72;
+        box-shadow: 0 0 0 1px rgba(255,235,171,.26) inset, 0 0 10px rgba(255,194,52,.55), 0 0 24px rgba(255,175,20,.30);
+      }
+      50% {
+        opacity: 1;
+        box-shadow: 0 0 0 1px rgba(255,245,205,.52) inset, 0 0 22px rgba(255,211,91,1), 0 0 58px rgba(255,175,20,.72);
+      }
+    }
+
+    @keyframes guided-gold-wave {
+      0% { transform: scale(0.985); opacity: 0; }
+      22% { opacity: 0.78; }
+      100% { transform: scale(1.08); opacity: 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #guided-focus-ring.is-visible,
+      #guided-focus-ring::before,
+      #guided-focus-ring::after { animation: none; }
+      #guided-focus-ring.is-visible {
+        opacity: 1;
+        box-shadow: 0 0 18px rgba(255,194,52,.9), 0 0 42px rgba(255,175,20,.52);
+      }
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (min-width: 620px) and (min-height: 820px) {
+      body { padding: 18px; }
+      .deck-shell {
+        height: min(932px, calc(100dvh - 36px));
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 28px;
+        box-shadow: 0 36px 120px rgba(0, 0, 0, 0.5);
+      }
+    }
+
+    @media (max-width: 390px) {
+      .slide { padding-inline: 13px; }
+      .feedback-node { width: 90px; }
+      .feedback-node.people { left: 10px; }
+      .feedback-node.tools { right: 10px; }
+      .feedback-core { width: 92px; min-height: 92px; }
+      .transplant-flow { grid-template-columns: minmax(0, 1fr) 65px minmax(0, 1fr); }
+    }
+
+    @media (max-height: 760px) {
+      .slide { padding-top: 12px; }
+      .slide-header { margin-bottom: 12px; }
+      .slide h2 { font-size: 1.7rem; }
+      .slide .lead { font-size: 0.82rem; margin-top: 9px; }
+      .feedback-visual, .feedback-visual svg { min-height: 230px; height: 230px; }
+      .visual-card { height: 290px; }
+      textarea { min-height: 118px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+
+
+    /* Polished presentation modes and responsive orientation layout */
+    [data-basic] { display: var(--basic-display, block) !important; }
+    body.advanced-mode [data-basic] { display: none !important; }
+
+    .topbar-actions {
+      min-width: 0;
+      display: grid;
+      justify-items: end;
+      gap: 4px;
+    }
+
+    .viewport-readout {
+      --advanced-display: inline-flex;
+      min-height: 16px;
+      align-items: center;
+      color: var(--quiet);
+      font-size: 0.54rem;
+      font-weight: 760;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .mode-switch {
+      min-height: 36px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+      gap: 2px;
+      width: 148px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .mode-option {
+      min-height: 28px;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--quiet);
+      font-size: 0.66rem;
+      font-weight: 820;
+    }
+
+    .mode-option:hover:not(:disabled) {
+      border-color: transparent;
+      background: rgba(255, 255, 255, 0.055);
+    }
+
+    .mode-option[aria-pressed="true"] {
+      background: rgba(115, 164, 246, 0.18);
+      color: #edf4ff;
+      box-shadow: inset 0 0 0 1px rgba(133, 181, 255, 0.34), 0 5px 14px rgba(0, 0, 0, 0.18);
+    }
+
+    body.advanced-mode .deck-shell {
+      box-shadow: inset 0 0 0 1px rgba(118, 171, 255, 0.08);
+    }
+
+    body.advanced-mode [data-advanced]:not(.stage-tools):not(.stage-hint):not(.viewport-readout) {
+      animation: advanced-reveal 170ms ease both;
+    }
+
+    @keyframes advanced-reveal {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .input-inspector {
+      --advanced-display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 7px;
+      color: var(--quiet);
+      font-size: 0.59rem;
+      line-height: 1.3;
+    }
+
+    .input-inspector span:last-child { text-align: right; }
+
+    .feedback-cycle {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      margin-bottom: 9px;
+    }
+
+    .feedback-cycle div {
+      min-height: 48px;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 3px;
+      padding: 7px 4px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.025);
+      text-align: center;
+    }
+
+    .feedback-cycle b {
+      width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: rgba(110, 184, 255, 0.14);
+      color: #bcd9ff;
+      font-size: 0.57rem;
+    }
+
+    .feedback-cycle span {
+      color: var(--muted);
+      font-size: 0.57rem;
+      font-weight: 760;
+    }
+
+    .review-checks {
+      display: grid;
+      gap: 7px;
+      margin-bottom: 10px;
+    }
+
+    .review-checks div {
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.022);
+    }
+
+    .review-checks strong {
+      display: block;
+      font-size: 0.66rem;
+    }
+
+    .review-checks span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 0.61rem;
+      line-height: 1.36;
+    }
+
+    /* Wide presentation stage for PCs, tablets, and rotated phones */
+    body[data-orientation="landscape"] {
+      padding: 12px;
+    }
+
+    body[data-orientation="landscape"] .deck-shell {
+      width: min(calc(100vw - 24px), 1240px);
+      height: min(calc(100dvh - 24px), 840px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 24px;
+      box-shadow: 0 34px 110px rgba(0, 0, 0, 0.5);
+    }
+
+    body[data-orientation="landscape"] .deck-topbar {
+      min-height: 58px;
+      padding: calc(8px + var(--safe-top)) 18px 8px;
+    }
+
+    body[data-orientation="landscape"] .deck-topbar h1 {
+      font-size: 1rem;
+    }
+
+    body[data-orientation="landscape"] .slide {
+      display: grid;
+      grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.48fr);
+      grid-auto-flow: row;
+      grid-auto-rows: max-content;
+      align-content: start;
+      column-gap: clamp(20px, 3.4vw, 52px);
+      row-gap: 10px;
+      padding: clamp(16px, 2.25vw, 28px);
+    }
+
+    body[data-orientation="landscape"] .slide > .slide-header {
+      grid-column: 1;
+      grid-row: 1 / span 20;
+      align-self: center;
+      margin: 0;
+      padding-right: clamp(4px, 1vw, 14px);
+    }
+
+    body[data-orientation="landscape"] .slide > :not(.slide-header) {
+      grid-column: 2;
+      min-width: 0;
+    }
+
+    body[data-orientation="landscape"] .slide h2,
+    body[data-orientation="landscape"] .slide[data-slide="2"] h2 {
+      max-width: 12ch;
+      font-size: clamp(1.75rem, 3.45vw, 3.15rem);
+    }
+
+    body[data-orientation="landscape"] .slide .lead,
+    body[data-orientation="landscape"] .slide[data-slide="2"] .lead {
+      max-width: 34ch;
+      margin-top: 12px;
+      font-size: clamp(0.76rem, 1.18vw, 0.96rem);
+    }
+
+    body[data-orientation="landscape"] .feedback-visual,
+    body[data-orientation="landscape"] .plain-callout,
+    body[data-orientation="landscape"] .three-step,
+    body[data-orientation="landscape"] .lens-strip,
+    body[data-orientation="landscape"] .lens-reading,
+    body[data-orientation="landscape"] .advanced-panel,
+    body[data-orientation="landscape"] .evidence-tabs,
+    body[data-orientation="landscape"] .evidence-card {
+      margin-top: 0;
+    }
+
+    body[data-orientation="landscape"] .feedback-visual {
+      min-height: 270px;
+    }
+
+    body[data-orientation="landscape"] .feedback-visual svg {
+      height: 270px;
+    }
+
+    body[data-orientation="landscape"] .visual-card {
+      height: clamp(235px, 39dvh, 330px);
+    }
+
+    body[data-orientation="landscape"] .evidence-card {
+      min-height: 205px;
+    }
+
+    body[data-orientation="landscape"] .transplant-flow {
+      min-height: 160px;
+    }
+
+    body[data-orientation="landscape"] .takeaway-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    body[data-orientation="landscape"] .deck-nav {
+      min-height: 58px;
+      padding: 7px 14px calc(7px + var(--safe-bottom));
+      grid-template-columns: 92px minmax(0, 1fr) 108px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="wide"] .slide {
+      align-content: center;
+      grid-template-columns: minmax(270px, 0.72fr) minmax(0, 1.55fr);
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="wide"] .deck-shell {
+      width: min(calc(100vw - 36px), 1320px);
+      height: min(calc(100dvh - 36px), 860px);
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] {
+      padding: 0;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .deck-shell {
+      width: 100vw;
+      height: 100dvh;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .deck-topbar {
+      min-height: 48px;
+      padding: calc(5px + var(--safe-top)) 12px 5px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .brand-kicker {
+      margin-bottom: 2px;
+      font-size: 0.54rem;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .deck-topbar h1 {
+      font-size: 0.82rem;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .mode-switch {
+      width: 128px;
+      min-height: 32px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .mode-option {
+      min-height: 24px;
+      padding-inline: 7px;
+      font-size: 0.59rem;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .viewport-readout {
+      display: none !important;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide {
+      grid-template-columns: minmax(170px, 0.64fr) minmax(0, 1.6fr);
+      column-gap: 18px;
+      row-gap: 8px;
+      padding: 10px 14px 14px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide > .slide-header {
+      position: sticky;
+      top: 0;
+      align-self: start;
+      z-index: 5;
+      padding-top: 4px;
+      padding-bottom: 10px;
+      background: linear-gradient(180deg, rgba(9, 13, 24, 0.98) 72%, rgba(9, 13, 24, 0));
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide-number {
+      min-height: 20px;
+      margin-bottom: 7px;
+      font-size: 0.54rem;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide-kicker {
+      font-size: 0.54rem;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide h2,
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] h2 {
+      font-size: clamp(1.25rem, 4.1vw, 1.72rem);
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide .lead,
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] .lead {
+      margin-top: 7px;
+      font-size: 0.68rem;
+      line-height: 1.38;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .feedback-visual,
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .feedback-visual svg {
+      min-height: 215px;
+      height: 215px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .visual-card {
+      height: 220px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] textarea {
+      min-height: 94px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .evidence-card {
+      min-height: 165px;
+      padding: 14px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .transplant-flow {
+      min-height: 126px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .deck-nav {
+      min-height: 48px;
+      padding: 4px 10px calc(4px + var(--safe-bottom));
+      grid-template-columns: 70px minmax(0, 1fr) 82px;
+      gap: 7px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .nav-button {
+      min-height: 34px;
+      padding-inline: 8px;
+      font-size: 0.62rem;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide-status {
+      display: none;
+    }
+
+    body[data-orientation="portrait"][data-viewport-tier="wide"] .deck-shell {
+      width: min(calc(100vw - 36px), 660px);
+    }
+
+    @media (max-width: 430px) {
+      .mode-switch { width: 138px; }
+      .mode-option { padding-inline: 8px; font-size: 0.62rem; }
+      .feedback-cycle { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+
+    /* Keep the complete basic map visible on short landscape screens. */
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] {
+      grid-template-columns: minmax(190px, 0.7fr) minmax(0, 1.55fr);
+      grid-template-rows: auto auto auto;
+      align-content: start;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] > .slide-header {
+      position: static;
+      grid-column: 1;
+      grid-row: 1;
+      align-self: start;
+      padding-bottom: 4px;
+      background: none;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] > .system-summary {
+      grid-column: 2;
+      grid-row: 1;
+      margin: 0;
+      padding: 10px 12px;
+      font-size: 0.66rem;
+      line-height: 1.38;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] > .visual-card {
+      grid-column: 2;
+      grid-row: 2 / span 2;
+      height: 214px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] > .lens-strip {
+      grid-column: 1;
+      grid-row: 2;
+      gap: 4px;
+      margin: 0;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] .lens-button {
+      min-height: 32px;
+      padding-inline: 2px;
+      font-size: 0.49rem;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] > .lens-reading {
+      grid-column: 1;
+      grid-row: 3;
+      margin: 0;
+      padding: 10px 11px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] .lens-reading-key {
+      font-size: 0.53rem;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] .lens-reading strong {
+      margin-top: 4px;
+      font-size: 0.72rem;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] .lens-reading p {
+      margin-top: 3px;
+      font-size: 0.58rem;
+      line-height: 1.32;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] > .advanced-panel {
+      grid-column: 1 / -1;
+      grid-row: 4;
+    }
+
+
+    /* Compact landscape map uses two independent presentation columns. */
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] {
+      grid-template-columns: minmax(190px, 0.7fr) minmax(0, 1.55fr);
+      grid-template-rows: auto auto minmax(0, 1fr);
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"]:not(.advanced-mode) .slide[data-slide="2"] > .system-summary {
+      display: none;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] > .visual-card {
+      grid-column: 2;
+      grid-row: 1 / span 3;
+      height: 300px;
+      align-self: start;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] > .lens-reading {
+      max-height: 112px;
+      overflow: hidden;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] .lens-reading p {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      overflow: hidden;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"].advanced-mode .slide[data-slide="2"] > .system-summary {
+      grid-column: 1 / -1;
+      grid-row: 4;
+      align-self: start;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] > .advanced-panel {
+      grid-column: 1 / -1;
+      grid-row: 5;
+    }
+
+
+
+    /* Final presentation polish: obvious modes and stable responsive columns. */
+    .deck-shell {
+      grid-template-rows: auto 2px auto minmax(0, 1fr) auto;
+    }
+
+    /* Explicit rows keep Basic mode from collapsing the slide when the inspector is hidden. */
+    .deck-topbar { grid-row: 1; }
+    .progress-track { grid-row: 2; }
+    .inspector-banner { grid-row: 3; }
+    .deck-viewport { grid-row: 4; }
+    .deck-nav { grid-row: 5; }
+
+    .inspector-banner {
+      --advanced-display: flex;
+      min-height: 40px;
+      padding: 6px 14px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      border-bottom: 1px solid rgba(181, 152, 255, 0.22);
+      background: linear-gradient(90deg, rgba(166, 128, 255, 0.15), rgba(73, 128, 207, 0.09));
+    }
+
+    .inspector-banner-copy {
+      min-width: 0;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .inspector-banner-copy strong {
+      flex: 0 0 auto;
+      color: #e8dcff;
+      font-size: 0.63rem;
+      font-weight: 860;
+      letter-spacing: 0.055em;
+      text-transform: uppercase;
+    }
+
+    .inspector-banner-copy span {
+      min-width: 0;
+      overflow: hidden;
+      color: #bbb3ce;
+      font-size: 0.62rem;
+      line-height: 1.25;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .inspector-banner .viewport-readout {
+      flex: 0 0 auto;
+      min-height: 24px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 9px;
+      border: 1px solid rgba(181, 152, 255, 0.25);
+      border-radius: 999px;
+      background: rgba(7, 10, 18, 0.4);
+      color: #cec4e1;
+      font-size: 0.56rem;
+      white-space: nowrap;
+    }
+
+    body.advanced-mode .mode-option#advanced-mode-button[aria-pressed="true"] {
+      background: rgba(171, 137, 255, 0.2);
+      box-shadow: inset 0 0 0 1px rgba(191, 164, 255, 0.46), 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    body.advanced-mode .brand-kicker {
+      color: #c9b9ee;
+    }
+
+    body.advanced-mode .progress-track span {
+      background: linear-gradient(90deg, #82b5ff, #bd8fff);
+    }
+
+    body.advanced-mode .deck-topbar {
+      background: linear-gradient(90deg, rgba(166, 128, 255, 0.045), transparent 60%);
+    }
+
+    .slide-layout,
+    .slide-intro,
+    .slide-content {
+      min-width: 0;
+    }
+
+    .slide-layout {
+      min-height: 100%;
+    }
+
+    .advanced-context {
+      margin: -2px 0 15px;
+      padding: 10px 12px;
+      border: 1px solid rgba(182, 151, 255, 0.24);
+      border-left: 3px solid rgba(182, 151, 255, 0.72);
+      border-radius: 0 13px 13px 0;
+      background: rgba(161, 126, 241, 0.07);
+    }
+
+    .advanced-context strong {
+      display: block;
+      color: #e8dfff;
+      font-size: 0.62rem;
+      font-weight: 850;
+      letter-spacing: 0.045em;
+      text-transform: uppercase;
+    }
+
+    .advanced-context span {
+      display: block;
+      margin-top: 4px;
+      color: #ada5bb;
+      font-size: 0.64rem;
+      line-height: 1.4;
+    }
+
+    .advanced-panel,
+    .advanced-only-note {
+      border-color: rgba(182, 151, 255, 0.23);
+      box-shadow: inset 3px 0 0 rgba(182, 151, 255, 0.48), 0 18px 60px rgba(0, 0, 0, 0.16);
+    }
+
+    /* Landscape is a true two-column presentation instead of a stretched phone. */
+    body[data-orientation="landscape"] .slide {
+      display: block;
+      padding: clamp(16px, 2.2vw, 28px);
+      overflow: hidden;
+    }
+
+    body[data-orientation="landscape"] .slide-layout {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: minmax(230px, 0.72fr) minmax(0, 1.48fr);
+      gap: clamp(22px, 3.8vw, 56px);
+      align-items: center;
+    }
+
+    body[data-orientation="landscape"] .slide-intro,
+    body[data-orientation="landscape"] .slide-content {
+      max-height: 100%;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(160, 185, 235, 0.24) transparent;
+    }
+
+    body[data-orientation="landscape"] .slide-intro {
+      align-self: center;
+      padding-right: 4px;
+    }
+
+    body[data-orientation="landscape"] .slide-content {
+      align-self: center;
+      padding-right: 5px;
+    }
+
+    body[data-orientation="landscape"] .slide-header {
+      margin-bottom: 12px;
+      padding: 0;
+      background: none;
+      position: static;
+    }
+
+    body[data-orientation="landscape"] .slide h2,
+    body[data-orientation="landscape"] .slide[data-slide="2"] h2 {
+      max-width: 14ch;
+      font-size: clamp(1.9rem, 3.4vw, 3.2rem);
+    }
+
+    body[data-orientation="landscape"] .slide .lead,
+    body[data-orientation="landscape"] .slide[data-slide="2"] .lead {
+      max-width: 35ch;
+      font-size: clamp(0.78rem, 1.15vw, 0.96rem);
+    }
+
+    body[data-orientation="landscape"] .slide-content > :first-child {
+      margin-top: 0;
+    }
+
+    body[data-orientation="landscape"] .feedback-visual {
+      height: clamp(270px, 44dvh, 390px);
+      min-height: 0;
+      margin-top: 0;
+    }
+
+    body[data-orientation="landscape"] .feedback-visual svg {
+      height: 100%;
+    }
+
+    body[data-orientation="landscape"] .visual-card {
+      height: clamp(255px, 40dvh, 350px);
+    }
+
+    body[data-orientation="landscape"] .takeaway-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="wide"] .slide-layout {
+      grid-template-columns: minmax(290px, 0.74fr) minmax(0, 1.52fr);
+    }
+
+    /* Rotated phones and short windows keep both columns independently scrollable. */
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .inspector-banner {
+      min-height: 32px;
+      padding: 4px 11px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .inspector-banner-copy strong,
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .inspector-banner-copy span {
+      font-size: 0.54rem;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .inspector-banner .viewport-readout {
+      min-height: 21px;
+      padding-inline: 7px;
+      font-size: 0.5rem;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide {
+      display: block;
+      padding: 8px 12px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide-layout {
+      grid-template-columns: minmax(185px, 0.62fr) minmax(0, 1.38fr);
+      gap: 15px;
+      align-items: start;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide-intro,
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide-content {
+      align-self: start;
+      height: 100%;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide-number {
+      min-height: 20px;
+      margin-bottom: 6px;
+      font-size: 0.53rem;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide-kicker {
+      margin-bottom: 3px;
+      font-size: 0.53rem;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide h2,
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] h2 {
+      font-size: clamp(1.22rem, 3.5vw, 1.65rem);
+      line-height: 1;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide .lead,
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] .lead {
+      margin-top: 7px;
+      font-size: 0.67rem;
+      line-height: 1.36;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .advanced-context {
+      margin-bottom: 8px;
+      padding: 8px 9px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .advanced-context strong,
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .advanced-context span {
+      font-size: 0.55rem;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .feedback-visual {
+      height: 190px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] textarea {
+      min-height: 76px;
+      max-height: 92px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .three-step {
+      gap: 5px;
+      margin-top: 7px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .three-step div {
+      min-height: 52px;
+      padding: 7px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .visual-card {
+      height: 230px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .evidence-card {
+      min-height: 160px;
+      padding: 13px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .transplant-flow {
+      min-height: 118px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .portable-parts {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .takeaway-grid {
+      gap: 5px;
+    }
+
+    /* The map slide uses its right column more efficiently on a rotated phone. */
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] .slide-content {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.43fr) minmax(0, 1fr);
+      grid-template-rows: auto auto minmax(0, 1fr);
+      gap: 6px 10px;
+      overflow-y: auto;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] .system-summary {
+      grid-column: 1;
+      grid-row: 1;
+      margin: 0;
+      padding: 8px 9px;
+      font-size: 0.58rem;
+      line-height: 1.32;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] .visual-card {
+      grid-column: 2;
+      grid-row: 1 / span 3;
+      width: 100%;
+      height: 100%;
+      min-height: 222px;
+      align-self: stretch;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] .lens-strip {
+      grid-column: 1;
+      grid-row: 2;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px;
+      margin: 0;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] .lens-button {
+      min-height: 29px;
+      font-size: 0.48rem;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] .lens-button:last-child {
+      grid-column: 1 / -1;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] .lens-reading {
+      grid-column: 1;
+      grid-row: 3;
+      min-height: 0;
+      margin: 0;
+      padding: 8px 9px;
+      overflow-y: auto;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] .lens-reading strong {
+      font-size: 0.68rem;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] .lens-reading p {
+      font-size: 0.56rem;
+      line-height: 1.3;
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .slide[data-slide="2"] .advanced-panel {
+      grid-column: 1 / -1;
+      grid-row: 4;
+      margin: 0;
+    }
+
+    /* Toasts no longer cover the center of a landscape slide. */
+    body[data-orientation="landscape"] .toast {
+      left: auto;
+      right: 18px;
+      top: 74px;
+      bottom: auto;
+      transform: translateY(-10px);
+    }
+
+    body[data-orientation="landscape"].advanced-mode .toast {
+      top: 116px;
+    }
+
+    body[data-orientation="landscape"] .toast.visible {
+      transform: translateY(0);
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"] .toast {
+      right: 10px;
+      top: 54px;
+      max-width: min(46vw, 430px);
+    }
+
+    body[data-orientation="landscape"][data-viewport-tier="compact"].advanced-mode .toast {
+      top: 88px;
+    }
+
+    @media (max-width: 430px) {
+      .inspector-banner-copy span { display: none; }
+    }
+
+
+
+
+    /* Guided attention: visual-only gold cue. */
+    .guided-target {
+      position: relative !important;
+      z-index: 30 !important;
+      border-color: rgba(255, 205, 92, 0.96) !important;
+      color: #fff6d7 !important;
+      background: linear-gradient(180deg, rgba(114, 78, 14, 0.96), rgba(66, 43, 8, 0.98)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 224, 135, 0.34) inset,
+        0 0 18px rgba(255, 194, 58, 0.58),
+        0 0 42px rgba(255, 183, 34, 0.28) !important;
+    }
+
+    .guided-target::before,
+    .guided-target::after {
+      content: "";
+      position: absolute;
+      inset: -7px;
+      border: 2px solid rgba(255, 207, 94, 0.88);
+      border-radius: inherit;
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(0.98);
+      animation: guide-halo-a 3.1s ease-out infinite;
+    }
+
+    .guided-target::after {
+      inset: -14px;
+      border-color: rgba(255, 194, 59, 0.52);
+      animation-name: guide-halo-b;
+      animation-delay: 0.34s;
+    }
+
+    @keyframes guide-halo-a {
+      0%, 8% { opacity: 0; transform: scale(0.98); }
+      13% { opacity: 0.96; transform: scale(1); }
+      36% { opacity: 0; transform: scale(1.1); }
+      100% { opacity: 0; transform: scale(1.1); }
+    }
+
+    @keyframes guide-halo-b {
+      0%, 13% { opacity: 0; transform: scale(0.98); }
+      18% { opacity: 0.72; transform: scale(1); }
+      42% { opacity: 0; transform: scale(1.13); }
+      100% { opacity: 0; transform: scale(1.13); }
+    }
+
+    .guided-stage {
+      position: relative !important;
+      z-index: 20 !important;
+      border-color: rgba(255, 205, 92, 0.8) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 214, 112, 0.18) inset,
+        0 0 26px rgba(255, 190, 48, 0.22),
+        0 22px 70px rgba(0, 0, 0, 0.34) !important;
+      animation: guide-stage-breathe 2.9s ease-in-out infinite;
+    }
+
+    .guided-stage::after {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      border: 2px solid rgba(255, 206, 91, 0.66);
+      border-radius: calc(20px - 7px);
+      pointer-events: none;
+      opacity: 0;
+      animation: guide-stage-frame 3.2s ease-out infinite;
+    }
+
+    @keyframes guide-stage-breathe {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(255, 214, 112, 0.14) inset, 0 0 12px rgba(255, 190, 48, 0.12), 0 22px 70px rgba(0,0,0,.34); }
+      18% { box-shadow: 0 0 0 1px rgba(255, 224, 140, 0.34) inset, 0 0 32px rgba(255, 190, 48, 0.42), 0 22px 70px rgba(0,0,0,.34); }
+      42% { box-shadow: 0 0 0 1px rgba(255, 214, 112, 0.14) inset, 0 0 16px rgba(255, 190, 48, 0.16), 0 22px 70px rgba(0,0,0,.34); }
+    }
+
+    @keyframes guide-stage-frame {
+      0%, 8% { opacity: 0; transform: scale(0.985); }
+      14% { opacity: 0.92; transform: scale(1); }
+      36% { opacity: 0; transform: scale(1.025); }
+      100% { opacity: 0; transform: scale(1.025); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .guided-target,
+      .guided-stage { animation: none !important; }
+      .guided-target::before,
+      .guided-target::after,
+      .guided-stage::after { animation: none !important; opacity: 0.72; }
+    }
+</style>
+</head>
+<body>
+  <script>
+    (() => {
+      function applyAnthroViewportProfile() {
+        const viewport = window.visualViewport;
+        const width = Math.max(1, Math.round(viewport?.width ?? window.innerWidth));
+        const height = Math.max(1, Math.round(viewport?.height ?? window.innerHeight));
+        const orientation = width > height * 1.05 ? "landscape" : "portrait";
+
+        let tier = "standard";
+        if (orientation === "landscape") {
+          if (height <= 560 || width <= 820) tier = "compact";
+          else if (width >= 1180 && height >= 680) tier = "wide";
+        } else if (width >= 700) {
+          tier = "wide";
+        } else if (height <= 650) {
+          tier = "compact";
+        }
+
+        const device = width >= 1200 && height >= 650
+          ? "desktop"
+          : Math.min(width, height) <= 520
+            ? "phone"
+            : "tablet";
+
+        const profile = { width, height, orientation, tier, device };
+        for (const target of [document.documentElement, document.body]) {
+          target.dataset.orientation = orientation;
+          target.dataset.viewportTier = tier;
+          target.dataset.device = device;
+        }
+        window.__anthroViewportProfile = profile;
+        return profile;
+      }
+
+      window.applyAnthroViewportProfile = applyAnthroViewportProfile;
+      applyAnthroViewportProfile();
+    })();
+  </script>
+
+  <main class="deck-shell">
+    <header class="deck-topbar">
+      <div>
+        <p class="brand-kicker" id="brand-kicker">Guided peer-review demo</p>
+        <h1>Anthrocybernetics, explained</h1>
+      </div>
+      <div class="topbar-actions">
+        <div class="mode-switch" role="group" aria-label="Choose presentation detail level">
+          <button class="mode-option" id="basic-mode-button" type="button" aria-pressed="true">Basic</button>
+          <button class="mode-option" id="advanced-mode-button" type="button" aria-pressed="false">Advanced</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="progress-track" aria-hidden="true"><span id="progress-fill"></span></div>
+
+    <aside class="inspector-banner" id="inspector-banner" data-advanced style="--advanced-display: flex" aria-live="polite">
+      <div class="inspector-banner-copy">
+        <strong>Advanced inspector</strong>
+        <span id="advanced-feature">Rules, limits, and technical context are visible.</span>
+      </div>
+      <span class="viewport-readout" id="viewport-readout">Phone portrait</span>
+    </aside>
+
+    <div class="deck-viewport" id="deck-viewport">
+      <section class="slide is-active" data-slide="0" data-title="The idea" aria-labelledby="slide-1-title">
+        <div class="slide-layout">
+          <div class="slide-intro">
+            <div class="slide-header">
+                      <span class="slide-number">1 · The idea</span>
+                      <p class="slide-kicker">Plain-language meaning</p>
+                      <h2 id="slide-1-title">A workbook for noticing feedback loops.</h2>
+                      <p class="lead">It helps us look at one real situation from five angles before deciding what caused it.</p>
+                    </div>
+            <div class="advanced-context" data-advanced>
+              <strong>Inspect the loop</strong>
+              <span>Ask what closes the loop, how long the delay is, and what result would disprove the explanation.</span>
+            </div>
+          </div>
+          <div class="slide-content">
+            <div class="feedback-visual" aria-label="People and tools changing one another through a feedback loop">
+                      <svg viewBox="0 0 420 280" aria-hidden="true">
+                        <path class="flow-line" d="M118 112 C168 38 252 38 302 112"></path>
+                        <path class="flow-line return" d="M302 168 C252 242 168 242 118 168"></path>
+                      </svg>
+                      <div class="feedback-node people"><div><strong>People</strong><span>choose, react, and change habits</span></div></div>
+                      <div class="feedback-core"><div><strong>Feedback</strong><span>notice, adjust, notice again</span></div></div>
+                      <div class="feedback-node tools"><div><strong>Tools</strong><span>shape choices, speed, memory, and access</span></div></div>
+                    </div>
+
+                    <div class="plain-callout"><strong>What it is not:</strong> it is not an AI model, a brain scan, or a machine that proves causes. It is a structured way to ask better questions.</div>
+
+                    <div class="advanced-panel feedback-inspector" data-advanced>
+                      <div class="advanced-heading"><strong>Feedback-loop anatomy</strong><span>Inspector view</span></div>
+                      <div class="feedback-cycle" aria-label="Observe, label, adjust, and observe again">
+                        <div><b>1</b><span>Observe</span></div>
+                        <div><b>2</b><span>Label</span></div>
+                        <div><b>3</b><span>Adjust</span></div>
+                        <div><b>4</b><span>Observe again</span></div>
+                      </div>
+                      <p class="micro-copy">The workbook slows the jump from “something happened” to “we know the cause.” Each pass should produce a clearer observation or a testable next step.</p>
+                    </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-slide="1" data-title="Try one situation" aria-labelledby="slide-2-title">
+        <div class="slide-layout">
+          <div class="slide-intro">
+            <div class="slide-header">
+                      <span class="slide-number">2 · Try it</span>
+                      <p class="slide-kicker">Start small</p>
+                      <h2 id="slide-2-title">Describe one bounded situation.</h2>
+                      <p class="lead">Use one event or repeating problem. The clearer the boundary, the clearer the questions.</p>
+                    </div>
+            <div class="advanced-context" data-advanced>
+              <strong>Inspect the boundary</strong>
+              <span>A useful map begins with one event, one repeating problem, or one clearly named system.</span>
+            </div>
+          </div>
+          <div class="slide-content">
+            <div class="prompt-card">
+                      <div class="prompt-label-row">
+                        <label for="system-input">Situation</label>
+                        <span class="micro-copy" data-advanced>Ctrl or Cmd + Enter</span>
+                      </div>
+                      <textarea id="system-input" maxlength="900" spellcheck="true">After each cloud session ends, the local model loses the old memory files, so we rebuild the same instructions before work can continue.</textarea>
+
+                      <div class="input-inspector" data-advanced style="--advanced-display: flex">
+                        <span id="input-count">0 words</span>
+                        <span>Visible rules · no hidden model inference</span>
+                      </div>
+
+                      <div class="example-row" aria-label="Example situations">
+                        <button class="example-button" type="button" data-example="local" aria-pressed="true">Cloud to local</button>
+                        <button class="example-button" type="button" data-example="team" aria-pressed="false">Team deadline</button>
+                        <button class="example-button" type="button" data-example="room" aria-pressed="false">Room feedback</button>
+                      </div>
+
+                      <button class="primary-button" id="analyze-button" type="button">Map this situation</button>
+                    </div>
+
+                    <div class="three-step" aria-label="How the demo works">
+                      <div><strong>1. Describe</strong><span>State what happened without explaining it yet.</span></div>
+                      <div><strong>2. Ask</strong><span>Use five lenses to find timing, context, limits, patterns, and pathways.</span></div>
+                      <div><strong>3. Test</strong><span>Separate facts from guesses before changing the system.</span></div>
+                    </div>
+
+                    <div class="plain-callout advanced-only-note" data-advanced><strong>Analysis method:</strong> the demo uses visible word rules and optional grammar tags. It is intentionally explainable, not a hidden scientific score.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-slide="2" data-title="Five lenses" aria-labelledby="slide-3-title">
+        <div class="slide-layout">
+          <div class="slide-intro">
+            <div class="slide-header">
+                      <span class="slide-number">3 · Five lenses</span>
+                      <p class="slide-kicker">The core workbook idea</p>
+                      <h2 id="slide-3-title">The sentence becomes questions.</h2>
+                      <p class="lead">Tap a lens to see what it asks. Tap a word to inspect why it was connected.</p>
+                    </div>
+            <div class="advanced-context" data-advanced>
+              <strong>Inspect the rules</strong>
+              <span>Advanced mode exposes runtime status, more word nodes, raw signals, and each rule-based connection.</span>
+            </div>
+          </div>
+          <div class="slide-content">
+            <p class="system-summary" id="system-summary"></p>
+
+                    <div class="visual-card" aria-label="Interactive field map">
+                      <div id="stage" aria-label="Interactive three-dimensional map of words and five analysis lenses"></div>
+                      <canvas id="fallback-canvas" hidden aria-label="Two-dimensional fallback map"></canvas>
+                      <div class="stage-hint" data-basic>Tap a lens or word to see the question.</div>
+                      <div class="stage-hint" data-advanced>Drag to orbit. Tap a word to inspect its rule.</div>
+                      <div class="stage-tools" data-advanced>
+                        <span class="runtime-badge" id="runtime-badge">Loading visual</span>
+                        <button class="compact-button" id="reset-view-button" type="button">Reset view</button>
+                      </div>
+                      <div class="node-detail" id="node-detail" hidden>
+                        <div class="node-swatch" id="node-swatch"></div>
+                        <div><strong id="node-title"></strong><span id="node-copy"></span></div>
+                      </div>
+                    </div>
+
+                    <div class="lens-strip" role="tablist" aria-label="Five analysis lenses">
+                      <button class="lens-button" type="button" role="tab" data-lens="phase" aria-selected="false" style="--lens-color: var(--phase)">PHASE</button>
+                      <button class="lens-button" type="button" role="tab" data-lens="field" aria-selected="false" style="--lens-color: var(--field)">FIELD</button>
+                      <button class="lens-button" type="button" role="tab" data-lens="arc" aria-selected="false" style="--lens-color: var(--arc)">ARC</button>
+                      <button class="lens-button" type="button" role="tab" data-lens="form" aria-selected="false" style="--lens-color: var(--form)">FORM</button>
+                      <button class="lens-button" type="button" role="tab" data-lens="lattice" aria-selected="false" style="--lens-color: var(--lattice)">LATTICE</button>
+                    </div>
+
+                    <div class="lens-reading" id="lens-reading">
+                      <div class="lens-reading-key" id="lens-reading-key">PHASE · Timing and repetition</div>
+                      <strong id="lens-question"></strong>
+                      <p id="lens-answer"></p>
+                    </div>
+
+                    <div class="advanced-panel" data-advanced>
+                      <div class="advanced-heading"><strong>Raw rule signals</strong><span id="analysis-method">Heuristic text map</span></div>
+                      <div class="score-grid" id="score-grid" aria-label="Relative signal strength by lens"></div>
+                      <p class="micro-copy">These bars only show what the demo noticed in the sentence. They are not measurements, diagnoses, or proof of cause.</p>
+                    </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-slide="3" data-title="Evidence labels" aria-labelledby="slide-4-title">
+        <div class="slide-layout">
+          <div class="slide-intro">
+            <div class="slide-header">
+                      <span class="slide-number">4 · Evidence</span>
+                      <p class="slide-kicker">The strongest rule</p>
+                      <h2 id="slide-4-title">Keep facts, guesses, and stories separate.</h2>
+                      <p class="lead">The same sentence can support three different kinds of statements. Mixing them makes the project sound more certain than it is.</p>
+                    </div>
+            <div class="advanced-context" data-advanced>
+              <strong>Inspect the evidence</strong>
+              <span>A metaphor may suggest a test, but it cannot prove cause, consciousness, biology, or intent.</span>
+            </div>
+          </div>
+          <div class="slide-content">
+            <div class="evidence-tabs" role="tablist" aria-label="Evidence labels">
+                      <button class="evidence-tab" type="button" role="tab" data-evidence="grounded" aria-selected="true" style="--evidence-color: var(--grounded)">GROUNDED</button>
+                      <button class="evidence-tab" type="button" role="tab" data-evidence="hypothesized" aria-selected="false" style="--evidence-color: var(--hypothesized)">HYPOTHESIZED</button>
+                      <button class="evidence-tab" type="button" role="tab" data-evidence="interpretive" aria-selected="false" style="--evidence-color: var(--interpretive)">INTERPRETIVE</button>
+                    </div>
+
+                    <div class="evidence-card">
+                      <h3 id="evidence-title">What we directly observed</h3>
+                      <p class="evidence-definition" id="evidence-definition"></p>
+                      <div class="evidence-copy" id="evidence-copy" style="--evidence-color: var(--grounded)"></div>
+                    </div>
+
+                    <p class="evidence-rule">Good peer review asks: “Which label does this claim deserve, and what evidence would move it to a stronger label?”</p>
+
+                    <div class="plain-callout advanced-only-note" data-advanced><strong>Technical boundary:</strong> a metaphor can guide design, but it should never be used as proof that software is conscious, biological, or equivalent to a human brain.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-slide="4" data-title="Local transplant" aria-labelledby="slide-5-title">
+        <div class="slide-layout">
+          <div class="slide-intro">
+            <div class="slide-header">
+                      <span class="slide-number">5 · Local transplant</span>
+                      <p class="slide-kicker">Related Ghojualamanchu idea</p>
+                      <h2 id="slide-5-title">Moving an agent means moving a kit, not a mind.</h2>
+                      <p class="lead">A local model can receive the old instructions and saved state, but it is still a different model and may act differently.</p>
+                    </div>
+            <div class="advanced-context" data-advanced>
+              <strong>Inspect portability</strong>
+              <span>The portable package contains configuration and state, not proprietary weights or hidden cloud behavior.</span>
+            </div>
+          </div>
+          <div class="slide-content">
+            <div class="transplant-card">
+                      <div class="transplant-flow" aria-label="Cloud model sending a portable agent kit to a local model">
+                        <div class="system-block"><div><strong>Cloud model</strong><span>the old runtime</span></div></div>
+                        <div class="bundle-block"><div><strong>Agent kit</strong><span>portable files</span></div></div>
+                        <div class="system-block"><div><strong>Local model</strong><span>the new runtime</span></div></div>
+                      </div>
+
+                      <div class="portable-parts" aria-label="Portable agent components">
+                        <div class="portable-part"><strong>Instructions</strong><span>roles, rules, and prompts</span></div>
+                        <div class="portable-part"><strong>Memory</strong><span>notes, summaries, and state</span></div>
+                        <div class="portable-part"><strong>Tools</strong><span>files, APIs, and permissions</span></div>
+                        <div class="portable-part"><strong>Schedule</strong><span>timed routines and jobs</span></div>
+                      </div>
+
+                      <p class="portable-explanation">The model weights, hidden cloud behavior, and undocumented tools do not travel inside this kit. The practical task is porting configuration and state.</p>
+                    </div>
+
+                    <div class="advanced-panel" data-advanced>
+                      <div class="advanced-heading"><strong>Portable state example</strong><span>JSON, not model weights</span></div>
+                      <pre class="seed-preview" id="seed-preview"></pre>
+                      <div class="portable-actions">
+                        <button class="secondary-button" id="export-button" type="button">Export map</button>
+                        <button class="secondary-button" id="import-button" type="button">Import map</button>
+                        <button class="secondary-button" id="clear-button" type="button">Clear local state</button>
+                      </div>
+                      <input class="sr-only" id="import-file" type="file" accept="application/json,.json">
+                    </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-slide="5" data-title="Takeaway" aria-labelledby="slide-6-title">
+        <div class="slide-layout">
+          <div class="slide-intro">
+            <div class="slide-header">
+                      <span class="slide-number">6 · Takeaway</span>
+                      <p class="slide-kicker">The understood idea</p>
+                      <h2 id="slide-6-title">What this project is, in one sentence.</h2>
+                    </div>
+            <div class="advanced-context" data-advanced>
+              <strong>Inspect acceptance</strong>
+              <span>A stronger official demo should teach one example, trace every claim, and export a portable result.</span>
+            </div>
+          </div>
+          <div class="slide-content">
+            <div class="takeaway-card">
+                      <p class="takeaway-quote">A workbook for looking at how people, tools, patterns, limits, and pathways shape one another.</p>
+
+                      <div class="takeaway-grid">
+                        <div><strong>It is a method, not a model.</strong><span>The workbook organizes observation and questions.</span></div>
+                        <div><strong>The lenses are prompts, not measurements.</strong><span>They help us notice possibilities that still need testing.</span></div>
+                        <div><strong>State can move; behavior may change.</strong><span>Porting an agent kit does not copy a cloud model or prove a mind moved.</span></div>
+                      </div>
+
+                      <div class="peer-review-note"><strong>Main peer-review point:</strong> the original material needs a guided worked example that turns its private vocabulary into visible actions. This demo shows the missing interaction.</div>
+
+                      <button class="primary-button" id="restart-button" type="button">Map another situation</button>
+                    </div>
+
+                    <div class="advanced-panel" data-advanced>
+                      <div class="advanced-heading"><strong>Peer-review test</strong><span>What the project should prove next</span></div>
+                      <div class="review-checks">
+                        <div><strong>Can a new reader use it?</strong><span>Show one ordinary worked example from input to next test.</span></div>
+                        <div><strong>Can each claim be traced?</strong><span>Mark observations, hypotheses, and metaphors separately.</span></div>
+                        <div><strong>Can state be ported safely?</strong><span>Name instructions, memory, tools, schedules, permissions, and model dependencies.</span></div>
+                      </div>
+                      <button class="secondary-button" id="copy-review-button" type="button">Copy peer-review summary</button>
+                    </div>
+
+                    <p class="footer-note">Conceptual teaching demo based on the public Anthrocybernetics Core Workbook. It is not an official implementation. <a href="https://zo.pub/anthrocybernetics/anthrocybernetics-core-workbook/index.html" target="_blank" rel="noreferrer">Open the source summary</a>.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="deck-nav" aria-label="Presentation navigation">
+      <button class="nav-button" id="back-button" type="button">Back</button>
+      <div class="deck-status">
+        <div class="progress-dots" aria-label="Slide progress">
+          <button class="progress-dot is-active" type="button" aria-label="Go to slide 1"></button>
+          <button class="progress-dot" type="button" aria-label="Go to slide 2"></button>
+          <button class="progress-dot" type="button" aria-label="Go to slide 3"></button>
+          <button class="progress-dot" type="button" aria-label="Go to slide 4"></button>
+          <button class="progress-dot" type="button" aria-label="Go to slide 5"></button>
+          <button class="progress-dot" type="button" aria-label="Go to slide 6"></button>
+        </div>
+        <span class="slide-status" id="slide-status">1 of 6 · The idea</span>
+      </div>
+      <button class="nav-button next" id="next-button" type="button">Start</button>
+    </footer>
+  </main>
+
+  <div id="guided-focus-ring" aria-hidden="true"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script type="module">
+const THREE_VERSION = "0.185.1";
+    const STORAGE_KEY = "anthrocybernetics-guided-presentation-v3";
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const LENSES = {
+      phase: {
+        key: "phase",
+        label: "PHASE",
+        plain: "Timing and repetition",
+        question: "What rhythm is active?",
+        color: "#ffb15a",
+        colorNumber: 0xffb15a,
+        keywords: [
+          "again", "always", "afternoon", "before", "after", "cycle", "daily", "day", "evening", "every",
+          "frequent", "hour", "late", "morning", "monthly", "night", "often", "once", "periodic", "repeat",
+          "repeated", "restart", "rhythm", "routine", "schedule", "season", "sometimes", "start", "stop", "then",
+          "time", "timed", "until", "weekly", "when", "while", "year"
+        ]
+      },
+      field: {
+        key: "field",
+        label: "FIELD",
+        plain: "Surrounding conditions",
+        question: "What conditions surround and shape it?",
+        color: "#54d8c9",
+        colorNumber: 0x54d8c9,
+        keywords: [
+          "around", "because", "cloud", "condition", "context", "during", "environment", "heat", "inside", "local",
+          "network", "noise", "noisy", "outside", "pressure", "room", "setting", "space", "system", "team",
+          "temperature", "tool", "weather", "work", "workplace", "under", "within"
+        ]
+      },
+      arc: {
+        key: "arc",
+        label: "ARC",
+        plain: "Limits and turning points",
+        question: "What threshold or turning point is near?",
+        color: "#ef7698",
+        colorNumber: 0xef7698,
+        keywords: [
+          "approach", "approaching", "before", "break", "breaking", "change", "deadline", "drop", "end", "fail",
+          "failure", "fall", "limit", "near", "overload", "restart", "rise", "risk", "rushed", "shift", "spike",
+          "start", "stop", "threshold", "turn", "until", "urgent", "worse"
+        ]
+      },
+      form: {
+        key: "form",
+        label: "FORM",
+        plain: "Patterns that stay",
+        question: "What pattern persists?",
+        color: "#a88cff",
+        colorNumber: 0xa88cff,
+        keywords: [
+          "again", "habit", "keeps", "memory", "pattern", "persist", "persistent", "repeated", "role", "rule", "same",
+          "shape", "stable", "stays", "structure", "template", "usual", "usually"
+        ]
+      },
+      lattice: {
+        key: "lattice",
+        label: "LATTICE",
+        plain: "People, tools, and pathways",
+        question: "Which pathways carry the effect?",
+        color: "#6eb8ff",
+        colorNumber: 0x6eb8ff,
+        keywords: [
+          "across", "and", "between", "carry", "carries", "chat", "cloud", "connect", "connection", "depend", "file",
+          "fixes", "from", "into", "link", "local", "model", "people", "person", "route", "share", "through", "to",
+          "tool", "transfer", "transplant", "with", "workflow"
+        ]
+      }
+    };
+
+    const EVIDENCE = {
+      grounded: {
+        label: "GROUNDED",
+        color: "#72d6b1",
+        title: "What we directly observed",
+        definition: "A quote, event, log, measurement, or detail that was actually supplied."
+      },
+      hypothesized: {
+        label: "HYPOTHESIZED",
+        color: "#f0be65",
+        title: "What may explain it",
+        definition: "A testable guess. It can guide the next check, but it is not proven yet."
+      },
+      interpretive: {
+        label: "INTERPRETIVE",
+        color: "#b49bff",
+        title: "What story helps us picture it",
+        definition: "A metaphor or meaning that may be useful, but should not be treated as evidence."
+      }
+    };
+
+    const EXAMPLES = {
+      team: "Every afternoon our team chat gets rushed before the deadline, and the same two people carry the fixes.",
+      local: "After each cloud session ends, the local model loses the old memory files, so we rebuild the same instructions before work can continue.",
+      room: "When the room gets warmer, the cooling fan speeds up, the noise rises, and people start speaking louder."
+    };
+
+
+    const ADVANCED_SLIDE_FEATURES = [
+      "Loop timing, delay, and falsification questions are exposed.",
+      "Input boundaries, word counts, and transparent analysis rules are exposed.",
+      "Runtime status, extra nodes, raw scores, and connection reasons are exposed.",
+      "Scientific limits for evidence, metaphor, and consciousness claims are exposed.",
+      "Portable JSON state, import, export, and reset controls are exposed.",
+      "Peer-review acceptance checks and the copyable review summary are exposed."
+    ];
+
+    const STOP_WORDS = new Set([
+      "a", "an", "the", "this", "that", "these", "those", "i", "you", "we", "they", "he", "she", "it", "our",
+      "your", "their", "my", "his", "her", "its", "is", "are", "was", "were", "be", "been", "being", "do", "does",
+      "did", "have", "has", "had", "can", "could", "would", "should", "may", "might", "must", "will", "just", "very",
+      "more", "most", "some", "any", "all", "each", "two", "one", "of", "for", "as", "at", "by", "or", "but", "if",
+      "so", "not", "no", "than", "there", "here", "what", "which", "who", "how", "why"
+    ]);
+
+    const POSITIVE_WORDS = new Set(["calm", "clear", "help", "helps", "improve", "improves", "repair", "safe", "stable", "support", "works"]);
+    const TENSION_WORDS = new Set(["break", "deadline", "fail", "failure", "hot", "limit", "lose", "loses", "noise", "noisy", "overload", "pressure", "risk", "rushed", "urgent", "worse"]);
+
+    const DOM = {
+      stage: document.querySelector("#stage"),
+      fallbackCanvas: document.querySelector("#fallback-canvas"),
+      runtimeBadge: document.querySelector("#runtime-badge"),
+      input: document.querySelector("#system-input"),
+      analyzeButton: document.querySelector("#analyze-button"),
+      resetViewButton: document.querySelector("#reset-view-button"),
+      summary: document.querySelector("#system-summary"),
+      scoreGrid: document.querySelector("#score-grid"),
+      lensReading: document.querySelector("#lens-reading"),
+      lensReadingKey: document.querySelector("#lens-reading-key"),
+      lensQuestion: document.querySelector("#lens-question"),
+      lensAnswer: document.querySelector("#lens-answer"),
+      evidenceTitle: document.querySelector("#evidence-title"),
+      evidenceDefinition: document.querySelector("#evidence-definition"),
+      evidenceCopy: document.querySelector("#evidence-copy"),
+      nodeDetail: document.querySelector("#node-detail"),
+      nodeSwatch: document.querySelector("#node-swatch"),
+      nodeTitle: document.querySelector("#node-title"),
+      nodeCopy: document.querySelector("#node-copy"),
+      exportButton: document.querySelector("#export-button"),
+      importButton: document.querySelector("#import-button"),
+      importFile: document.querySelector("#import-file"),
+      clearButton: document.querySelector("#clear-button"),
+      toast: document.querySelector("#toast"),
+      basicModeButton: document.querySelector("#basic-mode-button"),
+      advancedModeButton: document.querySelector("#advanced-mode-button"),
+      brandKicker: document.querySelector("#brand-kicker"),
+      inspectorBanner: document.querySelector("#inspector-banner"),
+      advancedFeature: document.querySelector("#advanced-feature"),
+      viewportReadout: document.querySelector("#viewport-readout"),
+      inputCount: document.querySelector("#input-count"),
+      copyReviewButton: document.querySelector("#copy-review-button"),
+      deck: document.querySelector("#deck-viewport"),
+      slides: [...document.querySelectorAll(".slide")],
+      backButton: document.querySelector("#back-button"),
+      nextButton: document.querySelector("#next-button"),
+      slideStatus: document.querySelector("#slide-status"),
+      progressFill: document.querySelector("#progress-fill"),
+      progressDots: [...document.querySelectorAll(".progress-dot")],
+      restartButton: document.querySelector("#restart-button"),
+      seedPreview: document.querySelector("#seed-preview"),
+      guidedFocusRing: document.querySelector("#guided-focus-ring"),
+      visualCard: document.querySelector('.slide[data-slide="2"] .visual-card')
+    };
+
+    const appState = {
+      analysis: null,
+      activeLens: "phase",
+      activeEvidence: "grounded",
+      visual: null,
+      visualReady: false,
+      selectedNode: null,
+      lastSavedAt: null,
+      storageAvailable: true,
+      currentSlide: 0,
+      advancedMode: false,
+      viewportProfile: window.__anthroViewportProfile ?? null,
+      guide: { lensUsed: false, stageUsed: false, evidenceUsed: false },
+      guideLensTouched: false,
+      guideStageSeen: false
+    };
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function normalizeWord(value) {
+      return String(value ?? "")
+        .toLowerCase()
+        .replace(/[’']/g, "")
+        .replace(/[^a-z0-9-]/g, "")
+        .trim();
+    }
+
+    function hashString(value) {
+      let hash = 2166136261;
+      for (let i = 0; i < value.length; i += 1) {
+        hash ^= value.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+      }
+      return hash >>> 0;
+    }
+
+    function seededUnit(value, salt = 0) {
+      const hashed = hashString(`${value}:${salt}`);
+      return (hashed % 10000) / 10000;
+    }
+
+    function unique(values) {
+      return [...new Set(values.filter(Boolean))];
+    }
+
+    function humanList(values, fallback = "none stated") {
+      const clean = unique(values).slice(0, 5);
+      if (!clean.length) return fallback;
+      if (clean.length === 1) return clean[0];
+      if (clean.length === 2) return `${clean[0]} and ${clean[1]}`;
+      return `${clean.slice(0, -1).join(", ")}, and ${clean.at(-1)}`;
+    }
+
+    function titleCase(value) {
+      return String(value).replace(/\b\w/g, character => character.toUpperCase());
+    }
+
+    function extractTerms(text) {
+      const fallback = () => text
+        .match(/[A-Za-z0-9][A-Za-z0-9'-]*/g)
+        ?.map((token, index) => ({
+          text: token,
+          normal: normalizeWord(token),
+          tags: [],
+          index
+        })) ?? [];
+
+      if (typeof window.nlp !== "function") {
+        return { terms: fallback(), method: "Tokenizer fallback" };
+      }
+
+      try {
+        const documentModel = window.nlp(text);
+        const sentenceData = documentModel.json({ terms: true });
+        const terms = [];
+        let index = 0;
+
+        for (const sentence of sentenceData) {
+          for (const term of sentence.terms ?? []) {
+            const rawTags = term.tags ?? [];
+            const tags = Array.isArray(rawTags) ? rawTags : Object.keys(rawTags);
+            const normal = normalizeWord(term.normal || term.text);
+            if (!normal) continue;
+            terms.push({
+              text: term.text,
+              normal,
+              tags,
+              index
+            });
+            index += 1;
+          }
+        }
+
+        return {
+          terms: terms.length ? terms : fallback(),
+          method: terms.length ? "Compromise POS map" : "Tokenizer fallback"
+        };
+      } catch (error) {
+        console.warn("Compromise parsing failed; using fallback tokenizer.", error);
+        return { terms: fallback(), method: "Tokenizer fallback" };
+      }
+    }
+
+    function classifyTerm(term, frequency) {
+      const weights = {
+        phase: 0.04,
+        field: 0.04,
+        arc: 0.04,
+        form: 0.04,
+        lattice: 0.04
+      };
+      const reasons = {
+        phase: [],
+        field: [],
+        arc: [],
+        form: [],
+        lattice: []
+      };
+
+      const word = term.normal;
+      const tags = new Set(term.tags.map(tag => String(tag).toLowerCase()));
+
+      for (const lens of Object.values(LENSES)) {
+        if (lens.keywords.includes(word)) {
+          weights[lens.key] += 0.78;
+          reasons[lens.key].push(`keyword for ${lens.label.toLowerCase()}`);
+        }
+      }
+
+      if ([...tags].some(tag => tag.includes("date") || tag.includes("time"))) {
+        weights.phase += 0.72;
+        reasons.phase.push("time expression");
+      }
+
+      if ([...tags].some(tag => tag.includes("verb"))) {
+        weights.phase += 0.22;
+        weights.arc += 0.18;
+        reasons.phase.push("action can reveal rhythm");
+        reasons.arc.push("action can indicate change");
+      }
+
+      if ([...tags].some(tag => tag.includes("noun"))) {
+        weights.form += 0.30;
+        weights.field += 0.15;
+        reasons.form.push("noun names a persistent thing or role");
+        reasons.field.push("noun can name part of the setting");
+      }
+
+      if ([...tags].some(tag => tag.includes("adjective") || tag.includes("adverb"))) {
+        weights.field += 0.28;
+        reasons.field.push("descriptive condition");
+      }
+
+      if ([...tags].some(tag => tag.includes("preposition") || tag.includes("conjunction"))) {
+        weights.lattice += 0.24;
+        reasons.lattice.push("relationship or pathway word");
+      }
+
+      if ([...tags].some(tag => tag.includes("value") || tag.includes("cardinal") || tag.includes("number"))) {
+        weights.arc += 0.24;
+        weights.form += 0.10;
+        reasons.arc.push("quantity can mark a limit");
+      }
+
+      if (frequency > 1) {
+        const repeatBoost = Math.min(0.55, 0.18 * (frequency - 1));
+        weights.form += repeatBoost;
+        weights.phase += repeatBoost * 0.65;
+        reasons.form.push(`appears ${frequency} times`);
+        reasons.phase.push("repetition suggests rhythm");
+      }
+
+      if (TENSION_WORDS.has(word)) {
+        weights.arc += 0.36;
+        weights.field += 0.12;
+        reasons.arc.push("pressure or limit term");
+      }
+
+      const total = Object.values(weights).reduce((sum, value) => sum + value, 0);
+      const normalized = Object.fromEntries(
+        Object.entries(weights).map(([key, value]) => [key, value / total])
+      );
+      const dominant = Object.entries(normalized).sort((a, b) => b[1] - a[1])[0][0];
+
+      return {
+        ...term,
+        frequency,
+        weights: normalized,
+        rawWeights: weights,
+        reasons,
+        dominant,
+        influence: clamp(Math.max(...Object.values(normalized)) + Math.min(0.18, frequency * 0.035), 0.18, 0.9)
+      };
+    }
+
+    function extractPhrases(terms) {
+      const phrases = {
+        phase: [],
+        field: [],
+        arc: [],
+        form: [],
+        lattice: []
+      };
+
+      for (let index = 0; index < terms.length; index += 1) {
+        const current = terms[index];
+        const next = terms[index + 1];
+        const nextTwo = terms[index + 2];
+        const pair = next ? `${current.normal} ${next.normal}` : "";
+        const triple = nextTwo ? `${current.normal} ${next.normal} ${nextTwo.normal}` : "";
+
+        if (["every", "each", "before", "after", "during", "when", "while", "until"].includes(current.normal)) {
+          phrases.phase.push(triple || pair || current.normal);
+        }
+
+        if (["because", "under", "inside", "outside", "within", "during"].includes(current.normal)) {
+          phrases.field.push(triple || pair || current.normal);
+        }
+
+        if (["before", "until", "near", "deadline", "limit", "start", "stop", "restart"].includes(current.normal)) {
+          phrases.arc.push(triple || pair || current.normal);
+        }
+
+        if (["same", "again", "usual", "usually", "keeps", "stays"].includes(current.normal)) {
+          phrases.form.push(triple || pair || current.normal);
+        }
+
+        if (["between", "through", "from", "to", "with", "and", "into", "across"].includes(current.normal)) {
+          phrases.lattice.push(triple || pair || current.normal);
+        }
+      }
+
+      return Object.fromEntries(
+        Object.entries(phrases).map(([key, values]) => [key, unique(values).slice(0, 4)])
+      );
+    }
+
+    function analyzeText(text) {
+      const cleanText = text.trim().replace(/\s+/g, " ");
+      if (!cleanText) {
+        throw new Error("Describe one situation before mapping it.");
+      }
+
+      const extraction = extractTerms(cleanText);
+      const allTerms = extraction.terms.filter(term => term.normal);
+      const frequencyMap = new Map();
+
+      for (const term of allTerms) {
+        frequencyMap.set(term.normal, (frequencyMap.get(term.normal) ?? 0) + 1);
+      }
+
+      const classifiedTerms = allTerms.map(term => classifyTerm(term, frequencyMap.get(term.normal) ?? 1));
+      const meaningfulTerms = classifiedTerms.filter(term => {
+        const isLensKeyword = Object.values(LENSES).some(lens => lens.keywords.includes(term.normal));
+        return isLensKeyword || !STOP_WORDS.has(term.normal);
+      });
+
+      const uniqueTermMap = new Map();
+      for (const term of meaningfulTerms) {
+        const current = uniqueTermMap.get(term.normal);
+        if (!current || term.influence > current.influence) {
+          uniqueTermMap.set(term.normal, term);
+        }
+      }
+
+      const visualTerms = [...uniqueTermMap.values()]
+        .sort((a, b) => {
+          const aKeyword = Object.values(LENSES).some(lens => lens.keywords.includes(a.normal)) ? 1 : 0;
+          const bKeyword = Object.values(LENSES).some(lens => lens.keywords.includes(b.normal)) ? 1 : 0;
+          return (bKeyword - aKeyword) || (b.influence - a.influence) || (a.index - b.index);
+        })
+        .slice(0, 14);
+
+      const rawLensScores = {
+        phase: 0.15,
+        field: 0.15,
+        arc: 0.15,
+        form: 0.15,
+        lattice: 0.15
+      };
+
+      for (const term of meaningfulTerms) {
+        for (const key of Object.keys(rawLensScores)) {
+          rawLensScores[key] += term.rawWeights[key] * (1 + Math.min(0.5, term.frequency * 0.08));
+        }
+      }
+
+      const maxRawScore = Math.max(...Object.values(rawLensScores), 1);
+      const lensScores = Object.fromEntries(
+        Object.entries(rawLensScores).map(([key, value]) => [key, clamp(value / maxRawScore, 0.08, 1)])
+      );
+
+      const phrases = extractPhrases(allTerms);
+      const termsByLens = Object.fromEntries(
+        Object.keys(LENSES).map(key => [
+          key,
+          visualTerms
+            .filter(term => term.weights[key] >= 0.19)
+            .sort((a, b) => b.weights[key] - a.weights[key])
+            .map(term => term.normal)
+            .slice(0, 6)
+        ])
+      );
+
+      const repeatedTerms = [...frequencyMap.entries()]
+        .filter(([word, count]) => count > 1 && !STOP_WORDS.has(word))
+        .sort((a, b) => b[1] - a[1])
+        .map(([word]) => word)
+        .slice(0, 5);
+
+      const topLenses = Object.entries(lensScores).sort((a, b) => b[1] - a[1]).map(([key]) => key);
+      const tensionCount = meaningfulTerms.filter(term => TENSION_WORDS.has(term.normal)).length;
+      const positiveCount = meaningfulTerms.filter(term => POSITIVE_WORDS.has(term.normal)).length;
+      const energy = clamp((meaningfulTerms.length / 18) * 0.58 + lensScores.phase * 0.25 + lensScores.arc * 0.17, 0.18, 1);
+      const tension = clamp((tensionCount / Math.max(3, meaningfulTerms.length)) * 2.8 + lensScores.arc * 0.35 - positiveCount * 0.04, 0.08, 1);
+
+      const lensReadings = {
+        phase: {
+          question: LENSES.phase.question,
+          answer: phrases.phase.length || termsByLens.phase.length
+            ? `Timing signals include ${humanList([...phrases.phase, ...termsByLens.phase])}. Check how often the pattern repeats and when it starts or stops.`
+            : "No clear timing signal is stated. Add when it happens, how often it repeats, or what starts and stops it."
+        },
+        field: {
+          question: LENSES.field.question,
+          answer: termsByLens.field.length
+            ? `Surrounding conditions may include ${humanList(termsByLens.field)}. Treat these as context until a change in one condition is observed against another.`
+            : "The surrounding conditions are unclear. Name the place, people, tools, pressures, and environmental conditions around the event."
+        },
+        arc: {
+          question: LENSES.arc.question,
+          answer: phrases.arc.length || termsByLens.arc.length
+            ? `Possible turning-point signals include ${humanList([...phrases.arc, ...termsByLens.arc])}. Test what changes immediately before and after that point.`
+            : "No threshold is clearly named. Look for a deadline, limit, failure point, handoff, restart, or sharp change."
+        },
+        form: {
+          question: LENSES.form.question,
+          answer: repeatedTerms.length || termsByLens.form.length
+            ? `Persistent pattern candidates include ${humanList([...repeatedTerms, ...termsByLens.form])}. Confirm that they recur across more than one observation.`
+            : "No stable pattern is proven yet. Record what stays the same across several observations instead of relying on one event."
+        },
+        lattice: {
+          question: LENSES.lattice.question,
+          answer: termsByLens.lattice.length
+            ? `Likely carriers or pathways include ${humanList(termsByLens.lattice)}. Trace what moves between them: information, work, pressure, memory, or responsibility.`
+            : "The pathway is unclear. Name who or what receives, changes, stores, and passes the effect onward."
+        }
+      };
+
+      const groundedSignals = [];
+      if (phrases.phase.length) groundedSignals.push(`The sentence contains explicit timing language: ${humanList(phrases.phase)}.`);
+      if (phrases.arc.length) groundedSignals.push(`It names a possible threshold: ${humanList(phrases.arc)}.`);
+      if (repeatedTerms.length) groundedSignals.push(`These content words repeat: ${humanList(repeatedTerms)}.`);
+      if (!groundedSignals.length) groundedSignals.push(`The direct observation is the sentence itself; no repeated measurement or outside evidence was supplied.`);
+
+      const primary = topLenses[0];
+      const secondary = topLenses[1];
+      const primaryTerms = termsByLens[primary];
+      const secondaryTerms = termsByLens[secondary];
+
+      const evidence = {
+        grounded: groundedSignals.join(" "),
+        hypothesized: `The situation may be shaped mainly by ${LENSES[primary].label.toLowerCase()} and ${LENSES[secondary].label.toLowerCase()}. A useful test would change or measure ${humanList([...primaryTerms, ...secondaryTerms], "one named condition")} while keeping the system boundary fixed.`,
+        interpretive: buildInterpretiveReading(primary, secondary, tension)
+      };
+
+      const summary = buildSystemSummary({ topLenses, lensScores, phrases, termsByLens, repeatedTerms });
+
+      return {
+        type: "five_foci_field_map",
+        version: "1.0",
+        createdAt: new Date().toISOString(),
+        sourceText: cleanText,
+        method: extraction.method,
+        terms: visualTerms,
+        phrases,
+        termsByLens,
+        repeatedTerms,
+        lensScores,
+        topLenses,
+        energy,
+        tension,
+        lensReadings,
+        evidence,
+        summary
+      };
+    }
+
+    function buildSystemSummary({ topLenses }) {
+      const primary = topLenses[0];
+      const secondary = topLenses[1];
+      return `Strongest lens: ${LENSES[primary].plain.toLowerCase()}. Next: ${LENSES[secondary].plain.toLowerCase()}. This map suggests questions; it does not prove a cause.`;
+    }
+
+    function buildInterpretiveReading(primary, secondary, tension) {
+      const pair = `${primary}:${secondary}`;
+      const metaphors = {
+        "arc:lattice": "The system looks like a bridge narrowing as the load approaches a limit.",
+        "lattice:arc": "The system looks like a bridge narrowing as the load approaches a limit.",
+        "phase:form": "The system looks like a groove becoming deeper each time the same path is used.",
+        "form:phase": "The system looks like a groove becoming deeper each time the same path is used.",
+        "field:phase": "The system looks like weather shaping the pace of activity inside it.",
+        "phase:field": "The system looks like weather shaping the pace of activity inside it.",
+        "field:arc": "The system looks like pressure building inside a container.",
+        "arc:field": "The system looks like pressure building inside a container.",
+        "form:lattice": "The system looks like a familiar route that keeps directing traffic to the same place.",
+        "lattice:form": "The system looks like a familiar route that keeps directing traffic to the same place."
+      };
+      const base = metaphors[pair] ?? "The system looks like several currents meeting and shaping one another.";
+      return `${base} This is a metaphor, not evidence.${tension > 0.62 ? " Its tone emphasizes strain because the sentence contains pressure or limit language." : " Its tone stays neutral because the sentence does not strongly signal strain."}`;
+    }
+
+    function saveLocalState() {
+      if (!appState.analysis || !appState.storageAvailable) return false;
+      const payload = {
+        analysis: appState.analysis,
+        activeLens: appState.activeLens,
+        activeEvidence: appState.activeEvidence,
+        savedAt: new Date().toISOString()
+      };
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        appState.lastSavedAt = payload.savedAt;
+        return true;
+      } catch (error) {
+        appState.storageAvailable = false;
+        console.warn("Local state could not be saved in this browser context.", error);
+        return false;
+      }
+    }
+
+    function loadLocalState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const payload = JSON.parse(raw);
+        if (!payload?.analysis?.sourceText || payload.analysis.type !== "five_foci_field_map") return false;
+        appState.analysis = payload.analysis;
+        appState.activeLens = LENSES[payload.activeLens] ? payload.activeLens : "phase";
+        appState.activeEvidence = EVIDENCE[payload.activeEvidence] ? payload.activeEvidence : "grounded";
+        appState.lastSavedAt = payload.savedAt ?? null;
+        DOM.input.value = payload.analysis.sourceText;
+        return true;
+      } catch (error) {
+        appState.storageAvailable = false;
+        console.warn("Stored field map could not be loaded.", error);
+        return false;
+      }
+    }
+
+    function getVisualAnalysis() {
+      if (!appState.analysis) return null;
+      const termLimit = appState.advancedMode ? 14 : 8;
+      return {
+        ...appState.analysis,
+        terms: appState.analysis.terms.slice(0, termLimit)
+      };
+    }
+
+    function updateInputInspector() {
+      if (!DOM.inputCount) return;
+      const words = DOM.input.value.trim().match(/[A-Za-z0-9][A-Za-z0-9'-]*/g)?.length ?? 0;
+      const characters = DOM.input.value.length;
+      DOM.inputCount.textContent = `${words} word${words === 1 ? "" : "s"} · ${characters}/900 characters`;
+    }
+
+    function renderAnalysis() {
+      const analysis = appState.analysis;
+      if (!analysis) return;
+
+      DOM.summary.textContent = analysis.summary;
+      document.querySelector("#analysis-method").textContent = analysis.method;
+
+      DOM.scoreGrid.replaceChildren();
+      for (const lens of Object.values(LENSES)) {
+        const score = clamp(analysis.lensScores[lens.key] ?? 0, 0, 1);
+        const row = document.createElement("div");
+        row.className = "score-row";
+        row.innerHTML = `
+          <span class="score-label">${lens.label}</span>
+          <div class="score-track" aria-hidden="true">
+            <div class="score-fill" style="--score-color: ${lens.color}; width: ${(score * 100).toFixed(1)}%"></div>
+          </div>
+          <span class="score-value">${Math.round(score * 100)}</span>
+        `;
+        DOM.scoreGrid.append(row);
+      }
+
+      if (DOM.seedPreview) {
+        const preview = {
+          instructions: "five-foci mapping rules",
+          memory: {
+            situation: analysis.sourceText,
+            activeLens: appState.activeLens
+          },
+          tools: ["local browser storage", "JSON import/export"],
+          schedule: null,
+          modelWeightsIncluded: false
+        };
+        DOM.seedPreview.textContent = JSON.stringify(preview, null, 2);
+      }
+
+      updateInputInspector();
+      renderActiveLens();
+      renderEvidence();
+
+      if (appState.visualReady && appState.visual) {
+        appState.visual.update(getVisualAnalysis(), appState.activeLens);
+      }
+    }
+
+    function renderActiveLens() {
+      const lens = LENSES[appState.activeLens];
+      const reading = appState.analysis?.lensReadings?.[appState.activeLens];
+      if (!lens || !reading) return;
+
+      DOM.lensReading.style.setProperty("--active-lens-color", lens.color);
+      DOM.lensReadingKey.textContent = `${lens.label} · ${lens.plain}`;
+      DOM.lensQuestion.textContent = reading.question;
+      DOM.lensAnswer.textContent = reading.answer;
+
+      document.querySelectorAll(".lens-button").forEach(button => {
+        button.setAttribute("aria-selected", String(button.dataset.lens === appState.activeLens));
+      });
+
+      if (DOM.seedPreview && appState.analysis) {
+        const preview = {
+          instructions: "five-foci mapping rules",
+          memory: {
+            situation: appState.analysis.sourceText,
+            activeLens: appState.activeLens
+          },
+          tools: ["local browser storage", "JSON import/export"],
+          schedule: null,
+          modelWeightsIncluded: false
+        };
+        DOM.seedPreview.textContent = JSON.stringify(preview, null, 2);
+      }
+
+      if (appState.visualReady && appState.visual) {
+        appState.visual.setActiveLens(appState.activeLens);
+      }
+    }
+
+    function renderEvidence() {
+      const evidenceKey = appState.activeEvidence;
+      const evidence = EVIDENCE[evidenceKey];
+      if (!evidence || !appState.analysis) return;
+
+      DOM.evidenceTitle.textContent = evidence.title;
+      DOM.evidenceDefinition.textContent = evidence.definition;
+      DOM.evidenceCopy.textContent = appState.analysis.evidence[evidenceKey];
+      DOM.evidenceCopy.style.setProperty("--evidence-color", evidence.color);
+
+      document.querySelectorAll(".evidence-tab").forEach(button => {
+        button.setAttribute("aria-selected", String(button.dataset.evidence === evidenceKey));
+      });
+    }
+
+    function showNodeDetail(nodeData) {
+      if (!nodeData) {
+        DOM.nodeDetail.hidden = true;
+        appState.selectedNode = null;
+        return;
+      }
+
+      appState.selectedNode = nodeData;
+      const lens = LENSES[nodeData.dominant] ?? LENSES[appState.activeLens];
+      DOM.nodeSwatch.style.background = lens.color;
+      DOM.nodeSwatch.style.color = lens.color;
+      DOM.nodeTitle.textContent = nodeData.type === "anchor" ? lens.label : nodeData.label;
+
+      if (nodeData.type === "anchor") {
+        DOM.nodeCopy.textContent = appState.advancedMode
+          ? `${lens.question} This anchor filters the field toward ${lens.plain.toLowerCase()}.`
+          : lens.question;
+      } else {
+        const reason = nodeData.reasons?.[nodeData.dominant]?.[0] ?? "rule-based association";
+        const score = Math.round((nodeData.weights?.[nodeData.dominant] ?? 0) * 100);
+        DOM.nodeCopy.textContent = appState.advancedMode
+          ? `${lens.label} rule signal: ${score}%. ${titleCase(reason)}. This is an explainable heuristic, not proof.`
+          : `${titleCase(reason)}. This suggests the ${lens.plain.toLowerCase()} lens; it does not prove a cause.`;
+      }
+      DOM.nodeDetail.hidden = false;
+    }
+
+    function runAnalysis({ announce = true } = {}) {
+      try {
+        appState.analysis = analyzeText(DOM.input.value);
+        appState.activeLens = appState.analysis.topLenses[0] ?? "phase";
+        appState.selectedNode = null;
+        DOM.nodeDetail.hidden = true;
+        renderAnalysis();
+        saveLocalState();
+        if (announce) showToast("Situation mapped and saved locally.");
+        return true;
+      } catch (error) {
+        showToast(error.message || "The situation could not be mapped.");
+        return false;
+      }
+    }
+
+    function exportMap() {
+      if (!appState.analysis) return;
+      const payload = {
+        exportType: "anthrocybernetics_field_map_seed",
+        exportVersion: "1.0",
+        exportedAt: new Date().toISOString(),
+        note: "Portable instructions and state. This file does not contain model weights or prove consciousness.",
+        activeLens: appState.activeLens,
+        activeEvidence: appState.activeEvidence,
+        map: appState.analysis
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `five-foci-map-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+      showToast("Portable map exported as JSON.");
+    }
+
+    async function importMap(file) {
+      if (!file) return;
+      try {
+        const raw = await file.text();
+        const payload = JSON.parse(raw);
+        const imported = payload.map ?? payload.analysis ?? payload;
+        if (imported?.type !== "five_foci_field_map" || !imported.sourceText) {
+          throw new Error("That JSON is not a Five-Foci map export.");
+        }
+        appState.analysis = imported;
+        appState.activeLens = LENSES[payload.activeLens] ? payload.activeLens : imported.topLenses?.[0] ?? "phase";
+        appState.activeEvidence = EVIDENCE[payload.activeEvidence] ? payload.activeEvidence : "grounded";
+        DOM.input.value = imported.sourceText;
+        renderAnalysis();
+        saveLocalState();
+        showToast("Portable map imported into local state.");
+      } catch (error) {
+        showToast(error.message || "The JSON file could not be imported.");
+      } finally {
+        DOM.importFile.value = "";
+      }
+    }
+
+    function clearLocalState() {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (error) {
+        appState.storageAvailable = false;
+        console.warn("Local state could not be cleared in this browser context.", error);
+      }
+
+      DOM.input.value = EXAMPLES.local;
+      appState.activeEvidence = "grounded";
+      runAnalysis({ announce: false });
+      showToast("The example was reset. Local storage is cleared when the browser allows it.");
+    }
+
+    let toastTimer = 0;
+    function showToast(message) {
+      clearTimeout(toastTimer);
+      DOM.toast.textContent = message;
+      DOM.toast.classList.add("visible");
+      toastTimer = window.setTimeout(() => DOM.toast.classList.remove("visible"), 2400);
+    }
+
+
+    let guideStageTimer = 0;
+
+    function clearGuideVisuals() {
+      clearTimeout(guideStageTimer);
+      document.querySelectorAll('.guided-target').forEach(element => element.classList.remove('guided-target'));
+      document.querySelectorAll('.guided-stage').forEach(element => element.classList.remove('guided-stage'));
+    }
+
+    function setGuideTarget(target) {
+      if (!target || target.hidden || target.disabled) return;
+      target.classList.add('guided-target');
+    }
+
+    function refreshGuideVisuals({ stageFirst = false } = {}) {
+      clearGuideVisuals();
+
+      if (appState.currentSlide === 0) {
+        setGuideTarget(DOM.nextButton);
+        return;
+      }
+
+      if (appState.currentSlide === 1) {
+        setGuideTarget(DOM.analyzeButton);
+        return;
+      }
+
+      if (appState.currentSlide === 2) {
+        const firstLens = document.querySelector('.lens-button[data-lens="phase"]');
+        if (!appState.guideLensTouched && DOM.visualCard) {
+          DOM.visualCard.classList.add('guided-stage');
+          guideStageTimer = window.setTimeout(() => {
+            DOM.visualCard?.classList.remove('guided-stage');
+            setGuideTarget(firstLens);
+          }, stageFirst ? 1750 : 900);
+          return;
+        }
+        setGuideTarget(DOM.nextButton);
+        return;
+      }
+
+      if (appState.currentSlide === 3) {
+        const hypothesis = document.querySelector('.evidence-tab[data-evidence="hypothesized"]');
+        if (appState.activeEvidence === 'grounded' && hypothesis) setGuideTarget(hypothesis);
+        else setGuideTarget(DOM.nextButton);
+        return;
+      }
+
+      if (appState.currentSlide === 4) {
+        setGuideTarget(DOM.nextButton);
+        return;
+      }
+
+      if (appState.currentSlide === 5) {
+        setGuideTarget(DOM.restartButton || DOM.nextButton);
+      }
+    }
+
+    let guideFrame = 0;
+
+    function getGuideTarget() {
+      const visible = element => element && !element.hidden && element.getClientRects().length > 0;
+      if (appState.currentSlide === 0) return DOM.nextButton;
+      if (appState.currentSlide === 1) return DOM.analyzeButton;
+      if (appState.currentSlide === 2) {
+        if (!appState.guide.lensUsed) return document.querySelector('.lens-button[data-lens="phase"]');
+        if (!appState.guide.stageUsed) return document.querySelector('.visual-card');
+        return DOM.nextButton;
+      }
+      if (appState.currentSlide === 3) {
+        if (!appState.guide.evidenceUsed) return document.querySelector('.evidence-tab[data-evidence="hypothesized"]');
+        return DOM.nextButton;
+      }
+      if (appState.currentSlide === 4) return DOM.nextButton;
+      if (appState.currentSlide === 5) return visible(DOM.restartButton) ? DOM.restartButton : DOM.nextButton;
+      return null;
+    }
+
+    function updateGuidedFocus() {
+      cancelAnimationFrame(guideFrame);
+      guideFrame = requestAnimationFrame(() => {
+        const ring = DOM.guidedFocusRing;
+        const target = getGuideTarget();
+        if (!ring || !target || !target.isConnected) {
+          ring?.classList.remove('is-visible', 'is-stage');
+          return;
+        }
+        const rect = target.getBoundingClientRect();
+        const onScreen = rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.right > 0 && rect.top < innerHeight && rect.left < innerWidth;
+        if (!onScreen) {
+          ring.classList.remove('is-visible', 'is-stage');
+          return;
+        }
+        const isStage = target.classList.contains('visual-card');
+        const pad = isStage ? 7 : 5;
+        ring.style.left = `${Math.max(2, rect.left - pad)}px`;
+        ring.style.top = `${Math.max(2, rect.top - pad)}px`;
+        ring.style.width = `${Math.min(innerWidth - Math.max(2, rect.left - pad) - 2, rect.width + pad * 2)}px`;
+        ring.style.height = `${Math.min(innerHeight - Math.max(2, rect.top - pad) - 2, rect.height + pad * 2)}px`;
+        ring.style.borderRadius = `${Math.min(22, Math.max(12, parseFloat(getComputedStyle(target).borderRadius) || 12) + pad)}px`;
+        ring.classList.toggle('is-stage', isStage);
+        ring.classList.add('is-visible');
+      });
+    }
+
+    function scheduleGuidedFocus() {
+      requestAnimationFrame(updateGuidedFocus);
+    }
+
+    function updateDeckNavigation() {
+      const total = DOM.slides.length;
+      const slide = DOM.slides[appState.currentSlide];
+      const title = slide?.dataset.title ?? "";
+      if (DOM.advancedFeature) {
+        DOM.advancedFeature.textContent = ADVANCED_SLIDE_FEATURES[appState.currentSlide] || ADVANCED_SLIDE_FEATURES[0];
+      }
+
+      DOM.slides.forEach((candidate, index) => {
+        const active = index === appState.currentSlide;
+        candidate.classList.toggle("is-active", active);
+        candidate.setAttribute("aria-hidden", String(!active));
+        candidate.inert = !active;
+        if (active) {
+          candidate.scrollTop = 0;
+          candidate.querySelectorAll(".slide-intro, .slide-content").forEach(column => {
+            column.scrollTop = 0;
+          });
+        }
+      });
+
+      DOM.progressDots.forEach((dot, index) => {
+        const active = index === appState.currentSlide;
+        dot.classList.toggle("is-active", active);
+        dot.setAttribute("aria-current", active ? "step" : "false");
+      });
+
+      DOM.slideStatus.textContent = `${appState.currentSlide + 1} of ${total} · ${title}`;
+      DOM.progressFill.style.width = `${((appState.currentSlide + 1) / total) * 100}%`;
+      DOM.backButton.disabled = appState.currentSlide === 0;
+
+      const nextLabels = ["Start", "", "Evidence", "Local transplant", "Takeaway", "Restart"];
+      DOM.nextButton.textContent = nextLabels[appState.currentSlide] || "Next";
+      DOM.nextButton.hidden = appState.currentSlide === 1;
+
+      requestAnimationFrame(() => {
+        appState.visual?.resize?.();
+        refreshGuideVisuals({ stageFirst: appState.currentSlide === 2 });
+      });
+    }
+
+    function goToSlide(index) {
+      const total = DOM.slides.length;
+      appState.currentSlide = clamp(index, 0, total - 1);
+      updateDeckNavigation();
+    }
+
+    function setAdvancedMode(enabled, { announce = false } = {}) {
+      const nextMode = Boolean(enabled);
+      appState.advancedMode = nextMode;
+      document.body.classList.toggle("advanced-mode", appState.advancedMode);
+      document.body.dataset.mode = appState.advancedMode ? "advanced" : "basic";
+      DOM.basicModeButton.setAttribute("aria-pressed", String(!appState.advancedMode));
+      DOM.advancedModeButton.setAttribute("aria-pressed", String(appState.advancedMode));
+      DOM.basicModeButton.classList.toggle("is-active", !appState.advancedMode);
+      DOM.advancedModeButton.classList.toggle("is-active", appState.advancedMode);
+      DOM.brandKicker.textContent = appState.advancedMode
+        ? "Advanced peer-review inspector"
+        : "Guided peer-review demo";
+
+      if (appState.selectedNode) showNodeDetail(appState.selectedNode);
+      if (appState.visualReady && appState.visual && appState.analysis) {
+        appState.visual.update(getVisualAnalysis(), appState.activeLens);
+      }
+
+      requestAnimationFrame(() => appState.visual?.resize?.());
+
+      if (announce) {
+        DOM.inspectorBanner?.setAttribute(
+          "aria-label",
+          appState.advancedMode
+            ? "Advanced inspector enabled. Technical notes and controls are visible."
+            : "Basic story mode enabled."
+        );
+      }
+    }
+
+    const PEER_REVIEW_SUMMARY = "The workbook becomes easier to understand and evaluate when its five lenses are demonstrated on one ordinary situation. The interface should show which observations are grounded, which explanations are hypotheses, and which statements are metaphors. A portable agent seed should clearly identify instructions, memory, tools, schedules, permissions, model requirements, and the tests used to compare cloud and local behavior.";
+
+    async function copyPeerReviewSummary() {
+      try {
+        await navigator.clipboard.writeText(PEER_REVIEW_SUMMARY);
+        showToast("Peer-review summary copied.");
+      } catch (error) {
+        const helper = document.createElement("textarea");
+        helper.value = PEER_REVIEW_SUMMARY;
+        helper.setAttribute("readonly", "");
+        helper.style.position = "fixed";
+        helper.style.opacity = "0";
+        document.body.append(helper);
+        helper.select();
+        const copied = document.execCommand("copy");
+        helper.remove();
+        showToast(copied ? "Peer-review summary copied." : "Copy was blocked by this browser.");
+      }
+    }
+
+    let viewportUpdateFrame = 0;
+    function updateViewportProfile() {
+      const profile = window.applyAnthroViewportProfile?.() ?? window.__anthroViewportProfile;
+      if (!profile) return;
+      appState.viewportProfile = profile;
+
+      if (DOM.viewportReadout) {
+        DOM.viewportReadout.textContent = `${titleCase(profile.device)} ${profile.orientation} · ${profile.width}×${profile.height}`;
+        DOM.viewportReadout.title = `Detected ${profile.device} ${profile.orientation} layout at ${profile.width} by ${profile.height} CSS pixels`;
+      }
+
+      requestAnimationFrame(() => {
+        appState.visual?.resize?.();
+        refreshGuideVisuals();
+      });
+    }
+
+    function scheduleViewportProfileUpdate() {
+      cancelAnimationFrame(viewportUpdateFrame);
+      viewportUpdateFrame = requestAnimationFrame(updateViewportProfile);
+    }
+
+    function wireUI() {
+      DOM.analyzeButton.addEventListener("click", () => {
+        if (runAnalysis()) goToSlide(2);
+      });
+      DOM.resetViewButton.addEventListener("click", () => appState.visual?.resetView());
+      document.querySelector(".visual-card")?.addEventListener("pointerdown", () => {
+        if (appState.currentSlide !== 2 || !appState.guide.lensUsed) return;
+        appState.guide.stageUsed = true;
+        scheduleGuidedFocus();
+      }, { capture: true });
+
+      DOM.input.addEventListener("keydown", event => {
+        if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+          event.preventDefault();
+          if (runAnalysis()) goToSlide(2);
+        }
+      });
+
+      document.querySelectorAll(".example-button").forEach(button => {
+        button.addEventListener("click", () => {
+          DOM.input.value = EXAMPLES[button.dataset.example] ?? EXAMPLES.local;
+          updateInputInspector();
+          document.querySelectorAll(".example-button").forEach(candidate => {
+            candidate.setAttribute("aria-pressed", String(candidate === button));
+          });
+        });
+      });
+
+      document.querySelectorAll(".lens-button").forEach(button => {
+        button.addEventListener("click", () => {
+          appState.activeLens = button.dataset.lens;
+          appState.guideLensTouched = true;
+          renderActiveLens();
+          saveLocalState();
+          refreshGuideVisuals();
+        });
+      });
+
+      document.querySelectorAll(".evidence-tab").forEach(button => {
+        button.addEventListener("click", () => {
+          appState.activeEvidence = button.dataset.evidence;
+          appState.guide.evidenceUsed = true;
+          renderEvidence();
+          scheduleGuidedFocus();
+          saveLocalState();
+          refreshGuideVisuals();
+        });
+      });
+
+      DOM.exportButton.addEventListener("click", exportMap);
+      DOM.importButton.addEventListener("click", () => DOM.importFile.click());
+      DOM.importFile.addEventListener("change", () => importMap(DOM.importFile.files?.[0]));
+      DOM.clearButton.addEventListener("click", clearLocalState);
+      DOM.basicModeButton.addEventListener("click", () => setAdvancedMode(false, { announce: true }));
+      DOM.advancedModeButton.addEventListener("click", () => setAdvancedMode(true, { announce: true }));
+      DOM.input.addEventListener("input", updateInputInspector);
+      DOM.copyReviewButton?.addEventListener("click", copyPeerReviewSummary);
+
+      DOM.backButton.addEventListener("click", () => goToSlide(appState.currentSlide - 1));
+      DOM.nextButton.addEventListener("click", () => {
+        if (appState.currentSlide === DOM.slides.length - 1) {
+          goToSlide(0);
+          return;
+        }
+        goToSlide(appState.currentSlide + 1);
+      });
+      DOM.progressDots.forEach((dot, index) => {
+        dot.addEventListener("click", () => goToSlide(index));
+      });
+      DOM.restartButton.addEventListener("click", () => goToSlide(1));
+
+      document.addEventListener("keydown", event => {
+        const target = event.target;
+        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLButtonElement) return;
+        if (event.key === "ArrowRight" || event.key === "PageDown") goToSlide(appState.currentSlide + 1);
+        if (event.key === "ArrowLeft" || event.key === "PageUp") goToSlide(appState.currentSlide - 1);
+        if (event.key.toLowerCase() === "a") setAdvancedMode(!appState.advancedMode);
+      });
+
+      let pointerStart = null;
+      DOM.deck.addEventListener("pointerdown", event => {
+        pointerStart = { x: event.clientX, y: event.clientY, target: event.target };
+      });
+      DOM.deck.addEventListener("pointerup", event => {
+        if (!pointerStart) return;
+        const dx = event.clientX - pointerStart.x;
+        const dy = event.clientY - pointerStart.y;
+        const interactive = pointerStart.target.closest("button, textarea, input, canvas, #stage");
+        pointerStart = null;
+        if (interactive || Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+        goToSlide(appState.currentSlide + (dx < 0 ? 1 : -1));
+      });
+
+      window.addEventListener("resize", scheduleViewportProfileUpdate, { passive: true });
+      window.addEventListener("orientationchange", scheduleViewportProfileUpdate, { passive: true });
+      window.visualViewport?.addEventListener("resize", scheduleViewportProfileUpdate, { passive: true });
+      window.screen.orientation?.addEventListener?.("change", scheduleViewportProfileUpdate);
+    }
+
+    class ThreeFieldVisual {
+      constructor(THREE, OrbitControls, CSS2DRenderer, CSS2DObject) {
+        this.THREE = THREE;
+        this.OrbitControls = OrbitControls;
+        this.CSS2DRenderer = CSS2DRenderer;
+        this.CSS2DObject = CSS2DObject;
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.labelRenderer = null;
+        this.controls = null;
+        this.core = null;
+        this.coreShell = null;
+        this.coreMaterial = null;
+        this.anchorGroup = null;
+        this.wordGroup = null;
+        this.linkGroup = null;
+        this.anchors = new Map();
+        this.wordNodes = [];
+        this.links = [];
+        this.clickTargets = [];
+        this.raycaster = new THREE.Raycaster();
+        this.pointer = new THREE.Vector2();
+        this.pointerDown = null;
+        this.timer = new THREE.Timer();
+        this.timer.connect(document);
+        this.animationId = 0;
+        this.visible = true;
+        this.activeLens = "phase";
+        this.analysis = null;
+        this.resizeObserver = null;
+        this.disposed = false;
+      }
+
+      init() {
+        const THREE = this.THREE;
+        this.scene = new THREE.Scene();
+        this.scene.fog = new THREE.FogExp2(0x060913, 0.055);
+
+        this.camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+        this.camera.position.set(0, 0.15, 11.2);
+
+        this.renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          alpha: true,
+          powerPreference: "high-performance"
+        });
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+        this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+        this.renderer.setClearColor(0x000000, 0);
+        DOM.stage.append(this.renderer.domElement);
+
+        this.labelRenderer = new this.CSS2DRenderer();
+        this.labelRenderer.domElement.style.position = "absolute";
+        this.labelRenderer.domElement.style.inset = "0";
+        this.labelRenderer.domElement.style.pointerEvents = "none";
+        DOM.stage.append(this.labelRenderer.domElement);
+
+        this.controls = new this.OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.enableDamping = true;
+        this.controls.dampingFactor = 0.075;
+        this.controls.enablePan = false;
+        this.controls.minDistance = 7.2;
+        this.controls.maxDistance = 16;
+        this.controls.rotateSpeed = 0.58;
+        this.controls.zoomSpeed = 0.8;
+        this.controls.target.set(0, -0.15, 0);
+
+        const ambient = new THREE.AmbientLight(0xa9c4ff, 1.18);
+        const keyLight = new THREE.PointLight(0x8dc9ff, 24, 30, 2);
+        keyLight.position.set(4, 5, 8);
+        const rimLight = new THREE.PointLight(0xff89b2, 18, 24, 2);
+        rimLight.position.set(-5, -2, 4);
+        this.scene.add(ambient, keyLight, rimLight);
+
+        this.anchorGroup = new THREE.Group();
+        this.wordGroup = new THREE.Group();
+        this.linkGroup = new THREE.Group();
+        this.scene.add(this.anchorGroup, this.wordGroup, this.linkGroup);
+
+        this.createBackgroundParticles();
+        this.createCore();
+        this.createAnchors();
+        this.wirePointer();
+
+        this.resizeObserver = new ResizeObserver(() => this.resize());
+        this.resizeObserver.observe(DOM.stage);
+        this.resize();
+
+        document.addEventListener("visibilitychange", () => {
+          this.visible = !document.hidden;
+          if (this.visible && !this.animationId) this.animate();
+        });
+
+        this.animate();
+      }
+
+      createBackgroundParticles() {
+        const THREE = this.THREE;
+        const count = 84;
+        const positions = new Float32Array(count * 3);
+        const sizes = new Float32Array(count);
+        for (let index = 0; index < count; index += 1) {
+          const radius = 5 + seededUnit("particle", index) * 9;
+          const angle = seededUnit("particle-angle", index) * Math.PI * 2;
+          const elevation = (seededUnit("particle-elevation", index) - 0.5) * 9;
+          positions[index * 3] = Math.cos(angle) * radius;
+          positions[index * 3 + 1] = elevation;
+          positions[index * 3 + 2] = Math.sin(angle) * radius - 4;
+          sizes[index] = 0.5 + seededUnit("particle-size", index) * 1.5;
+        }
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute("aSize", new THREE.BufferAttribute(sizes, 1));
+        const material = new THREE.PointsMaterial({
+          color: 0x7f9bd3,
+          size: 0.026,
+          sizeAttenuation: true,
+          transparent: true,
+          opacity: 0.42,
+          depthWrite: false
+        });
+        this.particles = new THREE.Points(geometry, material);
+        this.scene.add(this.particles);
+      }
+
+      createCore() {
+        const THREE = this.THREE;
+        const geometry = new THREE.IcosahedronGeometry(0.98, 5);
+        this.coreMaterial = new THREE.ShaderMaterial({
+          uniforms: {
+            uTime: { value: 0 },
+            uEnergy: { value: 0.5 },
+            uTension: { value: 0.35 },
+            uColorA: { value: new THREE.Color(LENSES.field.color) },
+            uColorB: { value: new THREE.Color(LENSES.arc.color) }
+          },
+          vertexShader: `
+            uniform float uTime;
+            uniform float uEnergy;
+            varying vec3 vNormalW;
+            varying float vWave;
+
+            void main() {
+              float waveA = sin(position.x * 4.3 + uTime * 1.15);
+              float waveB = sin(position.y * 5.1 - uTime * 0.86);
+              float waveC = sin(position.z * 4.7 + uTime * 0.61);
+              float wave = (waveA + waveB + waveC) / 3.0;
+              float displacement = wave * (0.045 + uEnergy * 0.085);
+              vec3 displaced = position + normal * displacement;
+              vNormalW = normalize(normalMatrix * normal);
+              vWave = wave;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(displaced, 1.0);
+            }
+          `,
+          fragmentShader: `
+            uniform float uTime;
+            uniform float uEnergy;
+            uniform float uTension;
+            uniform vec3 uColorA;
+            uniform vec3 uColorB;
+            varying vec3 vNormalW;
+            varying float vWave;
+
+            void main() {
+              float facing = pow(1.0 - abs(vNormalW.z), 1.7);
+              float scan = 0.5 + 0.5 * sin((vNormalW.y + vWave * 0.18) * 12.0 - uTime * 1.2);
+              vec3 color = mix(uColorA, uColorB, clamp(0.35 + uTension * 0.35 + vWave * 0.18, 0.0, 1.0));
+              color += facing * vec3(0.28, 0.34, 0.52);
+              color += scan * 0.045 * uEnergy;
+              float alpha = 0.9 + facing * 0.1;
+              gl_FragColor = vec4(color, alpha);
+            }
+          `,
+          transparent: true
+        });
+        this.core = new THREE.Mesh(geometry, this.coreMaterial);
+        this.core.userData = {
+          type: "core",
+          label: "SYSTEM",
+          dominant: "lattice",
+          weights: { lattice: 1 },
+          reasons: { lattice: ["the bounded system being mapped"] }
+        };
+        this.scene.add(this.core);
+        this.clickTargets.push(this.core);
+
+        const shellGeometry = new THREE.IcosahedronGeometry(1.12, 2);
+        const shellMaterial = new THREE.MeshBasicMaterial({
+          color: 0x92b5ff,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.16,
+          depthWrite: false
+        });
+        this.coreShell = new THREE.Mesh(shellGeometry, shellMaterial);
+        this.scene.add(this.coreShell);
+      }
+
+      createAnchors() {
+        const THREE = this.THREE;
+        const radius = 3.25;
+        const lensKeys = Object.keys(LENSES);
+        lensKeys.forEach((key, index) => {
+          const lens = LENSES[key];
+          const angle = Math.PI / 2 + (index * Math.PI * 2) / lensKeys.length;
+          const position = new THREE.Vector3(
+            Math.cos(angle) * radius,
+            Math.sin(angle) * radius * 0.83 - 0.1,
+            Math.sin(angle * 1.7) * 0.35
+          );
+
+          const geometry = new THREE.SphereGeometry(0.3, 22, 18);
+          const material = new THREE.MeshStandardMaterial({
+            color: lens.colorNumber,
+            emissive: lens.colorNumber,
+            emissiveIntensity: 0.72,
+            roughness: 0.38,
+            metalness: 0.16,
+            transparent: true,
+            opacity: 0.95
+          });
+          const mesh = new THREE.Mesh(geometry, material);
+          mesh.position.copy(position);
+          mesh.userData = {
+            type: "anchor",
+            key,
+            label: lens.label,
+            dominant: key,
+            weights: { [key]: 1 },
+            reasons: { [key]: [lens.question] },
+            basePosition: position.clone(),
+            baseScale: 1
+          };
+
+          const labelElement = document.createElement("div");
+          labelElement.className = "label-3d anchor-label";
+          labelElement.textContent = lens.label;
+          labelElement.style.setProperty("--label-color", lens.color);
+          const labelObject = new this.CSS2DObject(labelElement);
+          labelObject.position.set(0, 0.49, 0);
+          mesh.add(labelObject);
+          mesh.userData.labelElement = labelElement;
+
+          this.anchorGroup.add(mesh);
+          this.anchors.set(key, mesh);
+          this.clickTargets.push(mesh);
+
+          const lineGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), position.clone()]);
+          const lineMaterial = new THREE.LineBasicMaterial({
+            color: lens.colorNumber,
+            transparent: true,
+            opacity: 0.19,
+            depthWrite: false
+          });
+          const line = new THREE.Line(lineGeometry, lineMaterial);
+          line.userData = { type: "anchor-link", lens: key };
+          this.linkGroup.add(line);
+        });
+      }
+
+      disposeWords() {
+        for (const node of this.wordNodes) {
+          node.mesh.geometry.dispose();
+          node.mesh.material.dispose();
+          node.labelElement.remove();
+          this.wordGroup.remove(node.mesh);
+          const targetIndex = this.clickTargets.indexOf(node.mesh);
+          if (targetIndex >= 0) this.clickTargets.splice(targetIndex, 1);
+        }
+        for (const link of this.links) {
+          link.line.geometry.dispose();
+          link.line.material.dispose();
+          this.linkGroup.remove(link.line);
+        }
+        this.wordNodes = [];
+        this.links = [];
+      }
+
+      update(analysis, activeLens) {
+        this.analysis = analysis;
+        this.activeLens = activeLens;
+        this.disposeWords();
+
+        const THREE = this.THREE;
+        const centerA = new THREE.Color(LENSES[analysis.topLenses[0] ?? "field"].color);
+        const centerB = new THREE.Color(LENSES[analysis.topLenses[1] ?? "arc"].color);
+        this.coreMaterial.uniforms.uColorA.value.copy(centerA);
+        this.coreMaterial.uniforms.uColorB.value.copy(centerB);
+        this.coreMaterial.uniforms.uEnergy.value = analysis.energy;
+        this.coreMaterial.uniforms.uTension.value = analysis.tension;
+
+        for (const [key, mesh] of this.anchors) {
+          const score = analysis.lensScores[key] ?? 0.2;
+          mesh.userData.baseScale = 0.82 + score * 0.48;
+          mesh.material.emissiveIntensity = 0.38 + score * 0.9;
+        }
+
+        analysis.terms.forEach((term, index) => {
+          const lens = LENSES[term.dominant];
+          const anchor = this.anchors.get(term.dominant);
+          if (!anchor) return;
+
+          const geometry = new THREE.SphereGeometry(0.115 + term.influence * 0.105, 18, 14);
+          const material = new THREE.MeshStandardMaterial({
+            color: lens.colorNumber,
+            emissive: lens.colorNumber,
+            emissiveIntensity: 0.26 + term.influence * 0.55,
+            roughness: 0.42,
+            metalness: 0.08,
+            transparent: true,
+            opacity: 0.86
+          });
+          const mesh = new THREE.Mesh(geometry, material);
+
+          const base = anchor.position.clone().multiplyScalar(0.69);
+          const randomAngle = seededUnit(term.normal, 1) * Math.PI * 2;
+          const radial = 0.58 + seededUnit(term.normal, 2) * 1.05;
+          const zOffset = (seededUnit(term.normal, 3) - 0.5) * 1.65;
+          const target = base.clone().add(new THREE.Vector3(
+            Math.cos(randomAngle) * radial,
+            Math.sin(randomAngle) * radial * 0.78,
+            zOffset
+          ));
+          mesh.position.copy(target).multiplyScalar(0.82);
+
+          const labelElement = document.createElement("div");
+          labelElement.className = "label-3d";
+          labelElement.textContent = term.normal;
+          const labelObject = new this.CSS2DObject(labelElement);
+          labelObject.position.set(0, 0.29 + term.influence * 0.08, 0);
+          mesh.add(labelObject);
+
+          const data = {
+            type: "word",
+            label: term.normal,
+            dominant: term.dominant,
+            weights: term.weights,
+            reasons: term.reasons,
+            frequency: term.frequency
+          };
+          mesh.userData = data;
+
+          const node = {
+            mesh,
+            data,
+            target,
+            velocity: new THREE.Vector3(),
+            seed: seededUnit(term.normal, 7) * Math.PI * 2,
+            labelElement,
+            influence: term.influence,
+            index
+          };
+          this.wordNodes.push(node);
+          this.wordGroup.add(mesh);
+          this.clickTargets.push(mesh);
+
+          const lineGeometry = new THREE.BufferGeometry();
+          lineGeometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(6), 3));
+          const lineMaterial = new THREE.LineBasicMaterial({
+            color: lens.colorNumber,
+            transparent: true,
+            opacity: 0.26,
+            depthWrite: false
+          });
+          const line = new THREE.Line(lineGeometry, lineMaterial);
+          const link = { line, node, anchor, lens: term.dominant };
+          this.links.push(link);
+          this.linkGroup.add(line);
+        });
+
+        this.setActiveLens(activeLens);
+      }
+
+      setActiveLens(key) {
+        this.activeLens = key;
+        for (const [lensKey, anchor] of this.anchors) {
+          const active = lensKey === key;
+          anchor.material.opacity = active ? 1 : 0.55;
+          anchor.userData.labelElement.style.opacity = active ? "1" : "0.56";
+        }
+
+        for (const node of this.wordNodes) {
+          const weight = node.data.weights?.[key] ?? 0;
+          const active = node.data.dominant === key || weight >= 0.22;
+          node.mesh.material.opacity = active ? 0.96 : 0.16;
+          node.mesh.material.emissiveIntensity = active ? 0.52 + node.influence * 0.55 : 0.05;
+          node.labelElement.style.opacity = active ? "1" : "0";
+        }
+
+        for (const link of this.links) {
+          const active = link.lens === key || (link.node.data.weights?.[key] ?? 0) >= 0.22;
+          link.line.material.opacity = active ? 0.42 : 0.04;
+        }
+      }
+
+      resetView() {
+        this.camera.position.set(0, 0.15, 11.2);
+        this.controls.target.set(0, -0.15, 0);
+        this.controls.update();
+        showNodeDetail(null);
+      }
+
+      wirePointer() {
+        const element = this.renderer.domElement;
+        element.addEventListener("pointerdown", event => {
+          this.pointerDown = { x: event.clientX, y: event.clientY };
+        });
+
+        element.addEventListener("pointerup", event => {
+          if (!this.pointerDown) return;
+          const movement = Math.hypot(event.clientX - this.pointerDown.x, event.clientY - this.pointerDown.y);
+          this.pointerDown = null;
+          if (movement > 9) return;
+
+          const rect = element.getBoundingClientRect();
+          this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+          this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+          this.raycaster.setFromCamera(this.pointer, this.camera);
+          const hit = this.raycaster.intersectObjects(this.clickTargets, false)[0];
+
+          if (!hit) {
+            showNodeDetail(null);
+            return;
+          }
+
+          const data = hit.object.userData;
+          if (data.type === "anchor") {
+            appState.activeLens = data.key;
+            renderActiveLens();
+            saveLocalState();
+          }
+          showNodeDetail(data);
+        });
+      }
+
+      updatePhysics(elapsed, delta) {
+        const THREE = this.THREE;
+        const safeDelta = Math.min(delta, 0.033);
+
+        for (let a = 0; a < this.wordNodes.length; a += 1) {
+          const nodeA = this.wordNodes[a];
+          const spring = nodeA.target.clone().sub(nodeA.mesh.position).multiplyScalar(1.6 * safeDelta);
+          nodeA.velocity.add(spring);
+
+          if (!prefersReducedMotion) {
+            nodeA.velocity.x += Math.sin(elapsed * 0.72 + nodeA.seed) * 0.00065;
+            nodeA.velocity.y += Math.cos(elapsed * 0.64 + nodeA.seed * 1.3) * 0.00055;
+            nodeA.velocity.z += Math.sin(elapsed * 0.51 + nodeA.seed * 0.8) * 0.00045;
+          }
+
+          for (let b = a + 1; b < this.wordNodes.length; b += 1) {
+            const nodeB = this.wordNodes[b];
+            const offset = nodeA.mesh.position.clone().sub(nodeB.mesh.position);
+            const distanceSq = Math.max(0.12, offset.lengthSq());
+            if (distanceSq > 1.5) continue;
+            const force = offset.normalize().multiplyScalar((0.0035 / distanceSq) * safeDelta * 60);
+            nodeA.velocity.add(force);
+            nodeB.velocity.sub(force);
+          }
+        }
+
+        for (const node of this.wordNodes) {
+          node.velocity.multiplyScalar(Math.pow(0.91, safeDelta * 60));
+          node.mesh.position.add(node.velocity);
+          const active = node.data.dominant === this.activeLens || (node.data.weights?.[this.activeLens] ?? 0) >= 0.22;
+          const targetScale = active ? 1.08 : 0.72;
+          node.mesh.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.09);
+        }
+      }
+
+      updateLinks() {
+        for (const link of this.links) {
+          const positions = link.line.geometry.attributes.position.array;
+          positions[0] = link.node.mesh.position.x;
+          positions[1] = link.node.mesh.position.y;
+          positions[2] = link.node.mesh.position.z;
+          positions[3] = link.anchor.position.x;
+          positions[4] = link.anchor.position.y;
+          positions[5] = link.anchor.position.z;
+          link.line.geometry.attributes.position.needsUpdate = true;
+        }
+      }
+
+      animate(timestamp) {
+        if (this.disposed || !this.visible) {
+          this.animationId = 0;
+          return;
+        }
+
+        this.animationId = requestAnimationFrame(nextTimestamp => this.animate(nextTimestamp));
+        this.timer.update(timestamp);
+        const delta = this.timer.getDelta();
+        const elapsed = this.timer.getElapsed();
+
+        if (!prefersReducedMotion) {
+          this.coreMaterial.uniforms.uTime.value = elapsed;
+          this.core.rotation.y = elapsed * 0.12;
+          this.core.rotation.x = Math.sin(elapsed * 0.3) * 0.08;
+          this.coreShell.rotation.y = -elapsed * 0.08;
+          this.coreShell.rotation.z = elapsed * 0.045;
+          this.particles.rotation.y = elapsed * 0.008;
+        }
+
+        const corePulse = prefersReducedMotion ? 1 : 1 + Math.sin(elapsed * (1.2 + (this.analysis?.energy ?? 0.5))) * 0.025;
+        this.core.scale.setScalar(corePulse);
+
+        for (const [key, anchor] of this.anchors) {
+          const score = this.analysis?.lensScores?.[key] ?? 0.35;
+          const pulse = prefersReducedMotion ? 1 : 1 + Math.sin(elapsed * (1.1 + score * 0.8) + anchor.position.x) * 0.045;
+          const scale = anchor.userData.baseScale * pulse * (key === this.activeLens ? 1.12 : 0.92);
+          anchor.scale.lerp(new this.THREE.Vector3(scale, scale, scale), 0.12);
+        }
+
+        this.updatePhysics(elapsed, delta);
+        this.updateLinks();
+        this.controls.update();
+        this.renderer.render(this.scene, this.camera);
+        this.labelRenderer.render(this.scene, this.camera);
+      }
+
+      resize() {
+        const rect = DOM.stage.getBoundingClientRect();
+        const width = Math.max(1, rect.width);
+        const height = Math.max(1, rect.height);
+        this.camera.aspect = width / height;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(width, height, false);
+        this.labelRenderer.setSize(width, height);
+      }
+    }
+
+    class CanvasFieldVisual {
+      constructor(canvas) {
+        this.canvas = canvas;
+        this.context = canvas.getContext("2d");
+        this.analysis = null;
+        this.activeLens = "phase";
+        this.nodes = [];
+        this.anchors = [];
+        this.animationId = 0;
+        this.resizeObserver = new ResizeObserver(() => this.resize());
+        this.pointer = { x: 0, y: 0 };
+      }
+
+      init() {
+        this.canvas.hidden = false;
+        this.resizeObserver.observe(this.canvas.parentElement);
+        this.resize();
+        this.canvas.addEventListener("pointerup", event => this.onPointer(event));
+        this.animate();
+      }
+
+      update(analysis, activeLens) {
+        this.analysis = analysis;
+        this.activeLens = activeLens;
+        this.layout();
+      }
+
+      setActiveLens(key) {
+        this.activeLens = key;
+      }
+
+      resetView() {
+        showNodeDetail(null);
+      }
+
+      resize() {
+        const rect = this.canvas.parentElement.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
+        this.canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+        this.canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+        this.canvas.style.width = `${rect.width}px`;
+        this.canvas.style.height = `${rect.height}px`;
+        this.context.setTransform(dpr, 0, 0, dpr, 0, 0);
+        this.width = rect.width;
+        this.height = rect.height;
+        this.layout();
+      }
+
+      layout() {
+        if (!this.analysis || !this.width || !this.height) return;
+        const center = { x: this.width / 2, y: this.height * 0.47 };
+        const radiusX = Math.min(this.width * 0.34, 150);
+        const radiusY = Math.min(this.height * 0.28, 115);
+        const keys = Object.keys(LENSES);
+        this.anchors = keys.map((key, index) => {
+          const angle = Math.PI / 2 + (index * Math.PI * 2) / keys.length;
+          return {
+            type: "anchor",
+            key,
+            label: LENSES[key].label,
+            dominant: key,
+            weights: { [key]: 1 },
+            reasons: { [key]: [LENSES[key].question] },
+            x: center.x + Math.cos(angle) * radiusX,
+            y: center.y - Math.sin(angle) * radiusY,
+            radius: 10 + (this.analysis.lensScores[key] ?? 0.3) * 7
+          };
+        });
+
+        this.nodes = this.analysis.terms.map((term, index) => {
+          const anchor = this.anchors.find(candidate => candidate.key === term.dominant);
+          const angle = seededUnit(term.normal, 1) * Math.PI * 2;
+          const radial = 22 + seededUnit(term.normal, 2) * 58;
+          return {
+            type: "word",
+            label: term.normal,
+            dominant: term.dominant,
+            weights: term.weights,
+            reasons: term.reasons,
+            x: anchor.x + Math.cos(angle) * radial,
+            y: anchor.y + Math.sin(angle) * radial * 0.62,
+            radius: 4 + term.influence * 4,
+            index
+          };
+        });
+      }
+
+      onPointer(event) {
+        const rect = this.canvas.getBoundingClientRect();
+        const point = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+        const candidates = [...this.nodes, ...this.anchors];
+        const hit = candidates
+          .map(node => ({ node, distance: Math.hypot(node.x - point.x, node.y - point.y) }))
+          .filter(item => item.distance <= item.node.radius + 12)
+          .sort((a, b) => a.distance - b.distance)[0]?.node;
+
+        if (!hit) {
+          showNodeDetail(null);
+          return;
+        }
+        if (hit.type === "anchor") {
+          appState.activeLens = hit.key;
+          renderActiveLens();
+          saveLocalState();
+        }
+        showNodeDetail(hit);
+      }
+
+      animate() {
+        this.animationId = requestAnimationFrame(() => this.animate());
+        this.draw(performance.now() * 0.001);
+      }
+
+      draw(time) {
+        const context = this.context;
+        if (!context || !this.width || !this.height) return;
+        context.clearRect(0, 0, this.width, this.height);
+        if (!this.analysis) return;
+
+        const center = { x: this.width / 2, y: this.height * 0.47 };
+
+        const gradient = context.createRadialGradient(center.x, center.y, 8, center.x, center.y, 115);
+        gradient.addColorStop(0, "rgba(112, 184, 255, 0.22)");
+        gradient.addColorStop(0.55, "rgba(168, 140, 255, 0.08)");
+        gradient.addColorStop(1, "rgba(5, 8, 15, 0)");
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, this.width, this.height);
+
+        context.lineWidth = 1;
+        for (const anchor of this.anchors) {
+          const active = anchor.key === this.activeLens;
+          context.strokeStyle = `${LENSES[anchor.key].color}${active ? "88" : "22"}`;
+          context.beginPath();
+          context.moveTo(center.x, center.y);
+          context.lineTo(anchor.x, anchor.y);
+          context.stroke();
+        }
+
+        for (const node of this.nodes) {
+          const anchor = this.anchors.find(candidate => candidate.key === node.dominant);
+          const active = node.dominant === this.activeLens || (node.weights?.[this.activeLens] ?? 0) >= 0.22;
+          context.strokeStyle = `${LENSES[node.dominant].color}${active ? "77" : "12"}`;
+          context.beginPath();
+          context.moveTo(node.x, node.y);
+          context.lineTo(anchor.x, anchor.y);
+          context.stroke();
+        }
+
+        const pulse = prefersReducedMotion ? 0 : Math.sin(time * 1.5) * 3;
+        context.fillStyle = "rgba(130, 185, 255, 0.18)";
+        context.beginPath();
+        context.arc(center.x, center.y, 31 + pulse, 0, Math.PI * 2);
+        context.fill();
+        context.fillStyle = "#dbe8ff";
+        context.beginPath();
+        context.arc(center.x, center.y, 17, 0, Math.PI * 2);
+        context.fill();
+
+        for (const anchor of this.anchors) {
+          const active = anchor.key === this.activeLens;
+          context.globalAlpha = active ? 1 : 0.55;
+          context.fillStyle = LENSES[anchor.key].color;
+          context.beginPath();
+          context.arc(anchor.x, anchor.y, anchor.radius + (active ? 2 : 0), 0, Math.PI * 2);
+          context.fill();
+          context.fillStyle = "#eef3ff";
+          context.font = "700 9px system-ui";
+          context.textAlign = "center";
+          context.fillText(anchor.label, anchor.x, anchor.y - anchor.radius - 6);
+        }
+
+        for (const node of this.nodes) {
+          const active = node.dominant === this.activeLens || (node.weights?.[this.activeLens] ?? 0) >= 0.22;
+          context.globalAlpha = active ? 0.95 : 0.15;
+          context.fillStyle = LENSES[node.dominant].color;
+          context.beginPath();
+          context.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+          context.fill();
+          if (active) {
+            context.fillStyle = "#e8eeff";
+            context.font = "600 9px system-ui";
+            context.textAlign = "center";
+            context.fillText(node.label, node.x, node.y - node.radius - 5);
+          }
+        }
+        context.globalAlpha = 1;
+      }
+    }
+
+    async function initializeVisual() {
+      const loadThree = Promise.all([
+        import("three"),
+        import("three/addons/controls/OrbitControls.js"),
+        import("three/addons/renderers/CSS2DRenderer.js")
+      ]);
+      const timeout = new Promise((_, reject) => {
+        window.setTimeout(() => reject(new Error("Three.js CDN timed out.")), 1800);
+      });
+
+      try {
+        const [THREE, controlsModule, labelsModule] = await Promise.race([loadThree, timeout]);
+        const visual = new ThreeFieldVisual(
+          THREE,
+          controlsModule.OrbitControls,
+          labelsModule.CSS2DRenderer,
+          labelsModule.CSS2DObject
+        );
+        visual.init();
+        appState.visual = visual;
+        appState.visualReady = true;
+        DOM.runtimeBadge.textContent = `Three.js ${THREE_VERSION}`;
+        if (appState.analysis) visual.update(getVisualAnalysis(), appState.activeLens);
+      } catch (error) {
+        console.warn("Three.js could not load quickly; starting the 2D fallback.", error);
+        DOM.stage.hidden = true;
+        const visual = new CanvasFieldVisual(DOM.fallbackCanvas);
+        visual.init();
+        appState.visual = visual;
+        appState.visualReady = true;
+        DOM.runtimeBadge.textContent = "2D fallback";
+        if (appState.analysis) visual.update(getVisualAnalysis(), appState.activeLens);
+      }
+    }
+
+    wireUI();
+    updateViewportProfile();
+    setAdvancedMode(false);
+    updateInputInspector();
+    updateDeckNavigation();
+    const restored = loadLocalState();
+    if (!restored) {
+      appState.analysis = analyzeText(DOM.input.value);
+      appState.activeLens = appState.analysis.topLenses[0] ?? "phase";
+    }
+    renderAnalysis();
+    initializeVisual();
+  </script>
+</body>
+</html>
