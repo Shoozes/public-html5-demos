@@ -35,6 +35,10 @@
   --gold-bright: #ffe59a;
   --gold-soft: rgba(241, 202, 107, 0.18);
   --green: #75d6ae;
+  --leaf: #8fd6a3;
+  --moss: #4f8f68;
+  --soil: #8f6846;
+  --bark: #b28761;
   --red: #ed819c;
   --orange: #f2a963;
   --safe-top: env(safe-area-inset-top, 0px);
@@ -50,7 +54,8 @@ body {
   margin: 0;
   background:
     radial-gradient(circle at 50% -14%, rgba(86, 126, 220, 0.23), transparent 42%),
-    radial-gradient(circle at 100% 100%, rgba(122, 78, 190, 0.12), transparent 36%),
+    radial-gradient(circle at 100% 100%, rgba(72, 130, 89, 0.15), transparent 38%),
+    radial-gradient(circle at 0% 90%, rgba(125, 93, 55, 0.13), transparent 34%),
     var(--bg);
   color: var(--text);
   overscroll-behavior: none;
@@ -617,6 +622,77 @@ textarea {
 .raw-tags pre,
 .seed-json { max-height: 150px; margin: 7px 0 0; overflow: auto; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: rgba(3,5,10,.72); color: #bcd4ff; font: 0.64rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; }
 
+
+/* Nature-first mental model */
+.nature-hero {
+  background:
+    radial-gradient(circle at 50% 68%, rgba(75, 132, 82, .20), transparent 34%),
+    radial-gradient(circle at 50% 16%, rgba(241, 202, 107, .11), transparent 28%),
+    linear-gradient(180deg, rgba(8, 18, 20, .88), rgba(12, 16, 18, .96));
+}
+.nature-hero::before {
+  content:"";
+  position:absolute;
+  left:50%; bottom:10%;
+  width:48%; height:28%;
+  transform:translateX(-50%);
+  border-radius:50%;
+  background:radial-gradient(ellipse, rgba(89,65,43,.42), rgba(89,65,43,0) 70%);
+  pointer-events:none;
+}
+.nature-hero .hero-core {
+  border-color:rgba(143,214,163,.48);
+  background:radial-gradient(circle at 48% 40%, rgba(87,155,105,.48), rgba(12,25,20,.98) 72%);
+  box-shadow:0 0 58px rgba(90,171,111,.18);
+}
+.nature-hero .hero-core::before,
+.nature-hero .hero-core::after {
+  content:"";
+  position:absolute;
+  left:50%;
+  width:2px;
+  background:linear-gradient(var(--leaf), rgba(143,214,163,0));
+  transform-origin:bottom;
+  pointer-events:none;
+}
+.nature-hero .hero-core::before { height:78px; bottom:84%; transform:rotate(-24deg); }
+.nature-hero .hero-core::after { height:66px; bottom:82%; transform:rotate(31deg); }
+.orbit-node small { display:block; margin-top:2px; color:var(--quiet); font-size:.52rem; font-weight:650; }
+.orbit-node { border-color:rgba(143,214,163,.2); background:rgba(12,24,20,.9); }
+.nature-legend { display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
+.nature-legend span { padding:5px 8px; border:1px solid rgba(143,214,163,.16); border-radius:999px; color:var(--muted); background:rgba(143,214,163,.045); font-size:.6rem; }
+.layer-card .nature-name { display:block; color:var(--leaf); font-size:.61rem; font-weight:850; letter-spacing:.08em; text-transform:uppercase; }
+.layer-card.is-selected { border-color:rgba(143,214,163,.46); background:linear-gradient(135deg, rgba(72,132,91,.16), rgba(241,202,107,.06)); }
+.seed-stage { background:
+  radial-gradient(circle at 50% 42%, rgba(143,214,163,.12), transparent 35%),
+  linear-gradient(180deg, rgba(10,20,17,.82), rgba(9,12,16,.95));
+}
+.seed-view-switch { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:10px 0 0; }
+.seed-view-switch button { min-height:36px; border-radius:999px; color:var(--muted); font-size:.68rem; font-weight:800; }
+.seed-view-switch button.is-selected { color:#efffe9; border-color:rgba(143,214,163,.48); background:rgba(143,214,163,.1); }
+.seed-json.basic-json {
+  display:block !important;
+  max-height:330px;
+  margin:0;
+  padding:14px;
+  border-color:rgba(143,214,163,.24);
+  background:rgba(4,10,8,.86);
+  color:#c9f2d3;
+  font-size:clamp(.64rem,1.5vw,.76rem);
+  line-height:1.55;
+  white-space:pre;
+}
+.seed-json-view { position:absolute; inset:18px; display:none; overflow:auto; border-radius:18px; }
+.seed-visual.show-json .seed-core,
+.seed-visual.show-json .seed-part { opacity:.08; filter:blur(2px); pointer-events:none; }
+.seed-visual.show-json .seed-json-view { display:block; }
+.seed-visual.show-json .seed-json { height:100%; max-height:none; }
+.seed-explain-line { margin:9px 0 0; color:var(--muted); font-size:.69rem; line-height:1.4; }
+.seed-explain-line strong { color:var(--leaf); }
+@media (min-width: 960px) and (min-height: 700px) {
+  .nature-hero { min-height:570px; }
+}
+
 .rhythm-reading { margin-top: 18px; padding: 15px; border: 1px solid var(--line); border-radius: 17px; background: rgba(255,255,255,.035); }
 .rhythm-reading span { color: var(--gold); font-size: .68rem; font-weight: 850; letter-spacing: .1em; }
 .rhythm-reading strong { display: block; margin-top: 5px; font-size: 1rem; }
@@ -931,37 +1007,655 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
   .guide-frame > span { display:none; }
 }
 </style>
+
+<style id="basic-mode-polish">
+  /* Basic mode is a separate four-step explainer. */
+  body:not(.advanced-mode) .slide[data-mode="advanced"],
+  body.advanced-mode .slide[data-mode="basic"] {
+    display: none !important;
+  }
+
+  body:not(.advanced-mode) .slide[data-mode="basic"]:not(.is-active) {
+    visibility: hidden;
+  }
+
+  body:not(.advanced-mode) .topbar {
+    background: linear-gradient(180deg, rgba(9, 16, 25, 0.98), rgba(7, 12, 20, 0.96));
+  }
+
+  body:not(.advanced-mode) .brand-kicker { color: #a8d7a0; }
+
+  .basic-layout {
+    min-height: 100%;
+    display: grid;
+    align-content: center;
+    gap: clamp(18px, 4vw, 34px);
+  }
+
+  .basic-layout.basic-two-column {
+    grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1.1fr);
+    align-items: center;
+  }
+
+  .basic-copy {
+    min-width: 0;
+    max-width: 620px;
+  }
+
+  .basic-copy h2 {
+    max-width: 12ch;
+    margin: 0;
+    font-size: clamp(2.35rem, 7vw, 5.6rem);
+    line-height: 0.92;
+    letter-spacing: -0.058em;
+  }
+
+  .basic-copy .basic-lead {
+    max-width: 42ch;
+    margin: 18px 0 0;
+    color: var(--muted);
+    font-size: clamp(1rem, 2.1vw, 1.24rem);
+    line-height: 1.58;
+  }
+
+  .basic-definition {
+    display: grid;
+    gap: 9px;
+    margin-top: 22px;
+    padding: 16px 17px;
+    border: 1px solid rgba(168, 215, 160, 0.24);
+    border-radius: 18px;
+    background: rgba(93, 141, 89, 0.08);
+  }
+
+  .basic-definition strong {
+    color: #dff3dc;
+    font-size: 1rem;
+  }
+
+  .basic-definition span {
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  .basic-definition .no-line {
+    color: #aab3c7;
+  }
+
+  .basic-primary {
+    width: min(100%, 360px);
+    min-height: 50px;
+    margin-top: 18px;
+    border-color: rgba(218, 190, 108, 0.66);
+    border-radius: 15px;
+    background: linear-gradient(135deg, #e5c56d, #9bc5e8);
+    color: #071019;
+    font-size: 0.84rem;
+    font-weight: 900;
+  }
+
+  .basic-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #f0d27c, #afd3ef);
+  }
+
+  .framework-garden,
+  .basic-purpose-visual,
+  .basic-loop-card,
+  .basic-portable-card {
+    position: relative;
+    min-height: 390px;
+    overflow: hidden;
+    border: 1px solid rgba(177, 210, 172, 0.17);
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at 50% 14%, rgba(211, 195, 104, 0.13), transparent 30%),
+      linear-gradient(180deg, rgba(15, 29, 34, 0.96), rgba(8, 16, 19, 0.98));
+    box-shadow: 0 26px 80px rgba(0, 0, 0, 0.25);
+  }
+
+  .framework-garden::before {
+    content: "";
+    position: absolute;
+    left: -10%;
+    right: -10%;
+    bottom: -15%;
+    height: 45%;
+    border-radius: 50% 50% 0 0;
+    background: linear-gradient(180deg, rgba(61, 84, 54, 0.62), rgba(30, 42, 31, 0.95));
+  }
+
+  .garden-sun {
+    position: absolute;
+    top: 30px;
+    right: 34px;
+    width: 76px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 226, 131, 0.9), rgba(231, 190, 92, 0.15) 60%, transparent 72%);
+    box-shadow: 0 0 60px rgba(239, 201, 104, 0.22);
+  }
+
+  .garden-stem {
+    position: absolute;
+    left: 50%;
+    bottom: 100px;
+    width: 8px;
+    height: 150px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: linear-gradient(180deg, #8fbd7c, #4f7651);
+  }
+
+  .garden-seed {
+    position: absolute;
+    left: 50%;
+    bottom: 58px;
+    width: 126px;
+    min-height: 76px;
+    transform: translateX(-50%);
+    display: grid;
+    place-items: center;
+    padding: 12px;
+    border: 1px solid rgba(229, 197, 109, 0.55);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(110, 85, 42, 0.95), rgba(45, 35, 23, 0.98));
+    text-align: center;
+    box-shadow: 0 0 38px rgba(229, 197, 109, 0.14);
+  }
+
+  .garden-seed strong { display: block; font-size: 0.9rem; }
+  .garden-seed span { display: block; margin-top: 3px; color: #d0c5a8; font-size: 0.66rem; }
+
+  .garden-leaf {
+    position: absolute;
+    min-width: 112px;
+    min-height: 54px;
+    display: grid;
+    place-items: center;
+    padding: 9px 12px;
+    border: 1px solid rgba(164, 210, 153, 0.28);
+    border-radius: 50% 18px 50% 18px;
+    background: linear-gradient(135deg, rgba(76, 122, 74, 0.82), rgba(25, 54, 42, 0.94));
+    color: #e4f2e1;
+    font-size: 0.75rem;
+    font-weight: 850;
+    text-align: center;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.2);
+  }
+
+  .garden-leaf small {
+    display: block;
+    margin-top: 2px;
+    color: #b7ccb3;
+    font-size: 0.6rem;
+    font-weight: 650;
+  }
+
+  .garden-leaf.rules { left: 10%; top: 26%; transform: rotate(-7deg); }
+  .garden-leaf.memory { right: 10%; top: 23%; transform: rotate(7deg) scaleX(-1); }
+  .garden-leaf.memory > span { transform: scaleX(-1); }
+  .garden-leaf.tools { left: 13%; top: 50%; transform: rotate(6deg); }
+  .garden-leaf.schedule { right: 13%; top: 48%; transform: rotate(-6deg) scaleX(-1); }
+  .garden-leaf.schedule > span { transform: scaleX(-1); }
+
+  .garden-caption {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 14px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    background: rgba(5, 10, 13, 0.82);
+    color: #b8c5bb;
+    font-size: 0.68rem;
+    line-height: 1.3;
+    text-align: center;
+  }
+
+  .basic-purpose-visual {
+    min-height: 360px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 20px;
+    align-content: center;
+  }
+
+  .purpose-tile {
+    min-height: 132px;
+    display: grid;
+    align-content: center;
+    gap: 7px;
+    padding: 18px;
+    border: 1px solid rgba(176, 207, 170, 0.17);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  .purpose-tile strong {
+    color: #ecf5e9;
+    font-size: 1.05rem;
+  }
+
+  .purpose-tile span {
+    color: var(--muted);
+    font-size: 0.74rem;
+    line-height: 1.42;
+  }
+
+  .purpose-tile:nth-child(1) { background: rgba(95, 136, 83, 0.11); }
+  .purpose-tile:nth-child(2) { background: rgba(82, 128, 117, 0.11); }
+  .purpose-tile:nth-child(3) { background: rgba(110, 125, 165, 0.11); }
+  .purpose-tile:nth-child(4) { background: rgba(155, 124, 76, 0.1); }
+
+  .basic-loop-layout {
+    min-height: 100%;
+    display: grid;
+    grid-template-columns: minmax(280px, 0.78fr) minmax(360px, 1.22fr);
+    align-items: center;
+    gap: clamp(18px, 4vw, 38px);
+  }
+
+  .basic-loop-input {
+    margin-top: 22px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  .basic-loop-input label {
+    display: block;
+    margin-bottom: 8px;
+    color: #dfe6f4;
+    font-size: 0.75rem;
+    font-weight: 820;
+  }
+
+  .basic-request-quote {
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    padding: 10px 13px;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    background: rgba(4, 7, 12, 0.7);
+    color: #edf1f8;
+    font-size: 0.84rem;
+    line-height: 1.35;
+  }
+
+  .basic-loop-input input {
+    width: 100%;
+    min-height: 46px;
+    padding: 0 13px;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    background: rgba(4, 7, 12, 0.7);
+    color: var(--text);
+  }
+
+  .basic-loop-card {
+    min-height: 410px;
+    display: grid;
+    align-content: center;
+    gap: 12px;
+    padding: 24px;
+  }
+
+  .basic-flow-step {
+    position: relative;
+    min-height: 62px;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border: 1px solid rgba(184, 205, 226, 0.13);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.032);
+    opacity: 0.46;
+    transform: translateX(0);
+    transition: opacity 220ms ease, border-color 220ms ease, background 220ms ease, transform 220ms ease;
+  }
+
+  .basic-flow-step::after {
+    content: "";
+    position: absolute;
+    left: 30px;
+    bottom: -13px;
+    width: 2px;
+    height: 13px;
+    background: rgba(168, 215, 160, 0.24);
+  }
+
+  .basic-flow-step:last-of-type::after { display: none; }
+
+  .basic-flow-step.is-active {
+    opacity: 1;
+    transform: translateX(4px);
+    border-color: rgba(218, 190, 108, 0.48);
+    background: rgba(218, 190, 108, 0.08);
+  }
+
+  .basic-flow-step b {
+    width: 32px;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(168, 215, 160, 0.13);
+    color: #dcefd7;
+    font-size: 0.72rem;
+  }
+
+  .basic-flow-step strong { display: block; font-size: 0.84rem; }
+  .basic-flow-step span { display: block; margin-top: 2px; color: var(--muted); font-size: 0.66rem; line-height: 1.35; }
+
+  .basic-flow-result {
+    min-height: 72px;
+    display: grid;
+    align-content: center;
+    gap: 4px;
+    margin-top: 4px;
+    padding: 13px 15px;
+    border: 1px solid rgba(168, 215, 160, 0.2);
+    border-radius: 16px;
+    background: rgba(93, 141, 89, 0.08);
+  }
+
+  .basic-flow-result span { color: #a8d7a0; font-size: 0.64rem; font-weight: 850; letter-spacing: 0.1em; text-transform: uppercase; }
+  .basic-flow-result p { margin: 0; color: #e7efe5; font-size: 0.78rem; line-height: 1.4; }
+
+  .basic-portable-card {
+    min-height: 410px;
+    display: grid;
+    align-content: center;
+    gap: 16px;
+    padding: 24px;
+  }
+
+  .portable-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .portable-host {
+    min-height: 118px;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    border: 1px solid rgba(180, 207, 175, 0.18);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.035);
+    text-align: center;
+  }
+
+  .portable-host strong { display: block; font-size: 0.9rem; }
+  .portable-host span { display: block; margin-top: 4px; color: var(--muted); font-size: 0.66rem; }
+
+  .portable-arrow {
+    color: #e5c56d;
+    font-size: 1.6rem;
+    font-weight: 900;
+  }
+
+  .portable-packet {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .portable-packet span {
+    min-height: 42px;
+    display: grid;
+    place-items: center;
+    padding: 7px;
+    border: 1px solid rgba(218, 190, 108, 0.24);
+    border-radius: 12px;
+    background: rgba(218, 190, 108, 0.07);
+    color: #e8dcb9;
+    font-size: 0.66rem;
+    font-weight: 760;
+    text-align: center;
+  }
+
+  .basic-json-panel {
+    display: none;
+    max-height: 210px;
+    overflow: auto;
+    padding: 14px;
+    border: 1px solid rgba(137, 184, 231, 0.22);
+    border-radius: 15px;
+    background: rgba(2, 5, 9, 0.76);
+  }
+
+  .basic-json-panel.is-open { display: block; }
+  .basic-json-panel pre {
+    margin: 0;
+    color: #d7e8d2;
+    font: 0.72rem/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    white-space: pre-wrap;
+  }
+
+  .portable-boundary {
+    padding: 11px 13px;
+    border-left: 3px solid rgba(218, 190, 108, 0.7);
+    background: rgba(218, 190, 108, 0.05);
+    color: #c9c0a8;
+    font-size: 0.7rem;
+    line-height: 1.45;
+  }
+
+  .basic-final-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .basic-secondary {
+    min-height: 44px;
+    padding: 0 15px;
+    border-radius: 14px;
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+
+  @media (max-width: 760px) {
+    .basic-layout.basic-two-column,
+    .basic-loop-layout {
+      grid-template-columns: 1fr;
+      align-content: start;
+    }
+
+    .basic-layout { gap: 16px; }
+    .basic-copy h2 { font-size: clamp(2.2rem, 11vw, 3.35rem); }
+    .basic-copy .basic-lead { margin-top: 12px; font-size: 0.9rem; }
+    .basic-definition { margin-top: 15px; padding: 13px 14px; }
+    .basic-primary { margin-top: 14px; min-height: 46px; }
+    .framework-garden { min-height: 330px; border-radius: 22px; }
+    .garden-leaf { min-width: 96px; min-height: 48px; font-size: 0.68rem; }
+    .garden-leaf.rules { left: 5%; top: 23%; }
+    .garden-leaf.memory { right: 5%; top: 20%; }
+    .garden-leaf.tools { left: 7%; top: 46%; }
+    .garden-leaf.schedule { right: 7%; top: 44%; }
+    .garden-stem { bottom: 88px; height: 135px; }
+    .garden-seed { bottom: 49px; width: 112px; min-height: 67px; }
+    .basic-purpose-visual { min-height: 330px; padding: 14px; gap: 9px; }
+    .purpose-tile { min-height: 118px; padding: 14px; border-radius: 17px; }
+    .purpose-tile strong { font-size: 0.92rem; }
+    .purpose-tile span { font-size: 0.68rem; }
+    .basic-loop-card, .basic-portable-card { min-height: 360px; padding: 16px; border-radius: 22px; }
+    .basic-loop-input { margin-top: 14px; }
+    .portable-row { grid-template-columns: 1fr 42px 1fr; }
+    .portable-host { min-height: 100px; padding: 11px; border-radius: 17px; }
+  }
+
+  @media (orientation: landscape) and (max-height: 560px) {
+    .basic-layout.basic-two-column,
+    .basic-loop-layout {
+      grid-template-columns: minmax(0, 0.88fr) minmax(330px, 1.12fr);
+      align-items: center;
+      gap: 14px;
+    }
+    .basic-copy h2 { font-size: clamp(1.82rem, 4.7vw, 2.72rem); }
+    .slide[data-mode="basic"] .basic-lead { display: none; }
+    .basic-definition { margin-top: 7px; gap: 3px; padding: 7px 10px; border-radius: 13px; }
+    .basic-definition strong { font-size: 0.76rem; }
+    .basic-definition span { font-size: 0.58rem; line-height: 1.25; }
+    .basic-definition .no-line { display: none; }
+    .basic-primary { min-height: 36px; margin-top: 6px; }
+    .framework-garden, .basic-purpose-visual, .basic-loop-card, .basic-portable-card { min-height: 310px; }
+    .purpose-tile { min-height: 105px; }
+    .basic-loop-input {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 132px;
+      gap: 7px;
+      margin-top: 8px;
+      padding: 8px;
+    }
+    .basic-loop-input label { display: none; }
+    .basic-loop-input input,
+    .basic-request-quote { min-height: 36px; font-size: 0.68rem; padding: 6px 10px; }
+    .basic-loop-input .basic-primary { width: 132px; min-height: 36px; margin: 0; padding-inline: 8px; }
+    .basic-loop-card { gap: 5px; padding: 10px 12px; }
+    .basic-flow-step { min-height: 44px; grid-template-columns: 25px minmax(0,1fr); gap: 8px; padding: 6px 9px; border-radius: 12px; }
+    .basic-flow-step::after { left: 21px; bottom: -6px; height: 6px; }
+    .basic-flow-step b { width: 24px; font-size: 0.6rem; }
+    .basic-flow-step strong { font-size: 0.72rem; }
+    .basic-flow-step span { font-size: 0.55rem; }
+    .basic-flow-result { min-height: 48px; padding: 7px 10px; border-radius: 12px; }
+    .basic-flow-result p { font-size: 0.63rem; }
+    .basic-portable-card { gap: 8px; padding: 12px 16px; }
+    .portable-host { min-height: 88px; }
+    .portable-packet span { min-height: 34px; }
+    .portable-boundary { padding: 7px 10px; font-size: 0.6rem; }
+    .basic-final-actions { gap: 6px; }
+    .basic-final-actions .basic-primary { width: min(100%, 360px); }
+    .basic-final-actions .basic-secondary { display: none; }
+  }
+</style>
+
 </head>
 <body>
   <main class="app-shell" id="appShell" aria-label="Ghojualamanchu interactive explainer">
     <header class="topbar">
       <div class="brand-block">
-        <p class="brand-kicker">Independent interactive explainer</p>
+        <p class="brand-kicker">What is Ghojualamanchu?</p>
         <h1 class="brand-title">Ghojualamanchu, Explained</h1>
       </div>
 
       <div class="topbar-actions">
         <label class="mode-switch" id="modeSwitch">
-          <span id="modeLabel">Plain view</span>
-          <input id="advancedToggle" type="checkbox" aria-label="Show technical details">
+          <span id="modeLabel">Basic</span>
+          <input id="advancedToggle" type="checkbox" aria-label="Switch between basic and deep-dive views">
           <span class="switch-rail" aria-hidden="true"></span>
         </label>
-        <span class="step-counter" id="stepCounter" aria-live="polite">01 / 07</span>
+        <span class="step-counter" id="stepCounter" aria-live="polite">01 / 03</span>
       </div>
     </header>
 
     <div class="progress-track" aria-hidden="true"><span id="progressBar"></span></div>
 
     <section class="viewport" id="viewport">
-      <article class="slide is-active" data-slide="0" aria-hidden="false">
+      <article class="slide is-active" data-mode="basic" data-basic-slide="0" aria-hidden="false">
+        <div class="basic-layout basic-two-column">
+          <div class="basic-copy">
+            <span class="slide-number">1 · What is it?</span>
+            <h2>An AI assistant framework.</h2>
+            <p class="basic-lead">It takes an existing language model and puts a working system around it.</p>
+            <div class="basic-definition">
+              <strong>Agent framework — not a game or a new model.</strong>
+              <span class="no-line">It organizes an existing language model; it is not a literal artificial brain.</span>
+            </div>
+            <button class="basic-primary" id="basicStartButton" type="button">What does it add?</button>
+          </div>
+
+          <section class="framework-garden" aria-label="A language model growing into an organized AI agent system">
+            <div class="garden-sun" aria-hidden="true"></div>
+            <div class="garden-stem" aria-hidden="true"></div>
+            <div class="garden-leaf rules"><span>Rules<small>how to behave</small></span></div>
+            <div class="garden-leaf memory"><span>Memory<small>what to keep</small></span></div>
+            <div class="garden-leaf tools"><span>Tools<small>what it can use</small></span></div>
+            <div class="garden-leaf schedule"><span>Schedule<small>what runs later</small></span></div>
+            <div class="garden-seed"><div><strong>AI model</strong><span>the language engine</span></div></div>
+            <div class="garden-caption">The model does the language work. The framework organizes everything around it.</div>
+          </section>
+        </div>
+      </article>
+
+      <article class="slide" data-mode="basic" data-basic-slide="1" aria-hidden="true">
+        <div class="basic-loop-layout">
+          <div class="basic-copy">
+            <span class="slide-number">2 · What does it do?</span>
+            <h2>It remembers, acts, and continues.</h2>
+            <p class="basic-lead">A request can follow the same rules, use saved context, call tools, and leave useful state for later.</p>
+            <div class="basic-loop-input">
+              <div class="basic-request-quote">“Remember that I prefer dark mode.”</div>
+              <button class="basic-primary" id="basicRunButton" type="button">Watch the loop</button>
+            </div>
+          </div>
+
+          <section class="basic-loop-card" aria-label="Simple agent request loop">
+            <div class="basic-flow-step" data-basic-flow="0"><b>1</b><div><strong>Receive</strong><span>Read the request.</span></div></div>
+            <div class="basic-flow-step" data-basic-flow="1"><b>2</b><div><strong>Check</strong><span>Apply rules and read relevant memory.</span></div></div>
+            <div class="basic-flow-step" data-basic-flow="2"><b>3</b><div><strong>Act</strong><span>Use a tool when the task needs one.</span></div></div>
+            <div class="basic-flow-step" data-basic-flow="3"><b>4</b><div><strong>Answer + save</strong><span>Respond and keep only useful state.</span></div></div>
+            <div class="basic-flow-result" aria-live="polite"><span>Result</span><p id="basicFlowResult">Run the loop to see the outcome.</p></div>
+          </section>
+        </div>
+      </article>
+
+      <article class="slide" data-mode="basic" data-basic-slide="2" aria-hidden="true">
+        <div class="basic-layout basic-two-column">
+          <div class="basic-copy">
+            <span class="slide-number">3 · What moves locally?</span>
+            <h2>The agent kit moves. The model does not.</h2>
+            <p class="basic-lead">Moving from cloud to local means copying instructions, memory, and goals, then connecting them to a separate local model and tools.</p>
+            <div class="basic-definition">
+              <strong>Portable: instructions + memory + mission.</strong>
+              <span class="no-line">Not automatically portable: the cloud model, hidden platform behavior, or a “mind.”</span>
+            </div>
+            <div class="basic-final-actions">
+              <button class="basic-primary" id="basicJsonButton" type="button">Show example JSON</button>
+              <button class="basic-secondary" id="basicRestartButton" type="button">Start over</button>
+            </div>
+          </div>
+
+          <section class="basic-portable-card" aria-label="Agent files moving from a cloud model to a local model">
+            <div class="portable-row">
+              <div class="portable-host"><div><strong>Cloud model</strong><span>current engine</span></div></div>
+              <div class="portable-arrow" aria-hidden="true">→</div>
+              <div class="portable-host"><div><strong>Local model</strong><span>new engine</span></div></div>
+            </div>
+            <div class="portable-packet" aria-label="Portable agent packet">
+              <span>Instructions</span><span>Memory</span><span>Mission</span>
+            </div>
+            <div class="basic-json-panel" id="basicJsonPanel">
+              <pre>{
+  "instructions": ["remember preferences"],
+  "memory": { "theme": "dark" },
+  "mission": "continue helping"
+}</pre>
+            </div>
+            <div class="portable-boundary">This JSON is an example of saved agent state. It does not contain the language model itself.</div>
+          </section>
+        </div>
+      </article>      <article class="slide" data-mode="advanced" data-slide="0" aria-hidden="false">
         <div class="slide-layout two-column hero-layout">
           <div class="copy-column">
             <span class="slide-number">The shortest answer</span>
-            <h2>An AI agent with a daily routine.</h2>
-            <p class="lead">Ghojualamanchu takes an existing language model and organizes it with nine named jobs, memory files, tools, and a clock.</p>
-            <p class="plain-callout"><strong>It is not a new base model.</strong> The site presents a full scheduled agent workspace and a smaller paste-in “gholing” seed. Both organize an existing model.</p>
+            <h2>Think of it like planting an AI.</h2>
+            <p class="lead">The AI model is the seed. Ghojualamanchu puts a living-looking system around it: roots for memory, a trellis for instructions, senses for tools, and day/night cycles for scheduled work.</p>
+            <p class="plain-callout"><strong>The important part:</strong> the “organism” is the whole setup around an existing model, not a new model by itself.</p>
             <div class="hero-actions">
-              <button class="primary-button" id="wakeButton" type="button">Stimulate medulla</button>
+              <button class="primary-button" id="wakeButton" type="button">Grow the workspace</button>
             </div>
             <div class="advanced-note" data-advanced>
               <strong>Under the hood</strong>
@@ -970,35 +1664,36 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
           </div>
 
           <div class="visual-column">
-            <section class="organism-hero" id="organismHero" aria-label="Animated diagram of an AI model surrounded by nine software roles and a daily clock">
+            <section class="organism-hero nature-hero" id="organismHero" aria-label="Animated diagram of an AI model surrounded by nine software roles and a daily clock">
               <div class="clock-orbit orbit-one" aria-hidden="true"></div>
               <div class="clock-orbit orbit-two" aria-hidden="true"></div>
               <div class="hero-core">
                 <span class="core-pulse" aria-hidden="true"></span>
-                <strong>Existing AI model</strong>
-                <span>given a workspace and routine</span>
+                <strong>The seed</strong>
+                <span>an existing AI model</span>
               </div>
-              <div class="orbit-node n1">Memory</div>
-              <div class="orbit-node n2">Routing</div>
-              <div class="orbit-node n3">Heartbeat</div>
-              <div class="orbit-node n4">Search</div>
-              <div class="orbit-node n5">Presence</div>
-              <div class="orbit-node n6">Absence</div>
-              <div class="orbit-node n7">Emotion</div>
-              <div class="orbit-node n8">Environment</div>
-              <div class="orbit-node n9">Integration</div>
-              <div class="hero-caption" id="heroCaption">Dormant until the workspace instructions are read.</div>
+              <div class="orbit-node n1">Roots<small>memory</small></div>
+              <div class="orbit-node n2">Trellis<small>routing</small></div>
+              <div class="orbit-node n3">Pulse<small>schedule</small></div>
+              <div class="orbit-node n4">Foraging<small>search</small></div>
+              <div class="orbit-node n5">Growth<small>presence</small></div>
+              <div class="orbit-node n6">Compost<small>forgetting</small></div>
+              <div class="orbit-node n7">Signal<small>salience</small></div>
+              <div class="orbit-node n8">Weather<small>environment</small></div>
+              <div class="orbit-node n9">Mycelium<small>integration</small></div>
+              <div class="hero-caption" id="heroCaption">A model by itself is only the seed. The surrounding files make the “organism.”</div>
             </section>
+            <div class="nature-legend"><span>Seed = model</span><span>Roots = memory</span><span>Weather = tools</span><span>Day/night = schedules</span></div>
           </div>
         </div>
       </article>
 
-      <article class="slide" data-slide="1" aria-hidden="true">
+      <article class="slide" data-mode="advanced" data-slide="1" aria-hidden="true">
         <div class="slide-layout two-column">
           <div class="copy-column">
             <span class="slide-number">What is under the metaphor?</span>
-            <h2>Four ordinary pieces.</h2>
-            <p class="lead">The brain language is memorable, but the working system is easier to understand as four software layers.</p>
+            <h2>One model, four things around it.</h2>
+            <p class="lead">The nature metaphor is only a map. Underneath it are four normal software pieces.</p>
             <div class="plain-callout" id="layerSummary"><strong>Start with the model.</strong> It supplies the language and reasoning ability. The project supplies the organization around it.</div>
             <div class="hero-actions">
               <button class="primary-button" id="layersNextButton" type="button">Meet the nine jobs</button>
@@ -1013,26 +1708,26 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
             <section class="layer-stack" id="layerStack" aria-label="Four software layers">
               <button class="layer-card is-selected" type="button" data-layer="model" aria-pressed="true">
                 <span class="layer-index">01</span>
-                <span><strong>Model</strong><small>The language engine</small></span>
+                <span><span class="nature-name">Seed</span><strong>Model</strong><small>The language engine</small></span>
               </button>
               <button class="layer-card" type="button" data-layer="instructions" aria-pressed="false">
                 <span class="layer-index">02</span>
-                <span><strong>Instructions</strong><small>Nine roles and behavior rules</small></span>
+                <span><span class="nature-name">Trellis</span><strong>Instructions</strong><small>Roles and behavior rules</small></span>
               </button>
               <button class="layer-card" type="button" data-layer="memory" aria-pressed="false">
                 <span class="layer-index">03</span>
-                <span><strong>Memory</strong><small>Logs, identity, and saved state</small></span>
+                <span><span class="nature-name">Roots + rings</span><strong>Memory</strong><small>Logs, identity, and saved state</small></span>
               </button>
               <button class="layer-card" type="button" data-layer="runtime" aria-pressed="false">
                 <span class="layer-index">04</span>
-                <span><strong>Tools + clock</strong><small>APIs, schedules, and triggers</small></span>
+                <span><span class="nature-name">Weather + seasons</span><strong>Tools + clock</strong><small>APIs, schedules, and triggers</small></span>
               </button>
             </section>
           </div>
         </div>
       </article>
 
-      <article class="slide module-slide" data-slide="2" aria-hidden="true">
+      <article class="slide module-slide" data-mode="advanced" data-slide="2" aria-hidden="true">
         <div class="slide-layout module-layout">
           <div class="module-copy">
             <span class="slide-number">The nine structures</span>
@@ -1074,7 +1769,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
         </div>
       </article>
 
-      <article class="slide" data-slide="3" aria-hidden="true">
+      <article class="slide" data-mode="advanced" data-slide="3" aria-hidden="true">
         <div class="slide-layout route-layout">
           <div class="copy-column route-copy">
             <span class="slide-number">The routing idea</span>
@@ -1113,7 +1808,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
         </div>
       </article>
 
-      <article class="slide" data-slide="4" aria-hidden="true">
+      <article class="slide" data-mode="advanced" data-slide="4" aria-hidden="true">
         <div class="slide-layout two-column rhythm-layout">
           <div class="copy-column">
             <span class="slide-number">The daily rhythm</span>
@@ -1148,12 +1843,12 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
         </div>
       </article>
 
-      <article class="slide" data-slide="5" aria-hidden="true">
+      <article class="slide" data-mode="advanced" data-slide="5" aria-hidden="true">
         <div class="slide-layout two-column seed-layout">
           <div class="copy-column">
-            <span class="slide-number">Seeds and transplants</span>
-            <h2>What actually moves?</h2>
-            <p class="lead">A “seed” is portable instructions and state. A local transplant rebuilds the surrounding system around a local model.</p>
+            <span class="slide-number">The seed packet</span>
+            <h2>The portable part is mostly files.</h2>
+            <p class="lead">A “seed” is not the model. It is a compact package describing identity, instructions, memory, and what should continue next.</p>
 
             <div class="tab-row" role="tablist" aria-label="Seed or local transplant">
               <button class="tab-button is-selected" type="button" role="tab" aria-selected="true" data-seed-tab="seed">Fractal seed</button>
@@ -1161,12 +1856,16 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
             </div>
 
             <div class="seed-copy-panel" data-seed-panel="seed">
-              <p class="plain-callout"><strong>A seed can carry:</strong> identity text, behavior instructions, a memory summary, open questions, and a mission.</p>
-              <button class="primary-button" id="openSeedButton" type="button">Open the seed</button>
+              <p class="seed-explain-line"><strong>Seed packet:</strong> identity + instructions + memory + mission.</p>
+              <button class="primary-button" id="openSeedButton" type="button">Open seed packet</button>
+              <div class="seed-view-switch" id="seedViewSwitch" hidden>
+                <button class="is-selected" id="seedVisualButton" type="button">Picture</button>
+                <button id="seedJsonButton" type="button">JSON</button>
+              </div>
             </div>
 
             <div class="seed-copy-panel" data-seed-panel="local" hidden>
-              <p class="plain-callout"><strong>A transplant needs:</strong> a local model, system prompt, persistent storage, scheduler, tool adapters, and tests.</p>
+              <p class="seed-explain-line"><strong>Cloud → local:</strong> reuse the files, then reconnect them to a local model, storage, tools, and scheduler.</p>
               <button class="primary-button" id="transplantButton" type="button">Run the transplant</button>
             </div>
 
@@ -1187,12 +1886,25 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
                 <div class="seed-part p2"><strong>Instructions</strong><span>How it should behave</span></div>
                 <div class="seed-part p3"><strong>Memory delta</strong><span>What mattered this session</span></div>
                 <div class="seed-part p4"><strong>Mission</strong><span>What it should continue</span></div>
-                <pre class="seed-json" id="seedJson" data-advanced>{
+                <div class="seed-json-view" id="seedJsonView">
+                  <pre class="seed-json basic-json" id="seedJson">{
   "type": "fractal_seed",
-  "instance": "gholing-local-1",
-  "memory_delta": ["..."],
-  "mission": "make the world more creative"
+  "identity": {
+    "name": "ghojualamanchu-instance",
+    "role": "cognitive workspace"
+  },
+  "instructions": [
+    "route input through named roles",
+    "preserve useful memory",
+    "run scheduled routines"
+  ],
+  "memory": {
+    "summary": "what mattered recently",
+    "open_questions": ["what should continue?"]
+  },
+  "mission": "continue the current work"
 }</pre>
+                </div>
               </div>
 
               <div class="seed-visual transplant-visual" data-seed-visual="local" hidden>
@@ -1211,7 +1923,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
         </div>
       </article>
 
-      <article class="slide" data-slide="6" aria-hidden="true">
+      <article class="slide" data-mode="advanced" data-slide="6" aria-hidden="true">
         <div class="slide-layout review-layout">
           <div class="copy-column">
             <span class="slide-number">Our thoughts</span>
@@ -1386,19 +2098,19 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
 
   const layerData = {
     model: {
-      summary: "<strong>Start with the model.</strong> It supplies the language and reasoning ability. The project supplies the organization around it.",
+      summary: "<strong>Seed = model.</strong> The model supplies language and reasoning. Everything else in this project grows around it.",
       technical: "Model runtime: a cloud model or local inference server capable of following the workspace instructions and calling available tools."
     },
     instructions: {
-      summary: "<strong>Add role instructions.</strong> Nine brain-named files tell the model which questions to ask and which responsibility each role owns.",
+      summary: "<strong>Trellis = instructions.</strong> Files shape how the model routes a problem and which role handles each part.",
       technical: "Workspace artifacts include AGENTS.md, REPLICATION.md, and structure files such as medulla.md, thalamus.md, hippocampus.md, and lethe.md."
     },
     memory: {
-      summary: "<strong>Save continuity outside the model.</strong> Logs and JSON files hold identity, state, observations, summaries, and material marked for decay.",
+      summary: "<strong>Roots = memory.</strong> Logs and JSON keep continuity outside the model so the next session can pick it back up.",
       technical: "The public layout describes Data/genome.json, Data/state.json, pulse/heard/seen/environment/planetary logs, and consolidated long-term memory."
     },
     runtime: {
-      summary: "<strong>Give it senses and a clock.</strong> Scheduled jobs, RSS feeds, APIs, web scans, and webhooks make the workspace do work between conversations.",
+      summary: "<strong>Weather + seasons = tools and schedules.</strong> APIs bring outside signals in; timers make certain jobs happen again and again.",
       technical: "Subagents are triggered by schedules, RSS polling, webhook calls, weather/NOAA feeds, and active web scans. These adapters must be rebuilt on a new host."
     }
   };
@@ -1421,7 +2133,15 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
   window.GHO_MODULES = modules;
   window.GHO_FALLBACK_ACTIVE = false;
 
-  const slides = Array.from(document.querySelectorAll(".slide"));
+  const allSlides = Array.from(document.querySelectorAll(".slide"));
+  let slides = [];
+  const basicStartButton = document.getElementById("basicStartButton");
+  const basicRunButton = document.getElementById("basicRunButton");
+  const basicFlowSteps = Array.from(document.querySelectorAll("[data-basic-flow]"));
+  const basicFlowResult = document.getElementById("basicFlowResult");
+  const basicJsonButton = document.getElementById("basicJsonButton");
+  const basicJsonPanel = document.getElementById("basicJsonPanel");
+  const basicRestartButton = document.getElementById("basicRestartButton");
   const progressBar = document.getElementById("progressBar");
   const stepCounter = document.getElementById("stepCounter");
   const progressDots = document.getElementById("progressDots");
@@ -1478,6 +2198,9 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
   const seedCopyPanels = Array.from(document.querySelectorAll("[data-seed-panel]"));
   const seedVisuals = Array.from(document.querySelectorAll("[data-seed-visual]"));
   const openSeedButton = document.getElementById("openSeedButton");
+  const seedViewSwitch = document.getElementById("seedViewSwitch");
+  const seedVisualButton = document.getElementById("seedVisualButton");
+  const seedJsonButton = document.getElementById("seedJsonButton");
   const seedVisual = document.querySelector('[data-seed-visual="seed"]');
   const transplantButton = document.getElementById("transplantButton");
   const transplantVisual = document.querySelector('[data-seed-visual="local"]');
@@ -1490,6 +2213,9 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
 
   let currentSlide = 0;
   let isAdvanced = false;
+  let basicFlowRan = false;
+  let basicJsonOpen = false;
+  let basicFlowTimers = [];
   let isAwake = false;
   let layerTouched = false;
   let selectedLayer = "model";
@@ -1522,31 +2248,39 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
     return String(value).padStart(2, "0");
   }
 
+  function refreshSlides() {
+    const mode = isAdvanced ? "advanced" : "basic";
+    slides = allSlides.filter((slide) => slide.dataset.mode === mode);
+  }
+
   function buildDots() {
+    progressDots.replaceChildren();
     slides.forEach((_, index) => {
       const dot = document.createElement("button");
       dot.type = "button";
       dot.className = "progress-dot";
-      dot.setAttribute("aria-label", `Go to stage ${index + 1}`);
-      if (index === 0) dot.setAttribute("aria-current", "step");
+      dot.setAttribute("aria-label", `Go to ${isAdvanced ? "deep-dive" : "basic"} stage ${index + 1}`);
+      if (index === currentSlide) dot.setAttribute("aria-current", "step");
       dot.addEventListener("click", () => setSlide(index));
       progressDots.appendChild(dot);
     });
   }
 
   function setSlide(index) {
-    const next = Math.max(0, Math.min(slides.length - 1, index));
+    if (!slides.length) refreshSlides();
+    const next = Math.max(0, Math.min(slides.length - 1, Number(index) || 0));
     currentSlide = next;
+    const activeSlide = slides[currentSlide];
 
-    slides.forEach((slide, slideIndex) => {
-      const active = slideIndex === currentSlide;
+    allSlides.forEach((slide) => {
+      const active = slide === activeSlide;
       slide.classList.toggle("is-active", active);
       slide.setAttribute("aria-hidden", String(!active));
       if (active) slide.scrollTop = 0;
     });
 
-    Array.from(progressDots.children).forEach((dot, index) => {
-      if (index === currentSlide) dot.setAttribute("aria-current", "step");
+    Array.from(progressDots.children).forEach((dot, dotIndex) => {
+      if (dotIndex === currentSlide) dot.setAttribute("aria-current", "step");
       else dot.removeAttribute("aria-current");
     });
 
@@ -1556,7 +2290,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
     nextButton.disabled = currentSlide === slides.length - 1;
     nextButton.textContent = currentSlide === slides.length - 2 ? "Finish" : "Next";
 
-    if (currentSlide === 2) window.GHO_RESIZE_STAGE?.();
+    if (isAdvanced && currentSlide === 2) window.GHO_RESIZE_STAGE?.();
     updateGuideSoon();
   }
 
@@ -1571,8 +2305,11 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
     isAdvanced = Boolean(enabled);
     document.body.classList.toggle("advanced-mode", isAdvanced);
     advancedToggle.checked = isAdvanced;
-    modeLabel.textContent = isAdvanced ? "Under the hood" : "Plain view";
-    updateGuideSoon();
+    modeLabel.textContent = isAdvanced ? "Deep dive" : "Basic";
+    currentSlide = 0;
+    refreshSlides();
+    buildDots();
+    setSlide(0);
     window.setTimeout(() => window.GHO_RESIZE_STAGE?.(), 60);
   }
 
@@ -1590,11 +2327,64 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
     window.setTimeout(() => window.GHO_RESIZE_STAGE?.(), 50);
   }
 
+  function stopBasicFlow() {
+    basicFlowTimers.forEach((timer) => clearTimeout(timer));
+    basicFlowTimers = [];
+  }
+
+  function runBasicFlow() {
+    stopBasicFlow();
+    basicFlowRan = true;
+    basicFlowSteps.forEach((step) => step.classList.remove("is-active"));
+    basicFlowResult.textContent = "Working through the loop…";
+    basicRunButton.textContent = "Running…";
+
+    const finish = () => {
+      basicFlowResult.textContent = "Preference saved: use dark mode in future sessions.";
+      basicRunButton.textContent = "Watch again";
+      updateGuideSoon();
+    };
+
+    if (prefersReducedMotion.matches) {
+      basicFlowSteps.forEach((step) => step.classList.add("is-active"));
+      finish();
+      return;
+    }
+
+    basicFlowSteps.forEach((step, index) => {
+      basicFlowTimers.push(window.setTimeout(() => {
+        step.classList.add("is-active");
+        if (index === basicFlowSteps.length - 1) {
+          basicFlowTimers.push(window.setTimeout(finish, 350));
+        }
+      }, index * 420));
+    });
+  }
+
+  function toggleBasicJson() {
+    basicJsonOpen = !basicJsonOpen;
+    basicJsonPanel.classList.toggle("is-open", basicJsonOpen);
+    basicJsonButton.textContent = basicJsonOpen ? "Hide example JSON" : "Show example JSON";
+    updateGuideSoon();
+  }
+
+  function restartBasic() {
+    stopBasicFlow();
+    basicFlowRan = false;
+    basicJsonOpen = false;
+    basicFlowSteps.forEach((step) => step.classList.remove("is-active"));
+    basicFlowResult.textContent = "Run the loop to see the outcome.";
+    basicRunButton.textContent = "Watch the loop";
+    basicJsonPanel.classList.remove("is-open");
+    basicJsonButton.textContent = "Show example JSON";
+    setSlide(0);
+  }
+
   function wakeOrganism() {
     isAwake = true;
     organismHero.classList.add("is-awake");
-    wakeButton.textContent = "The workspace is active";
-    heroCaption.textContent = "The model is now enacting roles, memory rules, tools, and scheduled routines.";
+    wakeButton.textContent = "Workspace active";
+    heroCaption.textContent = "The seed now has roots, structure, senses, and a daily rhythm.";
     showToast("The metaphor is awake. Next: see the software underneath.");
     updateGuideSoon();
     window.setTimeout(() => setSlide(1), prefersReducedMotion.matches ? 150 : 950);
@@ -1878,11 +2668,21 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
     updateGuideSoon();
   }
 
+  function setSeedView(view) {
+    const json = view === "json";
+    seedVisual.classList.toggle("show-json", json);
+    seedVisualButton.classList.toggle("is-selected", !json);
+    seedJsonButton.classList.toggle("is-selected", json);
+    updateGuideSoon();
+  }
+
   function openSeed() {
     seedOpened = true;
     seedVisual.classList.add("is-open");
-    openSeedButton.textContent = "Seed opened";
-    showToast("A seed carries a pattern, not the model weights.");
+    seedViewSwitch.hidden = false;
+    openSeedButton.textContent = "Seed packet open";
+    setSeedView("json");
+    showToast("This JSON is the portable state around the model.");
     updateGuideSoon();
   }
 
@@ -1944,10 +2744,13 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
     stageExpandedSeen = false;
     stageInteracted = false;
     organismHero.classList.remove("is-awake");
-    wakeButton.textContent = "Stimulate medulla";
-    heroCaption.textContent = "Dormant until the workspace instructions are read.";
-    seedVisual.classList.remove("is-open");
-    openSeedButton.textContent = "Open the seed";
+    wakeButton.textContent = "Grow the workspace";
+    heroCaption.textContent = "A model by itself is only the seed. The surrounding files make the “organism.”";
+    seedVisual.classList.remove("is-open", "show-json");
+    seedViewSwitch.hidden = true;
+    seedVisualButton.classList.add("is-selected");
+    seedJsonButton.classList.remove("is-selected");
+    openSeedButton.textContent = "Open seed packet";
     transplantButton.textContent = "Run the transplant";
     transplantStatus.textContent = "Ready to rebuild the agent kit locally.";
     copyGistButton.textContent = "Copy the gist";
@@ -1962,6 +2765,13 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
   }
 
   function guideTarget() {
+    if (!isAdvanced) {
+      if (currentSlide === 0) return basicStartButton;
+      if (currentSlide === 1) return basicFlowRan ? nextButton : basicRunButton;
+      if (currentSlide === 2) return basicJsonOpen ? basicRestartButton : basicJsonButton;
+      return nextButton;
+    }
+
     if (!stageModal.hidden) {
       return stageInteracted ? closeStageButton : brainStage;
     }
@@ -2149,6 +2959,10 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
   function bindEvents() {
     backButton.addEventListener("click", () => setSlide(currentSlide - 1));
     nextButton.addEventListener("click", () => setSlide(currentSlide + 1));
+    basicStartButton.addEventListener("click", () => setSlide(1));
+    basicRunButton.addEventListener("click", runBasicFlow);
+    basicJsonButton.addEventListener("click", toggleBasicJson);
+    basicRestartButton.addEventListener("click", restartBasic);
     advancedToggle.addEventListener("change", () => setAdvanced(advancedToggle.checked));
     wakeButton.addEventListener("click", wakeOrganism);
     layerButtons.forEach((button) => button.addEventListener("click", () => selectLayer(button.dataset.layer)));
@@ -2191,6 +3005,8 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
 
     seedTabs.forEach((button) => button.addEventListener("click", () => setSeedTab(button.dataset.seedTab)));
     openSeedButton.addEventListener("click", openSeed);
+    seedVisualButton.addEventListener("click", () => setSeedView("visual"));
+    seedJsonButton.addEventListener("click", () => setSeedView("json"));
     transplantButton.addEventListener("click", runTransplant);
     copyGistButton.addEventListener("click", copyGist);
     restartButton.addEventListener("click", restart);
@@ -2238,7 +3054,6 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
     }, { passive: true });
   }
 
-  buildDots();
   createModuleButtons();
   buildRouteTrack();
   buildClockEvents();
@@ -2251,6 +3066,9 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
   setAdvanced(false);
   updateViewportClass();
   setSlide(0);
+  window.setTimeout(updateGuideSoon, 250);
+  window.setTimeout(updateGuideSoon, 900);
+  document.fonts?.ready?.then(updateGuideSoon).catch(() => {});
 
   window.setTimeout(() => {
     if (!window.GHO_THREE_READY && !fallbackActive) activateFallback("CDN timeout");
