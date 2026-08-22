@@ -37,28 +37,40 @@ if (html.includes('raw.githubusercontent.com') || html.includes('github.com/mrdo
 }
 
 const requiredPhysicsTuning = [
-  'const poseDeadZoneBySegment = {',
-  'const humanoidJointLimitBySegment = {',
+  'const jointConstraintBySegment = {',
+  "spine: { type: 'fixed' },",
+  "neck: { type: 'fixed' },",
+  "head: { type: 'hinge', axis: 'x', limits: [-0.24, 0.24] },",
+  "leftUpperArm: { type: 'hinge', axis: 'z', limits: [-1.2, 1.2] },",
+  "leftForearm: { type: 'hinge', axis: 'z', limits: [-1.35, 1.35] },",
+  "leftThigh: { type: 'hinge', axis: 'x', limits: [-0.9, 0.9] },",
+  'const createRagdollJoint = (child) => {',
+  'RAPIER.JointData.fixed(parentAnchor, parentFrame, childAnchor, childFrame);',
+  'RAPIER.JointData.revolute(parentAnchor, childAnchor, { x: 1, y: 0, z: 0 });',
+  'if (constraint.limits) joint.setLimits(constraint.limits[0], constraint.limits[1]);',
+  'const rebuildRagdollJoints = () => {',
+  'world.removeImpulseJoint(child.joint, true);',
   'humanoidJointLimits: true,',
-  'const applyHumanoidJointLimits = () => {',
   'physicsSettings.humanoidJointLimits = humanoidJointLimitsToggle.checked;',
-  'applyHumanoidJointLimits();',
+  'resetRagdoll();\n      rebuildRagdollJoints();',
   'const settleRagdollAtRest = () => {',
   'const RESTING_SECONDS_BEFORE_SLEEP = 0.22;',
   'world.integrationParameters.numSolverIterations = 8;',
   'world.integrationParameters.numAdditionalFrictionIterations = 4;',
   '.setCanSleep(true)',
   '.setRestitution(0)',
-  'poseSupportTime = 0;',
+  'settleGuardTime = 0;',
+  'const COLLIDER_RADIUS_SCALE = 0.84;',
+  'const COLLIDER_JOINT_GAP = 0.018;',
+  'joint.setLocalFrame1(parentAnchor, parentFrame);',
+  'joint.setLocalFrame2(childAnchor, childFrame);',
   'const TARGET_HUMAN_HEIGHT_METERS = 1.8;',
   'const getGravityForModelHeight = (modelHeight) => {',
   'const gravityY = getGravityForModelHeight(modelHeight);',
   'world = new RAPIER.World({ x: 0, y: gravityY, z: 0 });',
   'const MIN_RAGDOLL_LAUNCH_IMPULSE = 3.5;',
-  'const RAGDOLL_COLLISION_GROUP_BY_SEGMENT = {',
-  'const getRagdollCollisionGroups = (segmentId) => {',
-  'for (let depth = 0; depth < 2; depth += 1) {',
-  '.setCollisionGroups(getRagdollCollisionGroups(definition.id))',
+  'const RAGDOLL_COLLISION_GROUPS = ((RAGDOLL_COLLISION_GROUP << 16) | STAGE_COLLISION_GROUP) >>> 0;',
+  '.setCollisionGroups(RAGDOLL_COLLISION_GROUPS)',
   '.setCollisionGroups(STAGE_COLLISION_GROUPS)',
   'const MIN_YEET_RELEASE_IMPULSE = 5.5;',
   'const MIN_YEET_PLANAR_SPEED = 12;',
@@ -71,6 +83,9 @@ const requiredPhysicsTuning = [
 ];
 for (const value of requiredPhysicsTuning) {
   if (!html.includes(value)) throw new Error(`Missing required physics tuning: ${value}`);
+}
+for (const staleController of ['configureJointMotors', 'applyJointSupport', 'applyPoseSupport', 'applyHumanoidJointLimits']) {
+  if (html.includes(staleController)) throw new Error(`Stale competing joint controller remains: ${staleController}`);
 }
 
 const requiredMobileInputSafety = [
