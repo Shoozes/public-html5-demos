@@ -545,6 +545,9 @@
     };
     const MAX_LINEAR_SPEED = 28;
     const MAX_ANGULAR_SPEED = 18;
+    // Ragdoll capsules only collide with the stage, never with another Soldier capsule.
+    const RAGDOLL_COLLISION_GROUP = 0x00010002;
+    const STAGE_COLLISION_GROUP = 0x00020001;
     const MAX_DRAG_THROW_STRENGTH = 12;
     const DRAG_THROW_DEAD_ZONE_PIXELS = 14;
     const DRAG_THROW_RESPONSE_PIXELS = 210;
@@ -1044,6 +1047,7 @@
         const collider = RAPIER.ColliderDesc.capsule(halfHeight, definition.radius)
           .setFriction(0.72)
           .setRestitution(0)
+          .setCollisionGroups(RAGDOLL_COLLISION_GROUP)
           .setDensity(1.15);
         world.createCollider(collider, body);
         const boneQuaternion = bone.getWorldQuaternion(new THREE.Quaternion());
@@ -1124,7 +1128,13 @@
         world.integrationParameters.numSolverIterations = 8;
         world.integrationParameters.numAdditionalFrictionIterations = 4;
         const groundBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, -0.22, 0));
-        world.createCollider(RAPIER.ColliderDesc.cylinder(0.18, STAGE_RADIUS).setFriction(0.86).setRestitution(0), groundBody);
+        world.createCollider(
+          RAPIER.ColliderDesc.cylinder(0.18, STAGE_RADIUS)
+            .setFriction(0.86)
+            .setRestitution(0)
+            .setCollisionGroups(STAGE_COLLISION_GROUP),
+          groundBody
+        );
 
         loadingTitle.textContent = 'Connecting joints';
         loadingCopy.textContent = 'Mapping Soldier’s Mixamo skeleton to the ragdoll.';
