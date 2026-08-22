@@ -47,7 +47,7 @@ https://shoozes.github.io/public-html5-demos/my-demo/
 
 ### Soldier Ragdoll Lab
 
-A mobile- and desktop-friendly Three.js physics playground using the external [Three.js Soldier GLB](https://github.com/mrdoob/three.js/raw/refs/heads/dev/examples/models/gltf/Soldier.glb). Grab and throw the character, orbit the scene, or reset the ragdoll. It includes optional music and sound effects, enabled from a tap-to-start splash screen. Share it at [Soldier Ragdoll Lab](https://shoozes.github.io/public-html5-demos/ragdoll-lab/).
+A mobile- and desktop-friendly Three.js physics playground using the local Soldier GLB asset. Grab and throw the character, orbit the scene, or reset the ragdoll. It includes optional music and sound effects, enabled from a tap-to-start splash screen. Share it at [Soldier Ragdoll Lab](https://shoozes.github.io/public-html5-demos/ragdoll-lab/).
 
 ### Anthrocybernetics Guided Demo
 

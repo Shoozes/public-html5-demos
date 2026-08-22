@@ -5,8 +5,9 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const demoPath = path.join(root, 'ragdoll-lab', 'index.html');
 const galleryPath = path.join(root, 'index.html');
-const soldierUrl = 'https://github.com/mrdoob/three.js/raw/refs/heads/dev/examples/models/gltf/Soldier.glb';
+const soldierAsset = path.join(root, 'assets', 'glb', 'Soldier.glb');
 const requiredAssets = [
+  soldierAsset,
   path.join(root, 'assets', 'ogg', 'sfx', 'YEET.ogg'),
   path.join(root, 'assets', 'ogg', 'music', 'backroom-static-track.ogg')
 ];
@@ -19,7 +20,7 @@ const requiredMarkup = [
   'id="intro-splash"',
   'id="music-toggle"',
   'id="sound-toggle"',
-  soldierUrl,
+  '../assets/glb/Soldier.glb',
   '../assets/ogg/sfx/YEET.ogg',
   '../assets/ogg/music/backroom-static-track.ogg'
 ];
@@ -30,8 +31,8 @@ for (const value of requiredMarkup) {
 if (!gallery.includes('href="./ragdoll-lab/"')) {
   throw new Error('Gallery does not link to Soldier Ragdoll Lab.');
 }
-if (html.includes('../assets/glb/')) {
-  throw new Error('Soldier demo unexpectedly depends on a local GLB asset.');
+if (html.includes('raw.githubusercontent.com') || html.includes('github.com/mrdoob')) {
+  throw new Error('Soldier demo unexpectedly depends on an external model URL.');
 }
 
 for (const asset of requiredAssets) {
@@ -44,12 +45,7 @@ if (!moduleScript) throw new Error('Soldier demo module script was not found.');
 const syntaxOnlySource = moduleScript[1].replace(/^\s*import .*;\r?\n/gm, '');
 new Function(syntaxOnlySource);
 
-const response = await fetch(soldierUrl);
-if (!response.ok) throw new Error(`Soldier GLB request failed: HTTP ${response.status}`);
-if (response.headers.get('access-control-allow-origin') !== '*') {
-  throw new Error('Soldier GLB is not served with public CORS access.');
-}
-const bytes = Buffer.from(await response.arrayBuffer());
+const bytes = await readFile(soldierAsset);
 if (bytes.readUInt32LE(0) !== 0x46546c67 || bytes.readUInt32LE(16) !== 0x4e4f534a) {
   throw new Error('Soldier model is not a valid GLB.');
 }
