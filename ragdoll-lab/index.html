@@ -72,6 +72,17 @@
     .setting-row input:checked { border-color: rgba(255, 150, 131, 0.82); background: #d85c59; }
     .setting-row input:checked::after { transform: translateX(14px); background: #fff4ea; }
     .setting-row input:focus-visible { outline: 2px solid var(--sky); outline-offset: 3px; }
+    .music-volume-row { display: grid; grid-template-columns: 36px 1fr; gap: 10px; padding: 0 4px 12px; touch-action: none; }
+    .music-volume-control { grid-column: 2; display: grid; gap: 7px; }
+    .music-volume-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 0.68rem; }
+    .music-volume-heading strong { color: var(--ink); font-size: 0.72rem; }
+    .music-volume-heading output { min-width: 3ch; color: var(--accent-bright); font-weight: 820; text-align: right; }
+    .music-volume-slider { appearance: none; width: 100%; height: 22px; margin: 0; padding: 0; background: transparent; cursor: pointer; touch-action: none; }
+    .music-volume-slider::-webkit-slider-runnable-track { height: 5px; border-radius: 999px; background: linear-gradient(90deg, rgba(255, 123, 110, 0.82), rgba(255, 177, 155, 0.42)); }
+    .music-volume-slider::-webkit-slider-thumb { appearance: none; width: 18px; height: 18px; margin-top: -6.5px; border: 2px solid #fff4ea; border-radius: 50%; background: #d85c59; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.38); }
+    .music-volume-slider::-moz-range-track { height: 5px; border: 0; border-radius: 999px; background: linear-gradient(90deg, rgba(255, 123, 110, 0.82), rgba(255, 177, 155, 0.42)); }
+    .music-volume-slider::-moz-range-thumb { width: 14px; height: 14px; border: 2px solid #fff4ea; border-radius: 50%; background: #d85c59; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.38); }
+    .music-volume-slider:focus-visible { outline: 2px solid var(--sky); outline-offset: 3px; border-radius: 999px; }
 
     button { min-height: 45px; padding: 0 15px; border: 1px solid transparent; border-radius: 12px; background: rgba(255, 255, 255, 0.07); color: var(--ink); font: inherit; font-size: 0.79rem; font-weight: 820; cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 130ms ease, background 130ms ease, border-color 130ms ease; }
     button:hover:not(:disabled), button:focus-visible { transform: translateY(-1px); border-color: rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.14); outline: none; }
@@ -201,6 +212,12 @@
         <input id="music-toggle" type="checkbox" checked>
         <span><strong>Music</strong><small>Play the backroom track after the first interaction.</small></span>
       </label>
+      <label class="music-volume-row" for="music-volume">
+        <span class="music-volume-control">
+          <span class="music-volume-heading"><strong>Music volume</strong><output id="music-volume-output" for="music-volume">5%</output></span>
+          <input class="music-volume-slider" id="music-volume" type="range" min="0" max="100" step="1" value="5" aria-label="Music volume">
+        </span>
+      </label>
       <label class="setting-row">
         <input id="sound-toggle" type="checkbox" checked>
         <span><strong>Sound effects</strong><small>Play the YEET sound on a calculated arena exit.</small></span>
@@ -249,17 +266,21 @@
     const stiffJointsToggle = document.getElementById('stiff-joints-toggle');
     const humanoidJointLimitsToggle = document.getElementById('humanoid-joint-limits-toggle');
     const musicToggle = document.getElementById('music-toggle');
+    const musicVolumeSlider = document.getElementById('music-volume');
+    const musicVolumeOutput = document.getElementById('music-volume-output');
     const soundToggle = document.getElementById('sound-toggle');
     const selectionCursorToggle = document.getElementById('selection-cursor-toggle');
     const arenaGridToggle = document.getElementById('arena-grid-toggle');
     const yeetSound = document.getElementById('yeet-sound');
     const music = document.getElementById('music');
-    const MUSIC_VOLUME = 0.0765;
+    const MUSIC_VOLUME = 0.05;
     const YEET_MIN_VOLUME = 0.1;
     const YEET_MAX_VOLUME = 0.22;
     const YEET_FULL_VOLUME_RELEASE_IMPULSE = 9;
     yeetSound.volume = YEET_MAX_VOLUME;
     music.volume = MUSIC_VOLUME;
+    musicVolumeSlider.value = String(Math.round(MUSIC_VOLUME * 100));
+    musicVolumeOutput.value = `${musicVolumeSlider.value}%`;
 
     const setStatus = (state, text) => {
       status.dataset.state = state;
@@ -267,16 +288,44 @@
     };
 
     let yeetPlayed = false;
-    let yeetAudioContext = null;
+    let audioContext = null;
     let yeetBuffer = null;
     let yeetBufferPromise = null;
+    let musicSourceNode = null;
+    let musicGainNode = null;
     let introStarted = false;
 
-    const getYeetAudioContext = () => {
+    const getAudioContext = () => {
       const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
       if (!AudioContextConstructor) return null;
-      yeetAudioContext ||= new AudioContextConstructor();
-      return yeetAudioContext;
+      audioContext ||= new AudioContextConstructor();
+      return audioContext;
+    };
+
+    const getMusicVolume = () => Number(musicVolumeSlider.value) / 100;
+
+    const applyMusicVolume = () => {
+      const volume = Math.min(1, Math.max(0, getMusicVolume()));
+      music.volume = volume;
+      musicVolumeOutput.value = `${Math.round(volume * 100)}%`;
+      if (musicGainNode && audioContext) {
+        musicGainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+      }
+    };
+
+    const ensureMusicAudioGraph = () => {
+      const context = getAudioContext();
+      if (!context || musicGainNode) return context;
+      try {
+        musicSourceNode = context.createMediaElementSource(music);
+        musicGainNode = context.createGain();
+        musicSourceNode.connect(musicGainNode).connect(context.destination);
+        applyMusicVolume();
+      } catch {
+        musicSourceNode = null;
+        musicGainNode = null;
+      }
+      return context;
     };
 
     const warmYeetBuffer = (context) => {
@@ -300,22 +349,24 @@
       return yeetBufferPromise;
     };
 
-    const unlockYeetSound = () => {
-      const context = getYeetAudioContext();
+    const unlockAudio = () => {
+      const context = ensureMusicAudioGraph();
       if (!context) return;
       if (context.state === 'suspended') context.resume().catch(() => {});
       warmYeetBuffer(context);
     };
 
     const startMusic = () => {
-      if (!musicToggle.checked || !music.paused) return;
-      music.play().catch(() => {});
+      if (!musicToggle.checked) return;
+      const context = ensureMusicAudioGraph();
+      if (context?.state === 'suspended') context.resume().catch(() => {});
+      if (music.paused) music.play().catch(() => {});
     };
 
     const enterDemo = () => {
       if (introStarted) return;
       introStarted = true;
-      unlockYeetSound();
+      unlockAudio();
       startMusic();
       introSplash.classList.add('is-leaving');
       window.setTimeout(() => {
@@ -330,7 +381,7 @@
       if (soundToggle.checked) {
         const intensity = getYeetIntensity(releaseStrength);
         const volume = getYeetVolume(releaseStrength);
-        const context = getYeetAudioContext();
+        const context = getAudioContext();
         if (context?.state === 'running' && yeetBuffer) {
           const source = context.createBufferSource();
           const gain = context.createGain();
@@ -347,7 +398,7 @@
             source.stop(now + fadeEnd + 0.02);
           }
         } else {
-          unlockYeetSound();
+          unlockAudio();
           yeetSound.volume = volume;
           yeetSound.currentTime = 0;
           yeetSound.play().catch(() => {});
@@ -861,7 +912,7 @@
 
     const giveToss = () => {
       if (!physicsReady) return;
-      unlockYeetSound();
+      unlockAudio();
       startMusic();
       releaseRagdoll();
       settleGuardTime = 0.45;
@@ -877,7 +928,7 @@
 
     const beginDrag = (event) => {
       if (!physicsReady || dragged) return false;
-      unlockYeetSound();
+      unlockAudio();
       startMusic();
       updatePointer(event);
       const hit = updateSelectionCursor();
@@ -1095,7 +1146,7 @@
     };
 
     dropButton.addEventListener('click', () => {
-      unlockYeetSound();
+      unlockAudio();
       startMusic();
       releaseRagdoll();
     });
@@ -1129,9 +1180,10 @@
       if (musicToggle.checked) startMusic();
       else music.pause();
     });
+    musicVolumeSlider.addEventListener('input', applyMusicVolume);
     soundToggle.addEventListener('change', () => {
       if (!soundToggle.checked) yeetSound.pause();
-      else unlockYeetSound();
+      else unlockAudio();
     });
     selectionCursorToggle.addEventListener('change', () => {
       physicsSettings.showSelectionCursor = selectionCursorToggle.checked;
