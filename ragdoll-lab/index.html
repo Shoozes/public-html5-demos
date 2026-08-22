@@ -218,6 +218,8 @@
     const MAX_STEPS_PER_FRAME = 3;
     const STAGE_RADIUS = 7.35;
     const YEET_EXIT_RADIUS = STAGE_RADIUS + 0.35;
+    const TARGET_HUMAN_HEIGHT_METERS = 1.8;
+    const GRAVITY_METERS_PER_SECOND_SQUARED = 9.81;
     const VERTICAL = new THREE.Vector3(0, 1, 0);
     const timer = new THREE.Timer();
 
@@ -418,6 +420,11 @@
     const getMotionProfile = () => physicsSettings.stiffJoints
       ? { linearDamping: 3.65, angularDamping: 16, maxAngularVelocity: 5.5 }
       : { linearDamping: 0.65, angularDamping: 2.2, maxAngularVelocity: 40 };
+
+    const getGravityForModelHeight = (modelHeight) => {
+      const worldUnitsPerMeter = modelHeight / TARGET_HUMAN_HEIGHT_METERS;
+      return -GRAVITY_METERS_PER_SECOND_SQUARED * worldUnitsPerMeter;
+    };
 
     const poseSupportBySegment = {
       spine: 22,
@@ -909,11 +916,6 @@
         loadingCopy.textContent = 'Warming up the ragdoll simulation.';
         progressBar.style.width = '25%';
         await RAPIER.init();
-        world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
-        world.integrationParameters.numSolverIterations = 8;
-        world.integrationParameters.numAdditionalFrictionIterations = 4;
-        const groundBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, -0.22, 0));
-        world.createCollider(RAPIER.ColliderDesc.cylinder(0.18, STAGE_RADIUS).setFriction(0.86).setRestitution(0), groundBody);
 
         loadingTitle.textContent = 'Loading Soldier';
         loadingCopy.textContent = 'Receiving the rigged character model.';
@@ -957,6 +959,13 @@
         const positionedBounds = new THREE.Box3().setFromObject(character);
         character.position.y += 2.25 - positionedBounds.min.y;
         character.updateMatrixWorld(true);
+        const modelHeight = new THREE.Box3().setFromObject(character).getSize(new THREE.Vector3()).y;
+        const gravityY = getGravityForModelHeight(modelHeight);
+        world = new RAPIER.World({ x: 0, y: gravityY, z: 0 });
+        world.integrationParameters.numSolverIterations = 8;
+        world.integrationParameters.numAdditionalFrictionIterations = 4;
+        const groundBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, -0.22, 0));
+        world.createCollider(RAPIER.ColliderDesc.cylinder(0.18, STAGE_RADIUS).setFriction(0.86).setRestitution(0), groundBody);
 
         loadingTitle.textContent = 'Connecting joints';
         loadingCopy.textContent = 'Mapping Soldier’s Mixamo skeleton to the ragdoll.';

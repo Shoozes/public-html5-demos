@@ -43,7 +43,11 @@ const requiredPhysicsTuning = [
   'world.integrationParameters.numAdditionalFrictionIterations = 4;',
   '.setCanSleep(true)',
   '.setRestitution(0)',
-  'poseSupportTime = 0;'
+  'poseSupportTime = 0;',
+  'const TARGET_HUMAN_HEIGHT_METERS = 1.8;',
+  'const getGravityForModelHeight = (modelHeight) => {',
+  'const gravityY = getGravityForModelHeight(modelHeight);',
+  'world = new RAPIER.World({ x: 0, y: gravityY, z: 0 });'
 ];
 for (const value of requiredPhysicsTuning) {
   if (!html.includes(value)) throw new Error(`Missing required physics tuning: ${value}`);
