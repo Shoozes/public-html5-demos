@@ -179,7 +179,7 @@
     </div>
 
     <div class="bottom">
-      <p class="hint">Drag Soldier farther and faster for a stronger throw. Send Soldier off the arena at speed for a YEET. Drag empty space to orbit. Right-drag or use two fingers to pan. Scroll or pinch to zoom. <kbd>R</kbd> resets.</p>
+      <p class="hint">Pull Soldier farther for a stronger throw. Send Soldier off the arena at speed for a YEET. Drag empty space to orbit. Right-drag or use two fingers to pan. Scroll or pinch to zoom. <kbd>R</kbd> resets.</p>
       <div class="control-dock" aria-label="Ragdoll actions">
         <button class="primary" id="drop-button" type="button" disabled>Drop Soldier</button>
         <button id="toss-button" type="button" disabled>Give a toss</button>
@@ -248,9 +248,11 @@
     const arenaGridToggle = document.getElementById('arena-grid-toggle');
     const yeetSound = document.getElementById('yeet-sound');
     const music = document.getElementById('music');
-    const YEET_VOLUME = 0.82;
-    yeetSound.volume = YEET_VOLUME;
-    music.volume = 0.32;
+    const MUSIC_VOLUME = 0.1;
+    const YEET_MIN_VOLUME = 0.035;
+    const YEET_MAX_VOLUME = 0.1;
+    yeetSound.volume = YEET_MAX_VOLUME;
+    music.volume = MUSIC_VOLUME;
 
     const setStatus = (state, text) => {
       status.dataset.state = state;
@@ -315,7 +317,7 @@
       }, 220);
     };
 
-    const playYeet = () => {
+    const playYeet = (volume) => {
       if (yeetPlayed) return false;
       yeetPlayed = true;
       if (soundToggle.checked) {
@@ -323,12 +325,13 @@
         if (context?.state === 'running' && yeetBuffer) {
           const source = context.createBufferSource();
           const gain = context.createGain();
-          gain.gain.value = YEET_VOLUME;
+          gain.gain.value = volume;
           source.buffer = yeetBuffer;
           source.connect(gain).connect(context.destination);
           source.start();
         } else {
           unlockYeetSound();
+          yeetSound.volume = volume;
           yeetSound.currentTime = 0;
           yeetSound.play().catch(() => {});
         }
@@ -502,8 +505,9 @@
     };
     const MAX_LINEAR_SPEED = 28;
     const MAX_ANGULAR_SPEED = 18;
-    const DRAG_THROW_MULTIPLIER = 3.8;
-    const MAX_DRAG_THROW_IMPULSE = 12;
+    const MAX_DRAG_THROW_STRENGTH = 12;
+    const DRAG_THROW_DEAD_ZONE_PIXELS = 14;
+    const DRAG_THROW_RESPONSE_PIXELS = 210;
     const MIN_RAGDOLL_LAUNCH_IMPULSE = 3.5;
     const MIN_YEET_RELEASE_IMPULSE = 5.5;
     const MIN_YEET_PLANAR_SPEED = 12;
@@ -534,11 +538,27 @@
     let cursorBody = null;
     let lastPointerPosition = null;
     let dragStartPosition = null;
+    let lastPointerScreen = null;
+    let dragStartScreen = null;
 
     const updatePointer = (event) => {
       const bounds = renderer.domElement.getBoundingClientRect();
       pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
       pointer.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1;
+    };
+
+    const getDragThrowStrength = (pullDistancePixels) => {
+      const chargedDistance = Math.max(0, pullDistancePixels - DRAG_THROW_DEAD_ZONE_PIXELS);
+      return MAX_DRAG_THROW_STRENGTH * (1 - Math.exp(-chargedDistance / DRAG_THROW_RESPONSE_PIXELS));
+    };
+
+    const getYeetVolume = (releaseStrength) => {
+      const strengthProgress = THREE.MathUtils.clamp(
+        (releaseStrength - MIN_YEET_RELEASE_IMPULSE) / (MAX_DRAG_THROW_STRENGTH - MIN_YEET_RELEASE_IMPULSE),
+        0,
+        1
+      );
+      return THREE.MathUtils.lerp(YEET_MIN_VOLUME, YEET_MAX_VOLUME, strengthProgress);
     };
 
     const worldPointToLocal = (segment, worldPoint) => {
@@ -837,6 +857,8 @@
       dragged = selected;
       lastPointerPosition = hitPoint.clone();
       dragStartPosition = hitPoint.clone();
+      lastPointerScreen = new THREE.Vector2(event.clientX, event.clientY);
+      dragStartScreen = lastPointerScreen.clone();
       selectionMarker.position.copy(hitPoint);
       selectionMaterial.color.set('#ffb19b');
       selectionMarker.visible = true;
@@ -862,16 +884,18 @@
       cursorBody.setNextKinematicTranslation({ x: target.x, y: target.y, z: target.z });
       selectionMarker.position.copy(target);
       lastPointerPosition = target;
+      lastPointerScreen.set(event.clientX, event.clientY);
     };
 
     const releaseDrag = (throwOnRelease = false) => {
       let playedYeet = false;
-      if (throwOnRelease && dragged && lastPointerPosition && dragStartPosition) {
-        const releaseImpulse = lastPointerPosition.clone().sub(dragStartPosition).multiplyScalar(DRAG_THROW_MULTIPLIER);
-        if (releaseImpulse.length() > MAX_DRAG_THROW_IMPULSE) releaseImpulse.setLength(MAX_DRAG_THROW_IMPULSE);
-        if (releaseImpulse.length() > 0.04) {
+      if (throwOnRelease && dragged && lastPointerPosition && dragStartPosition && lastPointerScreen && dragStartScreen) {
+        const worldDirection = lastPointerPosition.clone().sub(dragStartPosition);
+        const pullDistancePixels = dragStartScreen.distanceTo(lastPointerScreen);
+        const releaseStrength = getDragThrowStrength(pullDistancePixels);
+        if (worldDirection.lengthSq() > 0.0004 && releaseStrength > 0.04) {
+          const releaseImpulse = worldDirection.normalize().multiplyScalar(releaseStrength);
           dragged.body.applyImpulse({ x: releaseImpulse.x, y: releaseImpulse.y, z: releaseImpulse.z }, true);
-          const releaseStrength = releaseImpulse.length();
           if (releaseStrength >= MIN_RAGDOLL_LAUNCH_IMPULSE) {
             const launchVelocity = releaseImpulse.multiplyScalar(DRAG_LAUNCH_VELOCITY_MULTIPLIER);
             if (launchVelocity.length() > MAX_DRAG_LAUNCH_SPEED) launchVelocity.setLength(MAX_DRAG_LAUNCH_SPEED);
@@ -880,7 +904,7 @@
             const willYeet = willLaunchExitArena(launchVelocity);
             launchRagdoll(launchVelocity);
             if (willYeet && releaseStrength >= MIN_YEET_RELEASE_IMPULSE && planarLaunchSpeed >= MIN_YEET_PLANAR_SPEED) {
-              playedYeet = playYeet();
+              playedYeet = playYeet(getYeetVolume(releaseStrength));
             }
           }
         }
@@ -892,6 +916,8 @@
       dragged = null;
       lastPointerPosition = null;
       dragStartPosition = null;
+      lastPointerScreen = null;
+      dragStartScreen = null;
       controls.enabled = true;
       renderer.domElement.style.cursor = 'default';
       if (!playedYeet) setStatus(active ? 'active' : 'ready', active ? 'Physics live' : 'Ready to drop');
@@ -1090,13 +1116,16 @@
       }
     }, true);
     renderer.domElement.addEventListener('pointermove', moveDrag);
-    renderer.domElement.addEventListener('pointerup', () => releaseDrag(true));
-    renderer.domElement.addEventListener('pointercancel', releaseDrag);
+    renderer.domElement.addEventListener('pointerup', (event) => {
+      moveDrag(event);
+      releaseDrag(true);
+    });
+    renderer.domElement.addEventListener('pointercancel', () => releaseDrag());
     renderer.domElement.addEventListener('pointerleave', () => {
       if (!dragged) selectionMarker.visible = false;
     });
     renderer.domElement.addEventListener('contextmenu', (event) => event.preventDefault());
-    window.addEventListener('blur', releaseDrag);
+    window.addEventListener('blur', () => releaseDrag());
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();

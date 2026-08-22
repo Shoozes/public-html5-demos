@@ -51,7 +51,12 @@ const requiredPhysicsTuning = [
   'const MIN_RAGDOLL_LAUNCH_IMPULSE = 3.5;',
   'const MIN_YEET_RELEASE_IMPULSE = 5.5;',
   'const MIN_YEET_PLANAR_SPEED = 12;',
-  'releaseStrength >= MIN_YEET_RELEASE_IMPULSE && planarLaunchSpeed >= MIN_YEET_PLANAR_SPEED'
+  'releaseStrength >= MIN_YEET_RELEASE_IMPULSE && planarLaunchSpeed >= MIN_YEET_PLANAR_SPEED',
+  'const DRAG_THROW_DEAD_ZONE_PIXELS = 14;',
+  'const DRAG_THROW_RESPONSE_PIXELS = 210;',
+  'const getDragThrowStrength = (pullDistancePixels) => {',
+  'const pullDistancePixels = dragStartScreen.distanceTo(lastPointerScreen);',
+  'worldDirection.normalize().multiplyScalar(releaseStrength);'
 ];
 for (const value of requiredPhysicsTuning) {
   if (!html.includes(value)) throw new Error(`Missing required physics tuning: ${value}`);
@@ -76,13 +81,24 @@ const requiredLowLatencyAudio = [
   'const warmYeetBuffer = (context) => {',
   'context.decodeAudioData(audioData)',
   'const source = context.createBufferSource();',
-  'source.start();'
+  'source.start();',
+  'const MUSIC_VOLUME = 0.1;',
+  'const YEET_MIN_VOLUME = 0.035;',
+  'const YEET_MAX_VOLUME = 0.1;',
+  'const getYeetVolume = (releaseStrength) => {',
+  'playedYeet = playYeet(getYeetVolume(releaseStrength));'
 ];
 for (const value of requiredLowLatencyAudio) {
   if (!html.includes(value)) throw new Error(`Missing required low-latency audio behavior: ${value}`);
 }
 if (html.includes('yeetSound.muted = true;') || html.includes('yeetSound.play().then(() =>')) {
   throw new Error('YEET startup sound prime must not play the audible sound element.');
+}
+if (html.includes('DRAG_THROW_MULTIPLIER') || html.includes('MAX_DRAG_THROW_IMPULSE')) {
+  throw new Error('Throw strength must not depend directly on camera-scaled world distance.');
+}
+if (html.includes("addEventListener('pointercancel', releaseDrag)") || html.includes("addEventListener('blur', releaseDrag)")) {
+  throw new Error('Cancelled or unfocused drags must not throw the ragdoll.');
 }
 
 for (const asset of requiredAssets) {
