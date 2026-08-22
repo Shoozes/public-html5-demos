@@ -195,7 +195,7 @@
       </label>
       <label class="setting-row">
         <input id="humanoid-joint-limits-toggle" type="checkbox" checked>
-        <span><strong>Humanoid joint limits</strong><small>Locks torso twist and keeps the neck, elbows, knees, and ankles on natural hinge directions.</small></span>
+        <span><strong>Humanoid joint limits</strong><small>Locks torso twist and keeps the elbows, knees, and ankles on natural hinge directions.</small></span>
       </label>
       <label class="setting-row">
         <input id="music-toggle" type="checkbox" checked>
@@ -229,6 +229,7 @@
     const YEET_EXIT_RADIUS = STAGE_RADIUS + 0.35;
     const TARGET_HUMAN_HEIGHT_METERS = 1.8;
     const GRAVITY_METERS_PER_SECOND_SQUARED = 9.81;
+    const RAGDOLL_SOLVER_ITERATIONS = 20;
     const VERTICAL = new THREE.Vector3(0, 1, 0);
     const timer = new THREE.Timer();
 
@@ -475,10 +476,13 @@
       { id: 'rightShin', bone: 'mixamorig:RightLeg', end: 'mixamorig:RightFoot', radius: 0.15, parent: 'rightThigh' },
       { id: 'rightFoot', bone: 'mixamorig:RightFoot', end: 'mixamorig:RightToeBase', radius: 0.13, parent: 'rightShin' }
     ];
-    const RAGDOLL_COLLISION_GROUP = 1 << 0;
-    const STAGE_COLLISION_GROUP = 1 << 1;
-    const RAGDOLL_COLLISION_GROUPS = ((RAGDOLL_COLLISION_GROUP << 16) | STAGE_COLLISION_GROUP) >>> 0;
-    const STAGE_COLLISION_GROUPS = ((STAGE_COLLISION_GROUP << 16) | RAGDOLL_COLLISION_GROUP) >>> 0;
+    const BODY_COLLISION_GROUP = 1 << 0;
+    const HEAD_COLLISION_GROUP = 1 << 1;
+    const STAGE_COLLISION_GROUP = 1 << 2;
+    // Keep limb self-collision quiet while the head still blocks against the torso.
+    const BODY_COLLISION_GROUPS = ((BODY_COLLISION_GROUP << 16) | HEAD_COLLISION_GROUP | STAGE_COLLISION_GROUP) >>> 0;
+    const HEAD_COLLISION_GROUPS = ((HEAD_COLLISION_GROUP << 16) | BODY_COLLISION_GROUP | STAGE_COLLISION_GROUP) >>> 0;
+    const STAGE_COLLISION_GROUPS = ((STAGE_COLLISION_GROUP << 16) | BODY_COLLISION_GROUP | HEAD_COLLISION_GROUP) >>> 0;
 
     const physicsSettings = {
       stiffJoints: true,
@@ -501,7 +505,7 @@
       chest: { type: 'fixed' },
       upperChest: { type: 'fixed' },
       neck: { type: 'fixed' },
-      head: { type: 'hinge', axis: 'x', limits: [-0.24, 0.24] },
+      head: { type: 'fixed' },
       leftUpperArm: { type: 'hinge', axis: 'z', limits: [-1.2, 1.2] },
       leftForearm: { type: 'hinge', axis: 'z', limits: [-1.35, 1.35] },
       rightUpperArm: { type: 'hinge', axis: 'z', limits: [-1.2, 1.2] },
@@ -679,17 +683,18 @@
       const parentAnchor = worldPointToLocal(parent, anchor);
       const childAnchor = worldPointToLocal(child, anchor);
       const constraint = jointConstraintBySegment[child.id];
+      const isHead = child.id === 'head';
       let jointData;
       let parentFrame;
       let childFrame;
 
-      if (!physicsSettings.humanoidJointLimits || !constraint) {
+      if ((!physicsSettings.humanoidJointLimits || !constraint) && !isHead) {
         jointData = RAPIER.JointData.spherical(parentAnchor, childAnchor);
       } else {
         const jointWorldFrame = getJointWorldFrame(constraint);
         parentFrame = parent.restQuaternion.clone().invert().multiply(jointWorldFrame);
         childFrame = child.restQuaternion.clone().invert().multiply(jointWorldFrame);
-        if (constraint.type === 'fixed') {
+        if (isHead || constraint.type === 'fixed') {
           jointData = RAPIER.JointData.fixed(parentAnchor, parentFrame, childAnchor, childFrame);
         } else if (constraint.type === 'hinge') {
           jointData = RAPIER.JointData.revolute(parentAnchor, childAnchor, { x: 1, y: 0, z: 0 });
@@ -994,7 +999,7 @@
         const collider = RAPIER.ColliderDesc.capsule(halfHeight, colliderRadius)
           .setFriction(0.72)
           .setRestitution(0)
-          .setCollisionGroups(RAGDOLL_COLLISION_GROUPS)
+          .setCollisionGroups(definition.id === 'head' ? HEAD_COLLISION_GROUPS : BODY_COLLISION_GROUPS)
           .setDensity(1.15);
         world.createCollider(collider, body);
         const boneQuaternion = bone.getWorldQuaternion(new THREE.Quaternion());
@@ -1060,7 +1065,7 @@
         const modelHeight = new THREE.Box3().setFromObject(character).getSize(new THREE.Vector3()).y;
         const gravityY = getGravityForModelHeight(modelHeight);
         world = new RAPIER.World({ x: 0, y: gravityY, z: 0 });
-        world.integrationParameters.numSolverIterations = 8;
+        world.integrationParameters.numSolverIterations = RAGDOLL_SOLVER_ITERATIONS;
         world.integrationParameters.numAdditionalFrictionIterations = 4;
         const groundBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, -0.22, 0));
         world.createCollider(

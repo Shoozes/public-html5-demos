@@ -1,2 +1,6 @@
 # Local credentials used by the guarded Git push helper.
 .tools/.secrets/
+
+# Ephemeral state and screenshots from local browser regression checks.
+.playwright-cli/
+output/playwright/

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const demoPath = path.join(root, 'ragdoll-lab', 'index.html');
 const galleryPath = path.join(root, 'index.html');
+const readmePath = path.join(root, 'README.md');
 const soldierAsset = path.join(root, 'assets', 'glb', 'Soldier.glb');
 const requiredAssets = [
   soldierAsset,
@@ -14,6 +15,7 @@ const requiredAssets = [
 
 const html = await readFile(demoPath, 'utf8');
 const gallery = await readFile(galleryPath, 'utf8');
+const readme = await readFile(readmePath, 'utf8');
 const requiredMarkup = [
   'https://cdn.jsdelivr.net/npm/three@0.185.1/',
   'https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.20.0/',
@@ -32,6 +34,9 @@ for (const value of requiredMarkup) {
 if (!gallery.includes('href="./ragdoll-lab/"')) {
   throw new Error('Gallery does not link to Soldier Ragdoll Lab.');
 }
+if (!readme.includes('rigid neck/head link, framed limb hinges, selective head collision, and higher solver budget')) {
+  throw new Error('README does not describe the current ragdoll stability behavior.');
+}
 if (html.includes('raw.githubusercontent.com') || html.includes('github.com/mrdoob')) {
   throw new Error('Soldier demo unexpectedly depends on an external model URL.');
 }
@@ -40,13 +45,19 @@ const requiredPhysicsTuning = [
   'const jointConstraintBySegment = {',
   "spine: { type: 'fixed' },",
   "neck: { type: 'fixed' },",
-  "head: { type: 'hinge', axis: 'x', limits: [-0.24, 0.24] },",
+  "head: { type: 'fixed' },",
   "leftUpperArm: { type: 'hinge', axis: 'z', limits: [-1.2, 1.2] },",
   "leftForearm: { type: 'hinge', axis: 'z', limits: [-1.35, 1.35] },",
   "leftThigh: { type: 'hinge', axis: 'x', limits: [-0.9, 0.9] },",
   'const createRagdollJoint = (child) => {',
+  "const isHead = child.id === 'head';",
+  'if ((!physicsSettings.humanoidJointLimits || !constraint) && !isHead) {',
+  "if (isHead || constraint.type === 'fixed') {",
   'RAPIER.JointData.fixed(parentAnchor, parentFrame, childAnchor, childFrame);',
+  'const getJointWorldFrame = (constraint) => {',
   'RAPIER.JointData.revolute(parentAnchor, childAnchor, { x: 1, y: 0, z: 0 });',
+  'joint.setLocalFrame1(parentAnchor, parentFrame);',
+  'joint.setLocalFrame2(childAnchor, childFrame);',
   'if (constraint.limits) joint.setLimits(constraint.limits[0], constraint.limits[1]);',
   'const rebuildRagdollJoints = () => {',
   'world.removeImpulseJoint(child.joint, true);',
@@ -55,22 +66,22 @@ const requiredPhysicsTuning = [
   'resetRagdoll();\n      rebuildRagdollJoints();',
   'const settleRagdollAtRest = () => {',
   'const RESTING_SECONDS_BEFORE_SLEEP = 0.22;',
-  'world.integrationParameters.numSolverIterations = 8;',
   'world.integrationParameters.numAdditionalFrictionIterations = 4;',
   '.setCanSleep(true)',
   '.setRestitution(0)',
   'settleGuardTime = 0;',
   'const COLLIDER_RADIUS_SCALE = 0.84;',
   'const COLLIDER_JOINT_GAP = 0.018;',
-  'joint.setLocalFrame1(parentAnchor, parentFrame);',
-  'joint.setLocalFrame2(childAnchor, childFrame);',
   'const TARGET_HUMAN_HEIGHT_METERS = 1.8;',
+  'const RAGDOLL_SOLVER_ITERATIONS = 20;',
   'const getGravityForModelHeight = (modelHeight) => {',
   'const gravityY = getGravityForModelHeight(modelHeight);',
   'world = new RAPIER.World({ x: 0, y: gravityY, z: 0 });',
+  'world.integrationParameters.numSolverIterations = RAGDOLL_SOLVER_ITERATIONS;',
   'const MIN_RAGDOLL_LAUNCH_IMPULSE = 3.5;',
-  'const RAGDOLL_COLLISION_GROUPS = ((RAGDOLL_COLLISION_GROUP << 16) | STAGE_COLLISION_GROUP) >>> 0;',
-  '.setCollisionGroups(RAGDOLL_COLLISION_GROUPS)',
+  'const BODY_COLLISION_GROUPS = ((BODY_COLLISION_GROUP << 16) | HEAD_COLLISION_GROUP | STAGE_COLLISION_GROUP) >>> 0;',
+  'const HEAD_COLLISION_GROUPS = ((HEAD_COLLISION_GROUP << 16) | BODY_COLLISION_GROUP | STAGE_COLLISION_GROUP) >>> 0;',
+  "definition.id === 'head' ? HEAD_COLLISION_GROUPS : BODY_COLLISION_GROUPS",
   '.setCollisionGroups(STAGE_COLLISION_GROUPS)',
   'const MIN_YEET_RELEASE_IMPULSE = 5.5;',
   'const MIN_YEET_PLANAR_SPEED = 12;',
@@ -84,7 +95,7 @@ const requiredPhysicsTuning = [
 for (const value of requiredPhysicsTuning) {
   if (!html.includes(value)) throw new Error(`Missing required physics tuning: ${value}`);
 }
-for (const staleController of ['configureJointMotors', 'applyJointSupport', 'applyPoseSupport', 'applyHumanoidJointLimits']) {
+for (const staleController of ['configureJointMotors', 'applyJointSupport', 'applyPoseSupport', 'applyHumanoidJointLimits', 'JointData.revoluteWithAxes']) {
   if (html.includes(staleController)) throw new Error(`Stale competing joint controller remains: ${staleController}`);
 }
 
