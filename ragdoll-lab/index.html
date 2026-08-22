@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#091019">
   <meta name="color-scheme" content="dark">
   <link rel="icon" href="data:,">
-  <title>Ruby Ragdoll Lab</title>
+  <title>Soldier Ragdoll Lab</title>
   <style>
     :root {
       color-scheme: dark;
@@ -134,7 +134,7 @@
   <div class="loading" id="loading" aria-live="polite">
     <div class="loading-card">
       <div class="loader" aria-hidden="true"></div>
-      <h2 id="loading-title">Preparing Ruby</h2>
+      <h2 id="loading-title">Preparing Soldier</h2>
       <p id="loading-copy">Loading the character and its physics lab.</p>
       <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
     </div>
@@ -142,14 +142,14 @@
 
   <div class="fallback" id="fallback" hidden role="alert">
     <div class="fallback-card">
-      <h2>Ruby needs WebGL</h2>
+      <h2>The ragdoll needs WebGL</h2>
       <p>This demo needs a current browser with WebGL and access to the pinned Three.js and physics libraries. Please try an updated desktop or mobile browser, then reload.</p>
     </div>
   </div>
 
-  <div class="splash" id="intro-splash" hidden role="button" tabindex="0" aria-label="Start Ruby Ragdoll Lab with sound">
+  <div class="splash" id="intro-splash" hidden role="button" tabindex="0" aria-label="Start Soldier Ragdoll Lab with sound">
     <div class="splash-card">
-      <p class="splash-kicker">Ruby Ragdoll Lab</p>
+      <p class="splash-kicker">Soldier Ragdoll Lab</p>
       <h2>Ready to tumble?</h2>
       <p class="splash-copy">Tap the screen to enter the lab and start the music.</p>
       <span class="tap-prompt" aria-hidden="true">Tap the screen</span>
@@ -163,20 +163,20 @@
     <source src="../assets/ogg/music/backroom-static-track.ogg" type="audio/ogg">
   </audio>
 
-  <main class="hud" aria-label="Ruby Ragdoll Lab controls">
+  <main class="hud" aria-label="Soldier Ragdoll Lab controls">
     <div class="topbar">
       <section class="brand" aria-labelledby="demo-title">
         <p class="eyebrow">Physics playground</p>
-        <h1 id="demo-title">Ruby Ragdoll Lab</h1>
-        <p>Grab a limb, spin the camera, and let Ruby loose.</p>
+        <h1 id="demo-title">Soldier Ragdoll Lab</h1>
+        <p>Grab a limb, spin the camera, and let Soldier loose.</p>
       </section>
       <div class="status" id="status" data-state="loading" aria-live="polite"><span class="status-dot" aria-hidden="true"></span><span id="status-copy">Loading</span></div>
     </div>
 
     <div class="bottom">
-      <p class="hint">Drag Ruby farther and faster for a stronger throw. Send Ruby off the arena at speed for a YEET. Drag empty space to orbit. Right-drag or use two fingers to pan. Scroll or pinch to zoom. <kbd>R</kbd> resets.</p>
+      <p class="hint">Drag Soldier farther and faster for a stronger throw. Send Soldier off the arena at speed for a YEET. Drag empty space to orbit. Right-drag or use two fingers to pan. Scroll or pinch to zoom. <kbd>R</kbd> resets.</p>
       <div class="control-dock" aria-label="Ragdoll actions">
-        <button class="primary" id="drop-button" type="button" disabled>Drop Ruby</button>
+        <button class="primary" id="drop-button" type="button" disabled>Drop Soldier</button>
         <button id="toss-button" type="button" disabled>Give a toss</button>
         <button id="reset-button" type="button" disabled>Reset</button>
         <button id="settings-button" type="button" aria-expanded="false" aria-controls="settings-panel">Settings</button>
@@ -186,7 +186,7 @@
       <p class="settings-title">Ragdoll settings</p>
       <label class="setting-row">
         <input id="stiff-joints-toggle" type="checkbox" checked>
-        <span><strong>Stiffer joints</strong><small>Holds Ruby's torso and limbs together in flight, then settles without ground wobble.</small></span>
+        <span><strong>Stiffer joints</strong><small>Holds Soldier's torso and limbs together in flight, then settles without ground wobble.</small></span>
       </label>
       <label class="setting-row">
         <input id="music-toggle" type="checkbox" checked>
@@ -198,7 +198,7 @@
       </label>
       <label class="setting-row">
         <input id="selection-cursor-toggle" type="checkbox" checked>
-        <span><strong>Selection cursor</strong><small>Shows a coral cursor when Ruby can be grabbed.</small></span>
+        <span><strong>Selection cursor</strong><small>Shows a coral cursor when Soldier can be grabbed.</small></span>
       </label>
       <label class="setting-row">
         <input id="arena-grid-toggle" type="checkbox" checked>
@@ -213,7 +213,7 @@
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import RAPIER from '@dimforge/rapier3d-compat';
 
-    const MODEL_URL = '../assets/glb/Ruby_GR.glb';
+    const MODEL_URL = 'https://github.com/mrdoob/three.js/raw/refs/heads/dev/examples/models/gltf/Soldier.glb';
     const STEP_SECONDS = 1 / 60;
     const MAX_STEPS_PER_FRAME = 3;
     const STAGE_RADIUS = 7.35;
@@ -305,7 +305,7 @@
 
     const webglProbe = document.createElement('canvas');
     if (!webglProbe.getContext('webgl2') && !webglProbe.getContext('webgl')) {
-      showFailure('This browser does not support WebGL, which Ruby Ragdoll Lab needs to run.');
+      showFailure('This browser does not support WebGL, which Soldier Ragdoll Lab needs to run.');
       throw new Error('WebGL unavailable');
     }
 
@@ -689,7 +689,7 @@
       }
       applyPhysicsTuning();
       setStatus('ready', 'Ready to drop');
-      dropButton.textContent = 'Drop Ruby';
+      dropButton.textContent = 'Drop Soldier';
       tossButton.disabled = false;
     };
 
@@ -702,7 +702,7 @@
         segment.body.wakeUp();
       }
       setStatus('active', 'Physics live');
-      dropButton.textContent = 'Ruby is loose';
+      dropButton.textContent = 'Soldier is loose';
       tossButton.disabled = false;
     };
 
@@ -812,12 +812,12 @@
       for (const definition of segmentDefinitions) {
         const bone = bones.get(normalizeBoneName(definition.bone));
         const endBone = bones.get(normalizeBoneName(definition.end));
-        if (!bone || !endBone) throw new Error(`Ruby's rig is missing ${definition.bone} or ${definition.end}.`);
+        if (!bone || !endBone) throw new Error(`Soldier's rig is missing ${definition.bone} or ${definition.end}.`);
         const start = bone.getWorldPosition(new THREE.Vector3());
         const end = endBone.getWorldPosition(new THREE.Vector3());
         const direction = end.clone().sub(start);
         const length = direction.length();
-        if (length < 0.02) throw new Error(`Ruby's ${definition.id} bone is too short to simulate.`);
+        if (length < 0.02) throw new Error(`Soldier's ${definition.id} bone is too short to simulate.`);
         const rotation = new THREE.Quaternion().setFromUnitVectors(VERTICAL, direction.normalize());
         const center = start.clone().lerp(end, 0.5);
         const motionProfile = getMotionProfile();
@@ -868,7 +868,7 @@
         const groundBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, -0.22, 0));
         world.createCollider(RAPIER.ColliderDesc.cylinder(0.18, STAGE_RADIUS).setFriction(0.94).setRestitution(0.02), groundBody);
 
-        loadingTitle.textContent = 'Loading Ruby';
+        loadingTitle.textContent = 'Loading Soldier';
         loadingCopy.textContent = 'Receiving the rigged character model.';
         progressBar.style.width = '42%';
         const loader = new GLTFLoader();
@@ -876,7 +876,7 @@
           if (event.lengthComputable) progressBar.style.width = `${Math.max(42, Math.min(86, 42 + event.loaded / event.total * 44))}%`;
         });
         character = gltf.scene;
-        character.name = 'Ruby';
+        character.name = 'Soldier';
         character.traverse((object) => {
           if (object.isMesh) {
             const materials = Array.isArray(object.material) ? object.material : [object.material];
@@ -896,15 +896,14 @@
             characterMesh ||= object;
           }
         });
-        if (!characterMesh) throw new Error('Ruby’s GLB loaded without a visible mesh.');
+        if (!characterMesh) throw new Error('Soldier’s GLB loaded without a visible mesh.');
 
         scene.add(character);
-        // The source GLB retains Blender's Z-up armature transform; normalize it for a Y-up scene.
-        character.rotation.set(-Math.PI / 2, 0, 0);
+        character.rotation.set(0, 0, 0);
         character.updateMatrixWorld(true);
         const rawBounds = new THREE.Box3().setFromObject(character);
         const rawHeight = rawBounds.getSize(new THREE.Vector3()).y;
-        if (!Number.isFinite(rawHeight) || rawHeight <= 0) throw new Error('Ruby’s GLB has an invalid size.');
+        if (!Number.isFinite(rawHeight) || rawHeight <= 0) throw new Error('Soldier’s GLB has an invalid size.');
         const modelScale = 4.15 / rawHeight;
         character.scale.setScalar(modelScale);
         character.updateMatrixWorld(true);
@@ -913,7 +912,7 @@
         character.updateMatrixWorld(true);
 
         loadingTitle.textContent = 'Connecting joints';
-        loadingCopy.textContent = 'Mapping Ruby’s Mixamo skeleton to the ragdoll.';
+        loadingCopy.textContent = 'Mapping Soldier’s Mixamo skeleton to the ragdoll.';
         progressBar.style.width = '92%';
         buildRagdoll();
         resetRagdoll();
@@ -926,7 +925,7 @@
         introSplash.hidden = false;
         introSplash.focus();
       } catch (error) {
-        showFailure(error instanceof Error ? error.message : 'Ruby could not be prepared.');
+        showFailure(error instanceof Error ? error.message : 'Soldier could not be prepared.');
       }
     };
 
