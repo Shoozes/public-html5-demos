@@ -504,6 +504,9 @@
     const MAX_ANGULAR_SPEED = 18;
     const DRAG_THROW_MULTIPLIER = 3.8;
     const MAX_DRAG_THROW_IMPULSE = 12;
+    const MIN_RAGDOLL_LAUNCH_IMPULSE = 3.5;
+    const MIN_YEET_RELEASE_IMPULSE = 5.5;
+    const MIN_YEET_PLANAR_SPEED = 12;
     const DRAG_LAUNCH_VELOCITY_MULTIPLIER = 2.45;
     const MAX_DRAG_LAUNCH_SPEED = 26;
     const LAUNCH_FLIGHT_SECONDS = 0.95;
@@ -868,13 +871,17 @@
         if (releaseImpulse.length() > MAX_DRAG_THROW_IMPULSE) releaseImpulse.setLength(MAX_DRAG_THROW_IMPULSE);
         if (releaseImpulse.length() > 0.04) {
           dragged.body.applyImpulse({ x: releaseImpulse.x, y: releaseImpulse.y, z: releaseImpulse.z }, true);
-          if (releaseImpulse.length() >= 3.5) {
+          const releaseStrength = releaseImpulse.length();
+          if (releaseStrength >= MIN_RAGDOLL_LAUNCH_IMPULSE) {
             const launchVelocity = releaseImpulse.multiplyScalar(DRAG_LAUNCH_VELOCITY_MULTIPLIER);
             if (launchVelocity.length() > MAX_DRAG_LAUNCH_SPEED) launchVelocity.setLength(MAX_DRAG_LAUNCH_SPEED);
             launchVelocity.y = Math.max(launchVelocity.y, MIN_LAUNCH_LIFT);
+            const planarLaunchSpeed = Math.hypot(launchVelocity.x, launchVelocity.z);
             const willYeet = willLaunchExitArena(launchVelocity);
             launchRagdoll(launchVelocity);
-            if (willYeet) playedYeet = playYeet();
+            if (willYeet && releaseStrength >= MIN_YEET_RELEASE_IMPULSE && planarLaunchSpeed >= MIN_YEET_PLANAR_SPEED) {
+              playedYeet = playYeet();
+            }
           }
         }
       }

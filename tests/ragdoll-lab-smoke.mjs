@@ -47,7 +47,11 @@ const requiredPhysicsTuning = [
   'const TARGET_HUMAN_HEIGHT_METERS = 1.8;',
   'const getGravityForModelHeight = (modelHeight) => {',
   'const gravityY = getGravityForModelHeight(modelHeight);',
-  'world = new RAPIER.World({ x: 0, y: gravityY, z: 0 });'
+  'world = new RAPIER.World({ x: 0, y: gravityY, z: 0 });',
+  'const MIN_RAGDOLL_LAUNCH_IMPULSE = 3.5;',
+  'const MIN_YEET_RELEASE_IMPULSE = 5.5;',
+  'const MIN_YEET_PLANAR_SPEED = 12;',
+  'releaseStrength >= MIN_YEET_RELEASE_IMPULSE && planarLaunchSpeed >= MIN_YEET_PLANAR_SPEED'
 ];
 for (const value of requiredPhysicsTuning) {
   if (!html.includes(value)) throw new Error(`Missing required physics tuning: ${value}`);
