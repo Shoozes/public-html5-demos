@@ -119,7 +119,7 @@ const requiredLowLatencyAudio = [
   'context.decodeAudioData(audioData)',
   'const source = context.createBufferSource();',
   'source.start(now);',
-  'const MUSIC_VOLUME = 0.09;',
+  'const MUSIC_VOLUME = 0.0765;',
   'const YEET_MIN_VOLUME = 0.1;',
   'const YEET_MAX_VOLUME = 0.22;',
   'const YEET_FULL_VOLUME_RELEASE_IMPULSE = 9;',
