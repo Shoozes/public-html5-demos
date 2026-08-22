@@ -53,6 +53,19 @@ for (const value of requiredPhysicsTuning) {
   if (!html.includes(value)) throw new Error(`Missing required physics tuning: ${value}`);
 }
 
+const requiredMobileInputSafety = [
+  'overscroll-behavior: none;',
+  'touch-action: none;',
+  'touch-action: manipulation;',
+  'user-select: none;',
+  '-webkit-user-select: none;',
+  '-webkit-touch-callout: none;',
+  '::-moz-selection'
+];
+for (const value of requiredMobileInputSafety) {
+  if (!html.includes(value)) throw new Error(`Missing required mobile input safety rule: ${value}`);
+}
+
 for (const asset of requiredAssets) {
   await access(asset);
   if ((await stat(asset)).size === 0) throw new Error(`Asset is empty: ${asset}`);
