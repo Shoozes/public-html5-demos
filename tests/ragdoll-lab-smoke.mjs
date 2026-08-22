@@ -18,6 +18,7 @@ const requiredMarkup = [
   'https://cdn.jsdelivr.net/npm/three@0.185.1/',
   'https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.20.0/',
   'id="intro-splash"',
+  'id="humanoid-joint-limits-toggle" type="checkbox" checked',
   'id="music-toggle"',
   'id="sound-toggle"',
   '../assets/glb/Soldier.glb',
@@ -37,6 +38,11 @@ if (html.includes('raw.githubusercontent.com') || html.includes('github.com/mrdo
 
 const requiredPhysicsTuning = [
   'const poseDeadZoneBySegment = {',
+  'const humanoidJointLimitBySegment = {',
+  'humanoidJointLimits: true,',
+  'const applyHumanoidJointLimits = () => {',
+  'physicsSettings.humanoidJointLimits = humanoidJointLimitsToggle.checked;',
+  'applyHumanoidJointLimits();',
   'const settleRagdollAtRest = () => {',
   'const RESTING_SECONDS_BEFORE_SLEEP = 0.22;',
   'world.integrationParameters.numSolverIterations = 8;',

@@ -194,6 +194,10 @@
         <span><strong>Stiffer joints</strong><small>Holds Soldier's torso and limbs together in flight, then settles without ground wobble.</small></span>
       </label>
       <label class="setting-row">
+        <input id="humanoid-joint-limits-toggle" type="checkbox" checked>
+        <span><strong>Humanoid joint limits</strong><small>Softly resists neck, limb, and torso bends beyond their natural range.</small></span>
+      </label>
+      <label class="setting-row">
         <input id="music-toggle" type="checkbox" checked>
         <span><strong>Music</strong><small>Play the backroom track after the first interaction.</small></span>
       </label>
@@ -242,6 +246,7 @@
     const settingsButton = document.getElementById('settings-button');
     const settingsPanel = document.getElementById('settings-panel');
     const stiffJointsToggle = document.getElementById('stiff-joints-toggle');
+    const humanoidJointLimitsToggle = document.getElementById('humanoid-joint-limits-toggle');
     const musicToggle = document.getElementById('music-toggle');
     const soundToggle = document.getElementById('sound-toggle');
     const selectionCursorToggle = document.getElementById('selection-cursor-toggle');
@@ -473,6 +478,7 @@
 
     const physicsSettings = {
       stiffJoints: true,
+      humanoidJointLimits: true,
       showSelectionCursor: true,
       showArenaGrid: true
     };
@@ -519,6 +525,23 @@
       rightThigh: 0.36,
       rightShin: 0.5,
       rightFoot: 0.45
+    };
+    const humanoidJointLimitBySegment = {
+      spine: { maxAngle: 0.42, strength: 70, damping: 12, maxTorque: 120 },
+      chest: { maxAngle: 0.4, strength: 76, damping: 13, maxTorque: 130 },
+      upperChest: { maxAngle: 0.4, strength: 80, damping: 14, maxTorque: 140 },
+      neck: { maxAngle: 0.45, strength: 70, damping: 11, maxTorque: 105 },
+      head: { maxAngle: 0.56, strength: 52, damping: 8, maxTorque: 82 },
+      leftUpperArm: { maxAngle: 1.15, strength: 44, damping: 6, maxTorque: 72 },
+      leftForearm: { maxAngle: 0.7, strength: 72, damping: 8, maxTorque: 98 },
+      rightUpperArm: { maxAngle: 1.15, strength: 44, damping: 6, maxTorque: 72 },
+      rightForearm: { maxAngle: 0.7, strength: 72, damping: 8, maxTorque: 98 },
+      leftThigh: { maxAngle: 0.85, strength: 58, damping: 9, maxTorque: 96 },
+      leftShin: { maxAngle: 0.65, strength: 84, damping: 10, maxTorque: 112 },
+      leftFoot: { maxAngle: 0.55, strength: 48, damping: 6, maxTorque: 72 },
+      rightThigh: { maxAngle: 0.85, strength: 58, damping: 9, maxTorque: 96 },
+      rightShin: { maxAngle: 0.65, strength: 84, damping: 10, maxTorque: 112 },
+      rightFoot: { maxAngle: 0.55, strength: 48, damping: 6, maxTorque: 72 }
     };
     const MAX_LINEAR_SPEED = 28;
     const MAX_ANGULAR_SPEED = 18;
@@ -715,6 +738,44 @@
         correction.multiplyScalar(STEP_SECONDS);
         child.body.applyTorqueImpulse({ x: correction.x, y: correction.y, z: correction.z }, true);
         parent.body.applyTorqueImpulse({ x: -correction.x * 0.75, y: -correction.y * 0.75, z: -correction.z * 0.75 }, true);
+      }
+    };
+
+    const applyHumanoidJointLimits = () => {
+      if (!physicsSettings.humanoidJointLimits || !active || dragged) return;
+      for (const child of ragdollBodies) {
+        if (!child.parent || !child.restRelativeQuaternion || !child.humanoidJointLimit) continue;
+        const parent = bodyById.get(child.parent);
+        const parentRotation = parent.body.rotation();
+        const childRotation = child.body.rotation();
+        const targetRotation = new THREE.Quaternion(parentRotation.x, parentRotation.y, parentRotation.z, parentRotation.w)
+          .multiply(child.restRelativeQuaternion);
+        const rotationError = targetRotation.multiply(new THREE.Quaternion(childRotation.x, childRotation.y, childRotation.z, childRotation.w).invert());
+        if (rotationError.w < 0) {
+          rotationError.x *= -1;
+          rotationError.y *= -1;
+          rotationError.z *= -1;
+          rotationError.w *= -1;
+        }
+        const angle = 2 * Math.acos(THREE.MathUtils.clamp(rotationError.w, -1, 1));
+        const limitExceededBy = angle - child.humanoidJointLimit.maxAngle;
+        const axisScale = Math.sqrt(Math.max(0, 1 - rotationError.w * rotationError.w));
+        if (axisScale < 0.0001 || limitExceededBy <= 0) continue;
+
+        const axis = new THREE.Vector3(rotationError.x, rotationError.y, rotationError.z).multiplyScalar(1 / axisScale);
+        const parentVelocity = parent.body.angvel();
+        const childVelocity = child.body.angvel();
+        const relativeAngularVelocity = new THREE.Vector3(
+          childVelocity.x - parentVelocity.x,
+          childVelocity.y - parentVelocity.y,
+          childVelocity.z - parentVelocity.z
+        );
+        const correction = axis.multiplyScalar(limitExceededBy * child.humanoidJointLimit.strength)
+          .addScaledVector(relativeAngularVelocity, -child.humanoidJointLimit.damping);
+        if (correction.length() > child.humanoidJointLimit.maxTorque) correction.setLength(child.humanoidJointLimit.maxTorque);
+        correction.multiplyScalar(STEP_SECONDS);
+        child.body.applyTorqueImpulse({ x: correction.x, y: correction.y, z: correction.z }, true);
+        parent.body.applyTorqueImpulse({ x: -correction.x * 0.8, y: -correction.y * 0.8, z: -correction.z * 0.8 }, true);
       }
     };
 
@@ -987,7 +1048,7 @@
         world.createCollider(collider, body);
         const boneQuaternion = bone.getWorldQuaternion(new THREE.Quaternion());
         const scale = bone.getWorldScale(new THREE.Vector3());
-        const segment = { ...definition, bone, endBone, body, poseSupport: poseSupportBySegment[definition.id] || 0, poseDeadZone: poseDeadZoneBySegment[definition.id] || 0, restStart: start, restEnd: end, restCenter: center, restQuaternion: rotation, restBoneQuaternion: boneQuaternion, restBoneScale: scale };
+        const segment = { ...definition, bone, endBone, body, poseSupport: poseSupportBySegment[definition.id] || 0, poseDeadZone: poseDeadZoneBySegment[definition.id] || 0, humanoidJointLimit: humanoidJointLimitBySegment[definition.id], restStart: start, restEnd: end, restCenter: center, restQuaternion: rotation, restBoneQuaternion: boneQuaternion, restBoneScale: scale };
         ragdollBodies.push(segment);
         bodyById.set(definition.id, segment);
         bodyByHandle.set(body.handle, segment);
@@ -1109,6 +1170,12 @@
       poseSupportTime = physicsSettings.stiffJoints && active ? 0.45 : 0;
       applyPhysicsTuning();
     });
+    humanoidJointLimitsToggle.addEventListener('change', () => {
+      physicsSettings.humanoidJointLimits = humanoidJointLimitsToggle.checked;
+      if (active && humanoidJointLimitsToggle.checked) {
+        for (const segment of ragdollBodies) segment.body.wakeUp();
+      }
+    });
     musicToggle.addEventListener('change', () => {
       if (musicToggle.checked) startMusic();
       else music.pause();
@@ -1166,6 +1233,7 @@
         world.timestep = STEP_SECONDS;
         world.step();
         applyPoseSupport();
+        applyHumanoidJointLimits();
         capRagdollVelocity();
         poseSupportTime = Math.max(0, poseSupportTime - STEP_SECONDS);
         if (launchFlightTime > 0) {
