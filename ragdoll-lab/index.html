@@ -161,7 +161,7 @@
     </div>
   </div>
 
-  <audio id="yeet-sound" preload="auto">
+  <audio id="yeet-sound" preload="metadata">
     <source src="../assets/ogg/sfx/YEET.ogg" type="audio/ogg">
   </audio>
   <audio id="music" loop preload="metadata">
@@ -248,7 +248,8 @@
     const arenaGridToggle = document.getElementById('arena-grid-toggle');
     const yeetSound = document.getElementById('yeet-sound');
     const music = document.getElementById('music');
-    yeetSound.volume = 0.82;
+    const YEET_VOLUME = 0.82;
+    yeetSound.volume = YEET_VOLUME;
     music.volume = 0.32;
 
     const setStatus = (state, text) => {
@@ -257,21 +258,44 @@
     };
 
     let yeetPlayed = false;
-    let yeetAudioUnlocked = false;
+    let yeetAudioContext = null;
+    let yeetBuffer = null;
+    let yeetBufferPromise = null;
     let introStarted = false;
 
+    const getYeetAudioContext = () => {
+      const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextConstructor) return null;
+      yeetAudioContext ||= new AudioContextConstructor();
+      return yeetAudioContext;
+    };
+
+    const warmYeetBuffer = (context) => {
+      if (yeetBuffer) return Promise.resolve(yeetBuffer);
+      if (!yeetBufferPromise) {
+        yeetBufferPromise = fetch(yeetSound.currentSrc)
+          .then((response) => {
+            if (!response.ok) throw new Error('YEET sound could not be loaded.');
+            return response.arrayBuffer();
+          })
+          .then((audioData) => context.decodeAudioData(audioData))
+          .then((buffer) => {
+            yeetBuffer = buffer;
+            return buffer;
+          })
+          .catch(() => {
+            yeetBufferPromise = null;
+            return null;
+          });
+      }
+      return yeetBufferPromise;
+    };
+
     const unlockYeetSound = () => {
-      if (!soundToggle.checked || yeetAudioUnlocked) return;
-      const previousMuted = yeetSound.muted;
-      yeetSound.muted = true;
-      yeetSound.play().then(() => {
-        yeetSound.pause();
-        yeetSound.currentTime = 0;
-        yeetSound.muted = previousMuted;
-        yeetAudioUnlocked = true;
-      }).catch(() => {
-        yeetSound.muted = previousMuted;
-      });
+      const context = getYeetAudioContext();
+      if (!context) return;
+      if (context.state === 'suspended') context.resume().catch(() => {});
+      warmYeetBuffer(context);
     };
 
     const startMusic = () => {
@@ -295,8 +319,19 @@
       if (yeetPlayed) return false;
       yeetPlayed = true;
       if (soundToggle.checked) {
-        yeetSound.currentTime = 0;
-        yeetSound.play().catch(() => {});
+        const context = getYeetAudioContext();
+        if (context?.state === 'running' && yeetBuffer) {
+          const source = context.createBufferSource();
+          const gain = context.createGain();
+          gain.gain.value = YEET_VOLUME;
+          source.buffer = yeetBuffer;
+          source.connect(gain).connect(context.destination);
+          source.start();
+        } else {
+          unlockYeetSound();
+          yeetSound.currentTime = 0;
+          yeetSound.play().catch(() => {});
+        }
       }
       setStatus('active', 'YEET!');
       return true;
@@ -1022,6 +1057,7 @@
     });
     soundToggle.addEventListener('change', () => {
       if (!soundToggle.checked) yeetSound.pause();
+      else unlockYeetSound();
     });
     selectionCursorToggle.addEventListener('change', () => {
       physicsSettings.showSelectionCursor = selectionCursorToggle.checked;

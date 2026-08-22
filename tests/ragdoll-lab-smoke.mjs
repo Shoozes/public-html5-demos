@@ -66,6 +66,21 @@ for (const value of requiredMobileInputSafety) {
   if (!html.includes(value)) throw new Error(`Missing required mobile input safety rule: ${value}`);
 }
 
+const requiredLowLatencyAudio = [
+  '<audio id="yeet-sound" preload="metadata">',
+  'const getYeetAudioContext = () => {',
+  'const warmYeetBuffer = (context) => {',
+  'context.decodeAudioData(audioData)',
+  'const source = context.createBufferSource();',
+  'source.start();'
+];
+for (const value of requiredLowLatencyAudio) {
+  if (!html.includes(value)) throw new Error(`Missing required low-latency audio behavior: ${value}`);
+}
+if (html.includes('yeetSound.muted = true;') || html.includes('yeetSound.play().then(() =>')) {
+  throw new Error('YEET startup sound prime must not play the audible sound element.');
+}
+
 for (const asset of requiredAssets) {
   await access(asset);
   if ((await stat(asset)).size === 0) throw new Error(`Asset is empty: ${asset}`);
