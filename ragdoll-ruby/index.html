@@ -1,0 +1,1035 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#091019">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:,">
+  <title>Ruby Ragdoll Lab</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --ink: #f5f8ff;
+      --muted: #b9c4d8;
+      --line: rgba(225, 237, 255, 0.18);
+      --panel: rgba(10, 18, 30, 0.78);
+      --accent: #ff7b6e;
+      --accent-bright: #ffb19b;
+      --sky: #74c9ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; margin: 0; overflow: hidden; background: #091019; }
+
+    body { min-height: 100dvh; color: var(--ink); }
+
+    canvas { position: fixed; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; }
+
+    .hud { position: fixed; inset: 0; z-index: 2; display: flex; flex-direction: column; justify-content: space-between; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); pointer-events: none; }
+
+    .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+
+    .brand, .status, .control-dock { border: 1px solid var(--line); background: var(--panel); box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+
+    .brand { max-width: min(520px, calc(100vw - 124px)); padding: 14px 16px 15px; border-radius: 18px; }
+
+    .eyebrow { margin: 0 0 5px; color: var(--accent-bright); font-size: 0.66rem; font-weight: 850; letter-spacing: 0.16em; text-transform: uppercase; }
+
+    h1 { margin: 0; font-size: clamp(1.3rem, 3.3vw, 1.9rem); line-height: 1.05; letter-spacing: -0.045em; }
+
+    .brand p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
+
+    .status { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 12px; border-radius: 999px; color: var(--muted); font-size: 0.72rem; font-weight: 760; white-space: nowrap; }
+
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--sky); box-shadow: 0 0 0 4px rgba(116, 201, 255, 0.12); }
+    .status[data-state="ready"] .status-dot { background: #8ee7b8; box-shadow: 0 0 0 4px rgba(142, 231, 184, 0.12); }
+    .status[data-state="active"] .status-dot { background: var(--accent); box-shadow: 0 0 0 4px rgba(255, 123, 110, 0.12); }
+    .status[data-state="error"] .status-dot { background: #ff6b70; box-shadow: 0 0 0 4px rgba(255, 107, 112, 0.12); }
+
+    .bottom { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+
+    .hint { max-width: 275px; margin: 0 0 4px; color: rgba(235, 242, 255, 0.78); font-size: 0.76rem; font-weight: 650; line-height: 1.5; text-shadow: 0 1px 12px rgba(0, 0, 0, 0.7); }
+
+    .control-dock { display: flex; gap: 8px; padding: 8px; border-radius: 18px; pointer-events: auto; }
+
+    .settings-panel { position: absolute; right: max(16px, env(safe-area-inset-right)); bottom: 82px; width: min(310px, calc(100vw - 32px)); padding: 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28); pointer-events: auto; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+    .settings-panel[hidden] { display: none; }
+    .settings-title { margin: 0 0 9px; color: var(--accent-bright); font-size: 0.76rem; font-weight: 850; letter-spacing: 0.11em; text-transform: uppercase; }
+    .setting-row { display: grid; grid-template-columns: 36px 1fr; gap: 10px; align-items: center; padding: 10px 4px; border-top: 1px solid rgba(225, 237, 255, 0.1); cursor: pointer; }
+    .setting-row strong, .setting-row small { display: block; }
+    .setting-row strong { font-size: 0.79rem; }
+    .setting-row small { margin-top: 3px; color: var(--muted); font-size: 0.68rem; line-height: 1.35; }
+    .setting-row input { appearance: none; width: 34px; height: 20px; margin: 0; border: 1px solid rgba(225, 237, 255, 0.28); border-radius: 999px; background: rgba(255, 255, 255, 0.08); cursor: pointer; transition: background 140ms ease, border-color 140ms ease; }
+    .setting-row input::after { content: ""; display: block; width: 14px; height: 14px; margin: 2px; border-radius: 50%; background: #dbe7f7; transition: transform 140ms ease; }
+    .setting-row input:checked { border-color: rgba(255, 150, 131, 0.82); background: #d85c59; }
+    .setting-row input:checked::after { transform: translateX(14px); background: #fff4ea; }
+    .setting-row input:focus-visible { outline: 2px solid var(--sky); outline-offset: 3px; }
+
+    button { min-height: 45px; padding: 0 15px; border: 1px solid transparent; border-radius: 12px; background: rgba(255, 255, 255, 0.07); color: var(--ink); font: inherit; font-size: 0.79rem; font-weight: 820; cursor: pointer; transition: transform 130ms ease, background 130ms ease, border-color 130ms ease; }
+    button:hover:not(:disabled), button:focus-visible { transform: translateY(-1px); border-color: rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.14); outline: none; }
+    button:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+    button:disabled { cursor: wait; opacity: 0.55; }
+    .primary { border-color: rgba(255, 150, 131, 0.78); background: linear-gradient(135deg, #dc5c57, #ff876f); color: #250c13; }
+    .primary:hover:not(:disabled), .primary:focus-visible { border-color: #ffd0b7; background: linear-gradient(135deg, #f17167, #ff9d7d); }
+
+    .loading, .fallback { position: fixed; z-index: 4; inset: 0; display: grid; place-items: center; padding: 22px; background: radial-gradient(circle at 50% 35%, #1c3049, #091019 64%); }
+    .loading[hidden], .fallback[hidden] { display: none; }
+    .loading-card, .fallback-card { width: min(100%, 430px); padding: 25px; border: 1px solid var(--line); border-radius: 22px; background: rgba(7, 14, 24, 0.78); box-shadow: 0 28px 90px rgba(0, 0, 0, 0.36); text-align: center; }
+    .loader { width: 42px; height: 42px; margin: 0 auto 16px; border: 3px solid rgba(255, 255, 255, 0.18); border-top-color: var(--accent-bright); border-radius: 50%; animation: spin 900ms linear infinite; }
+    .loading h2, .fallback h2 { margin: 0; font-size: 1.25rem; letter-spacing: -0.035em; }
+    .loading p, .fallback p { margin: 9px 0 0; color: var(--muted); line-height: 1.5; font-size: 0.87rem; }
+    .progress { height: 5px; margin: 18px auto 0; overflow: hidden; border-radius: 999px; background: rgba(255, 255, 255, 0.12); }
+    .progress > span { display: block; width: 12%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent-bright)); transition: width 180ms ease; }
+    .splash { position: fixed; z-index: 5; inset: 0; display: grid; place-items: center; padding: 22px; overflow: hidden; background: radial-gradient(circle at 50% 38%, rgba(42, 65, 91, 0.92), rgba(4, 9, 17, 0.97) 68%); cursor: pointer; touch-action: manipulation; transition: opacity 220ms ease; }
+    .splash[hidden] { display: none; }
+    .splash.is-leaving { opacity: 0; pointer-events: none; }
+    .splash-card { width: min(100%, 410px); padding: 28px 26px; border: 1px solid rgba(255, 177, 155, 0.46); border-radius: 24px; background: rgba(7, 14, 24, 0.78); box-shadow: 0 30px 100px rgba(0, 0, 0, 0.48); text-align: center; }
+    .splash-kicker { margin: 0 0 8px; color: var(--accent-bright); font-size: 0.68rem; font-weight: 850; letter-spacing: 0.17em; text-transform: uppercase; }
+    .splash h2 { margin: 0; font-size: clamp(1.5rem, 5vw, 2.15rem); letter-spacing: -0.055em; }
+    .splash-copy { margin: 10px 0 22px; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
+    .tap-prompt { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 18px; border: 1px solid rgba(255, 177, 155, 0.74); border-radius: 999px; background: linear-gradient(135deg, rgba(220, 92, 87, 0.92), rgba(255, 135, 111, 0.94)); color: #250c13; font-size: 0.78rem; font-weight: 880; letter-spacing: 0.06em; text-transform: uppercase; animation: tap-pulse 1.6s ease-in-out infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes tap-pulse { 50% { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(255, 123, 110, 0.32); } }
+
+    @media (max-width: 620px) {
+      .hud { padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+      .brand { padding: 12px 13px; border-radius: 15px; }
+      .brand p:last-child { display: none; }
+      .status { min-height: 35px; padding: 0 10px; font-size: 0.68rem; }
+      .bottom { align-items: stretch; flex-direction: column-reverse; gap: 9px; }
+      .hint { max-width: 100%; margin: 0; font-size: 0.71rem; }
+      .control-dock { width: 100%; padding: 7px; border-radius: 16px; }
+      button { flex: 1; min-height: 48px; padding: 0 8px; font-size: 0.74rem; }
+      .settings-panel { right: max(12px, env(safe-area-inset-right)); bottom: 144px; width: min(340px, calc(100vw - 24px)); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0ms !important; animation-duration: 0ms !important; }
+    }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/",
+        "@dimforge/rapier3d-compat": "https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.20.0/dist/rapier.mjs"
+      }
+    }
+  </script>
+  <script>
+    window.addEventListener('error', () => {
+      const loading = document.getElementById('loading');
+      const fallback = document.getElementById('fallback');
+      if (loading && !loading.hidden) {
+        loading.hidden = true;
+        fallback.hidden = false;
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="loading" id="loading" aria-live="polite">
+    <div class="loading-card">
+      <div class="loader" aria-hidden="true"></div>
+      <h2 id="loading-title">Preparing Ruby</h2>
+      <p id="loading-copy">Loading the character and its physics lab.</p>
+      <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+    </div>
+  </div>
+
+  <div class="fallback" id="fallback" hidden role="alert">
+    <div class="fallback-card">
+      <h2>Ruby needs WebGL</h2>
+      <p>This demo needs a current browser with WebGL and access to the pinned Three.js and physics libraries. Please try an updated desktop or mobile browser, then reload.</p>
+    </div>
+  </div>
+
+  <div class="splash" id="intro-splash" hidden role="button" tabindex="0" aria-label="Start Ruby Ragdoll Lab with sound">
+    <div class="splash-card">
+      <p class="splash-kicker">Ruby Ragdoll Lab</p>
+      <h2>Ready to tumble?</h2>
+      <p class="splash-copy">Tap the screen to enter the lab and start the music.</p>
+      <span class="tap-prompt" aria-hidden="true">Tap the screen</span>
+    </div>
+  </div>
+
+  <audio id="yeet-sound" preload="auto">
+    <source src="../assets/ogg/sfx/YEET.ogg" type="audio/ogg">
+  </audio>
+  <audio id="music" loop preload="metadata">
+    <source src="../assets/ogg/music/backroom-static-track.ogg" type="audio/ogg">
+  </audio>
+
+  <main class="hud" aria-label="Ruby Ragdoll Lab controls">
+    <div class="topbar">
+      <section class="brand" aria-labelledby="demo-title">
+        <p class="eyebrow">Physics playground</p>
+        <h1 id="demo-title">Ruby Ragdoll Lab</h1>
+        <p>Grab a limb, spin the camera, and let Ruby loose.</p>
+      </section>
+      <div class="status" id="status" data-state="loading" aria-live="polite"><span class="status-dot" aria-hidden="true"></span><span id="status-copy">Loading</span></div>
+    </div>
+
+    <div class="bottom">
+      <p class="hint">Drag Ruby farther and faster for a stronger throw. Send Ruby off the arena at speed for a YEET. Drag empty space to orbit. Right-drag or use two fingers to pan. Scroll or pinch to zoom. <kbd>R</kbd> resets.</p>
+      <div class="control-dock" aria-label="Ragdoll actions">
+        <button class="primary" id="drop-button" type="button" disabled>Drop Ruby</button>
+        <button id="toss-button" type="button" disabled>Give a toss</button>
+        <button id="reset-button" type="button" disabled>Reset</button>
+        <button id="settings-button" type="button" aria-expanded="false" aria-controls="settings-panel">Settings</button>
+      </div>
+    </div>
+    <section class="settings-panel" id="settings-panel" hidden aria-label="Ragdoll settings">
+      <p class="settings-title">Ragdoll settings</p>
+      <label class="setting-row">
+        <input id="stiff-joints-toggle" type="checkbox" checked>
+        <span><strong>Stiffer joints</strong><small>Holds Ruby's torso and limbs together in flight, then settles without ground wobble.</small></span>
+      </label>
+      <label class="setting-row">
+        <input id="music-toggle" type="checkbox" checked>
+        <span><strong>Music</strong><small>Play the backroom track after the first interaction.</small></span>
+      </label>
+      <label class="setting-row">
+        <input id="sound-toggle" type="checkbox" checked>
+        <span><strong>Sound effects</strong><small>Play the YEET sound on a calculated arena exit.</small></span>
+      </label>
+      <label class="setting-row">
+        <input id="selection-cursor-toggle" type="checkbox" checked>
+        <span><strong>Selection cursor</strong><small>Shows a coral cursor when Ruby can be grabbed.</small></span>
+      </label>
+      <label class="setting-row">
+        <input id="arena-grid-toggle" type="checkbox" checked>
+        <span><strong>Arena grid</strong><small>Show the floor grid and boundary ring.</small></span>
+      </label>
+    </section>
+  </main>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import RAPIER from '@dimforge/rapier3d-compat';
+
+    const MODEL_URL = '../assets/glb/Ruby_GR.glb';
+    const STEP_SECONDS = 1 / 60;
+    const MAX_STEPS_PER_FRAME = 3;
+    const STAGE_RADIUS = 7.35;
+    const YEET_EXIT_RADIUS = STAGE_RADIUS + 0.35;
+    const VERTICAL = new THREE.Vector3(0, 1, 0);
+    const timer = new THREE.Timer();
+
+    const loading = document.getElementById('loading');
+    const loadingTitle = document.getElementById('loading-title');
+    const loadingCopy = document.getElementById('loading-copy');
+    const progressBar = document.getElementById('progress-bar');
+    const fallback = document.getElementById('fallback');
+    const introSplash = document.getElementById('intro-splash');
+    const status = document.getElementById('status');
+    const statusCopy = document.getElementById('status-copy');
+    const dropButton = document.getElementById('drop-button');
+    const tossButton = document.getElementById('toss-button');
+    const resetButton = document.getElementById('reset-button');
+    const settingsButton = document.getElementById('settings-button');
+    const settingsPanel = document.getElementById('settings-panel');
+    const stiffJointsToggle = document.getElementById('stiff-joints-toggle');
+    const musicToggle = document.getElementById('music-toggle');
+    const soundToggle = document.getElementById('sound-toggle');
+    const selectionCursorToggle = document.getElementById('selection-cursor-toggle');
+    const arenaGridToggle = document.getElementById('arena-grid-toggle');
+    const yeetSound = document.getElementById('yeet-sound');
+    const music = document.getElementById('music');
+    yeetSound.volume = 0.82;
+    music.volume = 0.32;
+
+    const setStatus = (state, text) => {
+      status.dataset.state = state;
+      statusCopy.textContent = text;
+    };
+
+    let yeetPlayed = false;
+    let yeetAudioUnlocked = false;
+    let introStarted = false;
+
+    const unlockYeetSound = () => {
+      if (!soundToggle.checked || yeetAudioUnlocked) return;
+      const previousMuted = yeetSound.muted;
+      yeetSound.muted = true;
+      yeetSound.play().then(() => {
+        yeetSound.pause();
+        yeetSound.currentTime = 0;
+        yeetSound.muted = previousMuted;
+        yeetAudioUnlocked = true;
+      }).catch(() => {
+        yeetSound.muted = previousMuted;
+      });
+    };
+
+    const startMusic = () => {
+      if (!musicToggle.checked || !music.paused) return;
+      music.play().catch(() => {});
+    };
+
+    const enterDemo = () => {
+      if (introStarted) return;
+      introStarted = true;
+      unlockYeetSound();
+      startMusic();
+      introSplash.classList.add('is-leaving');
+      window.setTimeout(() => {
+        introSplash.hidden = true;
+        introSplash.classList.remove('is-leaving');
+      }, 220);
+    };
+
+    const playYeet = () => {
+      if (yeetPlayed) return false;
+      yeetPlayed = true;
+      if (soundToggle.checked) {
+        yeetSound.currentTime = 0;
+        yeetSound.play().catch(() => {});
+      }
+      setStatus('active', 'YEET!');
+      return true;
+    };
+
+    const showFailure = (message) => {
+      console.error(message);
+      loading.hidden = true;
+      fallback.querySelector('p').textContent = message;
+      fallback.hidden = false;
+      setStatus('error', 'Unavailable');
+    };
+
+    const webglProbe = document.createElement('canvas');
+    if (!webglProbe.getContext('webgl2') && !webglProbe.getContext('webgl')) {
+      showFailure('This browser does not support WebGL, which Ruby Ragdoll Lab needs to run.');
+      throw new Error('WebGL unavailable');
+    }
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#091019');
+    scene.fog = new THREE.Fog('#091019', 14, 30);
+
+    const camera = new THREE.PerspectiveCamera(44, window.innerWidth / window.innerHeight, 0.05, 80);
+    camera.position.set(7.2, 5.2, 8.7);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 2.15, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.enablePan = true;
+    controls.screenSpacePanning = true;
+    controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
+    controls.minDistance = 4.5;
+    controls.maxDistance = 15;
+    controls.minPolarAngle = 0.4;
+    controls.maxPolarAngle = Math.PI * 0.47;
+    controls.update();
+
+    const hemi = new THREE.HemisphereLight('#a6d4ff', '#162031', 1.75);
+    scene.add(hemi);
+    const key = new THREE.DirectionalLight('#ffe4c2', 3.1);
+    key.position.set(5.5, 9, 5.5);
+    key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.camera.left = -8;
+    key.shadow.camera.right = 8;
+    key.shadow.camera.top = 8;
+    key.shadow.camera.bottom = -8;
+    scene.add(key);
+    const rim = new THREE.PointLight('#7ea7ff', 20, 18, 2);
+    rim.position.set(-5, 4.5, -5);
+    scene.add(rim);
+
+    const stage = new THREE.Group();
+    scene.add(stage);
+    const floorMaterial = new THREE.MeshStandardMaterial({ color: '#19283a', roughness: 0.78, metalness: 0.2 });
+    const floor = new THREE.Mesh(new THREE.CylinderGeometry(7.4, 7.8, 0.36, 64), floorMaterial);
+    floor.position.y = -0.18;
+    floor.receiveShadow = true;
+    stage.add(floor);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(7.18, 0.035, 8, 96), new THREE.MeshBasicMaterial({ color: '#4f789f', transparent: true, opacity: 0.54 }));
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = 0.015;
+    stage.add(ring);
+    const grid = new THREE.GridHelper(14, 18, '#456a87', '#28465e');
+    grid.position.y = 0.012;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.22;
+    stage.add(grid);
+
+    const selectionMaterial = new THREE.MeshBasicMaterial({ color: '#74c9ff', transparent: true, opacity: 0.98, depthTest: false, depthWrite: false });
+    const selectionMarker = new THREE.Group();
+    const selectionHalo = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.024, 8, 28), selectionMaterial);
+    selectionHalo.renderOrder = 10;
+    const selectionDot = new THREE.Mesh(new THREE.SphereGeometry(0.065, 16, 12), selectionMaterial);
+    selectionDot.renderOrder = 10;
+    selectionMarker.add(selectionHalo, selectionDot);
+    selectionMarker.renderOrder = 2;
+    selectionMarker.visible = false;
+    scene.add(selectionMarker);
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const rayPlane = new THREE.Plane();
+    const vectorScratch = new THREE.Vector3();
+    const quaternionScratch = new THREE.Quaternion();
+    const matrixScratch = new THREE.Matrix4();
+    const inverseMatrixScratch = new THREE.Matrix4();
+    const restWorldScale = new THREE.Vector3();
+
+    const segmentDefinitions = [
+      { id: 'hips', bone: 'mixamorig:Hips', end: 'mixamorig:Spine', radius: 0.22, parent: null },
+      { id: 'spine', bone: 'mixamorig:Spine', end: 'mixamorig:Spine1', radius: 0.2, parent: 'hips' },
+      { id: 'chest', bone: 'mixamorig:Spine1', end: 'mixamorig:Spine2', radius: 0.23, parent: 'spine' },
+      { id: 'upperChest', bone: 'mixamorig:Spine2', end: 'mixamorig:Neck', radius: 0.25, parent: 'chest' },
+      { id: 'neck', bone: 'mixamorig:Neck', end: 'mixamorig:Head', radius: 0.14, parent: 'upperChest' },
+      { id: 'head', bone: 'mixamorig:Head', end: 'mixamorig:HeadTop_End', radius: 0.28, parent: 'neck' },
+      { id: 'leftUpperArm', bone: 'mixamorig:LeftArm', end: 'mixamorig:LeftForeArm', radius: 0.14, parent: 'upperChest' },
+      { id: 'leftForearm', bone: 'mixamorig:LeftForeArm', end: 'mixamorig:LeftHand', radius: 0.12, parent: 'leftUpperArm' },
+      { id: 'rightUpperArm', bone: 'mixamorig:RightArm', end: 'mixamorig:RightForeArm', radius: 0.14, parent: 'upperChest' },
+      { id: 'rightForearm', bone: 'mixamorig:RightForeArm', end: 'mixamorig:RightHand', radius: 0.12, parent: 'rightUpperArm' },
+      { id: 'leftThigh', bone: 'mixamorig:LeftUpLeg', end: 'mixamorig:LeftLeg', radius: 0.18, parent: 'hips' },
+      { id: 'leftShin', bone: 'mixamorig:LeftLeg', end: 'mixamorig:LeftFoot', radius: 0.15, parent: 'leftThigh' },
+      { id: 'leftFoot', bone: 'mixamorig:LeftFoot', end: 'mixamorig:LeftToeBase', radius: 0.13, parent: 'leftShin' },
+      { id: 'rightThigh', bone: 'mixamorig:RightUpLeg', end: 'mixamorig:RightLeg', radius: 0.18, parent: 'hips' },
+      { id: 'rightShin', bone: 'mixamorig:RightLeg', end: 'mixamorig:RightFoot', radius: 0.15, parent: 'rightThigh' },
+      { id: 'rightFoot', bone: 'mixamorig:RightFoot', end: 'mixamorig:RightToeBase', radius: 0.13, parent: 'rightShin' }
+    ];
+
+    const physicsSettings = {
+      stiffJoints: true,
+      showSelectionCursor: true,
+      showArenaGrid: true
+    };
+
+    const getMotionProfile = () => physicsSettings.stiffJoints
+      ? { linearDamping: 3.1, angularDamping: 13.5, maxAngularVelocity: 6.5 }
+      : { linearDamping: 0.65, angularDamping: 2.2, maxAngularVelocity: 40 };
+
+    const poseSupportBySegment = {
+      spine: 22,
+      chest: 30,
+      upperChest: 34,
+      neck: 14,
+      head: 10,
+      leftUpperArm: 2,
+      leftForearm: 4,
+      rightUpperArm: 2,
+      rightForearm: 4,
+      leftThigh: 17,
+      leftShin: 22,
+      leftFoot: 8,
+      rightThigh: 17,
+      rightShin: 22,
+      rightFoot: 8
+    };
+    const MAX_LINEAR_SPEED = 28;
+    const MAX_ANGULAR_SPEED = 18;
+    const DRAG_THROW_MULTIPLIER = 3.8;
+    const MAX_DRAG_THROW_IMPULSE = 12;
+    const DRAG_LAUNCH_VELOCITY_MULTIPLIER = 2.45;
+    const MAX_DRAG_LAUNCH_SPEED = 26;
+    const LAUNCH_FLIGHT_SECONDS = 0.95;
+    const LAUNCH_LINEAR_DAMPING = 0.12;
+    const MIN_LAUNCH_LIFT = 6;
+
+    let world;
+    let character;
+    let characterMesh;
+    let bodyById = new Map();
+    let bodyByHandle = new Map();
+    let ragdollBodies = [];
+    let restPose = new Map();
+    let physicsReady = false;
+    let active = false;
+    let accumulator = 0;
+    let poseSupportTime = 0;
+    let launchFlightTime = 0;
+    let dragged = null;
+    let dragJoint = null;
+    let cursorBody = null;
+    let lastPointerPosition = null;
+    let dragStartPosition = null;
+
+    const updatePointer = (event) => {
+      const bounds = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
+      pointer.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1;
+    };
+
+    const worldPointToLocal = (segment, worldPoint) => {
+      return worldPoint.clone().sub(segment.restCenter).applyQuaternion(segment.restQuaternion.clone().invert());
+    };
+
+    const worldPointToCurrentBodyLocal = (segment, worldPoint) => {
+      const position = segment.body.translation();
+      const rotation = segment.body.rotation();
+      return worldPoint.clone()
+        .sub(new THREE.Vector3(position.x, position.y, position.z))
+        .applyQuaternion(new THREE.Quaternion(rotation.x, rotation.y, rotation.z, rotation.w).invert());
+    };
+
+    const findPhysicsHit = () => {
+      if (!physicsReady) return null;
+      const origin = raycaster.ray.origin;
+      const direction = raycaster.ray.direction;
+      const hit = world.castRay(
+        new RAPIER.Ray(
+          { x: origin.x, y: origin.y, z: origin.z },
+          { x: direction.x, y: direction.y, z: direction.z }
+        ),
+        100,
+        true
+      );
+      if (!hit) return null;
+      const collider = typeof hit.collider === 'number' ? world.getCollider(hit.collider) : hit.collider;
+      const rigidBody = collider?.parent?.();
+      return {
+        point: raycaster.ray.at(hit.timeOfImpact, new THREE.Vector3()),
+        segment: rigidBody ? bodyByHandle.get(rigidBody.handle) : null
+      };
+    };
+
+    const chooseClosestBody = (point) => {
+      let closest = null;
+      let closestDistance = Infinity;
+      for (const segment of ragdollBodies) {
+        const position = segment.body.translation();
+        const distance = point.distanceToSquared(vectorScratch.set(position.x, position.y, position.z));
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closest = segment;
+        }
+      }
+      return closest;
+    };
+
+    const findSelectionHit = () => {
+      const physicsHit = findPhysicsHit();
+      if (physicsHit?.segment) return physicsHit;
+
+      const visualHit = character ? raycaster.intersectObject(character, true)[0] : null;
+      if (visualHit) {
+        return { point: visualHit.point, segment: chooseClosestBody(visualHit.point) };
+      }
+      return physicsHit;
+    };
+
+    const updateSelectionCursor = () => {
+      raycaster.setFromCamera(pointer, camera);
+      const hit = findSelectionHit();
+      if (!hit) {
+        selectionMarker.visible = false;
+        renderer.domElement.style.cursor = 'default';
+        return null;
+      }
+      selectionMarker.position.copy(hit.point);
+      selectionMarker.quaternion.copy(camera.quaternion);
+      selectionMaterial.color.set(hit.segment ? '#ffb19b' : '#74c9ff');
+      selectionMarker.visible = physicsSettings.showSelectionCursor || Boolean(dragged);
+      renderer.domElement.style.cursor = hit.segment ? 'grab' : 'default';
+      return hit;
+    };
+
+    const applyPhysicsTuning = () => {
+      const profile = getMotionProfile();
+      for (const segment of ragdollBodies) {
+        segment.body.setLinearDamping(profile.linearDamping);
+        segment.body.setAngularDamping(profile.angularDamping);
+        if (segment.body.setMaxAngvel) segment.body.setMaxAngvel(profile.maxAngularVelocity, true);
+      }
+    };
+
+    const launchRagdoll = (velocity) => {
+      launchFlightTime = LAUNCH_FLIGHT_SECONDS;
+      poseSupportTime = Math.max(poseSupportTime, 0.35);
+      for (const segment of ragdollBodies) {
+        segment.body.setLinvel({ x: velocity.x, y: velocity.y, z: velocity.z }, true);
+        segment.body.setLinearDamping(LAUNCH_LINEAR_DAMPING);
+        segment.body.wakeUp();
+      }
+    };
+
+    const applyPoseSupport = () => {
+      const hips = bodyById.get('hips');
+      const airborne = hips && hips.body.translation().y > 0.9;
+      if (!physicsSettings.stiffJoints || !active || dragged || (!airborne && poseSupportTime <= 0 && launchFlightTime <= 0)) return;
+      for (const child of ragdollBodies) {
+        if (!child.parent || !child.restRelativeQuaternion || !child.poseSupport) continue;
+        const parent = bodyById.get(child.parent);
+        const parentRotation = parent.body.rotation();
+        const childRotation = child.body.rotation();
+        const targetRotation = new THREE.Quaternion(parentRotation.x, parentRotation.y, parentRotation.z, parentRotation.w)
+          .multiply(child.restRelativeQuaternion);
+        const rotationError = targetRotation.multiply(new THREE.Quaternion(childRotation.x, childRotation.y, childRotation.z, childRotation.w).invert());
+        if (rotationError.w < 0) {
+          rotationError.x *= -1;
+          rotationError.y *= -1;
+          rotationError.z *= -1;
+          rotationError.w *= -1;
+        }
+        const angle = 2 * Math.acos(THREE.MathUtils.clamp(rotationError.w, -1, 1));
+        const axisScale = Math.sqrt(Math.max(0, 1 - rotationError.w * rotationError.w));
+        if (axisScale < 0.0001 || angle < 0.001) continue;
+
+        const axis = new THREE.Vector3(rotationError.x, rotationError.y, rotationError.z).multiplyScalar(1 / axisScale);
+        const parentVelocity = parent.body.angvel();
+        const childVelocity = child.body.angvel();
+        const childLinearVelocity = child.body.linvel();
+        const jointAngularSpeed = Math.hypot(
+          childVelocity.x - parentVelocity.x,
+          childVelocity.y - parentVelocity.y,
+          childVelocity.z - parentVelocity.z
+        );
+        const childLinearSpeed = Math.hypot(childLinearVelocity.x, childLinearVelocity.y, childLinearVelocity.z);
+        if (jointAngularSpeed < 0.55 && childLinearSpeed < 0.3) continue;
+        const correction = axis.multiplyScalar(Math.min(angle, 1.2) * child.poseSupport)
+          .addScaledVector(
+            new THREE.Vector3(childVelocity.x - parentVelocity.x, childVelocity.y - parentVelocity.y, childVelocity.z - parentVelocity.z),
+            -child.poseSupport * 0.16
+          );
+        if (correction.length() > 4.8) correction.setLength(4.8);
+        correction.multiplyScalar(STEP_SECONDS);
+        child.body.applyTorqueImpulse({ x: correction.x, y: correction.y, z: correction.z }, true);
+        parent.body.applyTorqueImpulse({ x: -correction.x * 0.75, y: -correction.y * 0.75, z: -correction.z * 0.75 }, true);
+      }
+    };
+
+    const capRagdollVelocity = () => {
+      for (const segment of ragdollBodies) {
+        const linearVelocity = segment.body.linvel();
+        const linearSpeed = Math.hypot(linearVelocity.x, linearVelocity.y, linearVelocity.z);
+        if (linearSpeed > MAX_LINEAR_SPEED) {
+          const scale = MAX_LINEAR_SPEED / linearSpeed;
+          segment.body.setLinvel({ x: linearVelocity.x * scale, y: linearVelocity.y * scale, z: linearVelocity.z * scale }, true);
+        }
+        const angularVelocity = segment.body.angvel();
+        const angularSpeed = Math.hypot(angularVelocity.x, angularVelocity.y, angularVelocity.z);
+        if (angularSpeed > MAX_ANGULAR_SPEED) {
+          const scale = MAX_ANGULAR_SPEED / angularSpeed;
+          segment.body.setAngvel({ x: angularVelocity.x * scale, y: angularVelocity.y * scale, z: angularVelocity.z * scale }, true);
+        }
+      }
+    };
+
+    const willLaunchExitArena = (velocity) => {
+      const hips = bodyById.get('hips');
+      if (!hips) return false;
+      const position = hips.body.translation();
+      const dampedTravel = (1 - Math.exp(-LAUNCH_LINEAR_DAMPING * LAUNCH_FLIGHT_SECONDS)) / LAUNCH_LINEAR_DAMPING;
+      const predictedX = position.x + velocity.x * dampedTravel;
+      const predictedZ = position.z + velocity.z * dampedTravel;
+      return Math.hypot(predictedX, predictedZ) > YEET_EXIT_RADIUS;
+    };
+
+    const setKinematicTransform = (body, position, rotation) => {
+      body.setNextKinematicTranslation({ x: position.x, y: position.y, z: position.z });
+      body.setNextKinematicRotation({ x: rotation.x, y: rotation.y, z: rotation.z, w: rotation.w });
+      body.setTranslation({ x: position.x, y: position.y, z: position.z }, true);
+      body.setRotation({ x: rotation.x, y: rotation.y, z: rotation.z, w: rotation.w }, true);
+    };
+
+    const applyPoseFromPhysics = () => {
+      if (!character) return;
+      for (const segment of ragdollBodies) {
+        const rotation = segment.body.rotation();
+        const translation = segment.body.translation();
+        const bodyQuaternion = new THREE.Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
+        const delta = bodyQuaternion.multiply(segment.restQuaternion.clone().invert());
+        const bonePosition = segment.restStart.clone().sub(segment.restCenter).applyQuaternion(delta).add(new THREE.Vector3(translation.x, translation.y, translation.z));
+        const boneQuaternion = delta.multiply(segment.restBoneQuaternion.clone());
+
+        const parent = segment.bone.parent;
+        parent.updateWorldMatrix(true, false);
+        matrixScratch.compose(bonePosition, boneQuaternion, segment.restBoneScale);
+        inverseMatrixScratch.copy(parent.matrixWorld).invert();
+        matrixScratch.premultiply(inverseMatrixScratch);
+        matrixScratch.decompose(segment.bone.position, segment.bone.quaternion, segment.bone.scale);
+        segment.bone.updateMatrix();
+        segment.bone.updateMatrixWorld(true);
+      }
+    };
+
+    const resetSkeleton = () => {
+      for (const [bone, pose] of restPose) {
+        bone.position.copy(pose.position);
+        bone.quaternion.copy(pose.quaternion);
+        bone.scale.copy(pose.scale);
+        bone.updateMatrix();
+      }
+      character.updateMatrixWorld(true);
+    };
+
+    const resetRagdoll = () => {
+      if (!physicsReady) return;
+      releaseDrag();
+      yeetPlayed = false;
+      active = false;
+      poseSupportTime = 0;
+      launchFlightTime = 0;
+      resetSkeleton();
+      for (const segment of ragdollBodies) {
+        segment.body.setBodyType(RAPIER.RigidBodyType.KinematicPositionBased, true);
+        segment.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+        segment.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+        setKinematicTransform(segment.body, segment.restCenter, segment.restQuaternion);
+      }
+      applyPhysicsTuning();
+      setStatus('ready', 'Ready to drop');
+      dropButton.textContent = 'Drop Ruby';
+      tossButton.disabled = false;
+    };
+
+    const releaseRagdoll = () => {
+      if (active) return;
+      active = true;
+      poseSupportTime = 1.1;
+      for (const segment of ragdollBodies) {
+        segment.body.setBodyType(RAPIER.RigidBodyType.Dynamic, true);
+        segment.body.wakeUp();
+      }
+      setStatus('active', 'Physics live');
+      dropButton.textContent = 'Ruby is loose';
+      tossButton.disabled = false;
+    };
+
+    const giveToss = () => {
+      if (!physicsReady) return;
+      unlockYeetSound();
+      startMusic();
+      releaseRagdoll();
+      poseSupportTime = 1.1;
+      launchFlightTime = 0;
+      applyPhysicsTuning();
+      const impulse = new THREE.Vector3((Math.random() - 0.5) * 1.4, 2.4, (Math.random() - 0.5) * 1.1);
+      const target = bodyById.get('upperChest') || bodyById.get('hips');
+      target.body.applyImpulse(impulse, true);
+      target.body.applyTorqueImpulse({ x: (Math.random() - 0.5) * 1.2, y: (Math.random() - 0.5) * 1.2, z: (Math.random() - 0.5) * 1.2 }, true);
+      setStatus('active', 'Gentle toss');
+    };
+
+    const beginDrag = (event) => {
+      if (!physicsReady || dragged) return false;
+      unlockYeetSound();
+      startMusic();
+      updatePointer(event);
+      const hit = updateSelectionCursor();
+      if (!hit?.segment) return false;
+
+      releaseRagdoll();
+      yeetPlayed = false;
+      const hitPoint = hit.point;
+      const selected = hit.segment;
+
+      const cursorDesc = RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(hitPoint.x, hitPoint.y, hitPoint.z);
+      cursorBody = world.createRigidBody(cursorDesc);
+      const localAnchor = worldPointToCurrentBodyLocal(selected, hitPoint);
+      dragJoint = world.createImpulseJoint(RAPIER.JointData.spherical({ x: 0, y: 0, z: 0 }, { x: localAnchor.x, y: localAnchor.y, z: localAnchor.z }), cursorBody, selected.body, true);
+      if (dragJoint.setContactsEnabled) dragJoint.setContactsEnabled(false);
+      dragged = selected;
+      lastPointerPosition = hitPoint.clone();
+      dragStartPosition = hitPoint.clone();
+      selectionMarker.position.copy(hitPoint);
+      selectionMaterial.color.set('#ffb19b');
+      selectionMarker.visible = true;
+      rayPlane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(vectorScratch), hitPoint);
+      controls.enabled = false;
+      renderer.domElement.style.cursor = 'grabbing';
+      renderer.domElement.setPointerCapture(event.pointerId);
+      setStatus('active', 'Dragging ' + selected.id.replace(/([A-Z])/g, ' $1').toLowerCase());
+      return true;
+    };
+
+    const moveDrag = (event) => {
+      updatePointer(event);
+      if (!dragged || !cursorBody) {
+        updateSelectionCursor();
+        return;
+      }
+      raycaster.setFromCamera(pointer, camera);
+      const point = raycaster.ray.intersectPlane(rayPlane, vectorScratch);
+      if (!point) return;
+      const target = point.clone();
+      target.y = Math.max(0.18, target.y);
+      cursorBody.setNextKinematicTranslation({ x: target.x, y: target.y, z: target.z });
+      selectionMarker.position.copy(target);
+      lastPointerPosition = target;
+    };
+
+    const releaseDrag = (throwOnRelease = false) => {
+      let playedYeet = false;
+      if (throwOnRelease && dragged && lastPointerPosition && dragStartPosition) {
+        const releaseImpulse = lastPointerPosition.clone().sub(dragStartPosition).multiplyScalar(DRAG_THROW_MULTIPLIER);
+        if (releaseImpulse.length() > MAX_DRAG_THROW_IMPULSE) releaseImpulse.setLength(MAX_DRAG_THROW_IMPULSE);
+        if (releaseImpulse.length() > 0.04) {
+          dragged.body.applyImpulse({ x: releaseImpulse.x, y: releaseImpulse.y, z: releaseImpulse.z }, true);
+          if (releaseImpulse.length() >= 3.5) {
+            const launchVelocity = releaseImpulse.multiplyScalar(DRAG_LAUNCH_VELOCITY_MULTIPLIER);
+            if (launchVelocity.length() > MAX_DRAG_LAUNCH_SPEED) launchVelocity.setLength(MAX_DRAG_LAUNCH_SPEED);
+            launchVelocity.y = Math.max(launchVelocity.y, MIN_LAUNCH_LIFT);
+            const willYeet = willLaunchExitArena(launchVelocity);
+            launchRagdoll(launchVelocity);
+            if (willYeet) playedYeet = playYeet();
+          }
+        }
+      }
+      if (dragJoint) world.removeImpulseJoint(dragJoint, true);
+      if (cursorBody) world.removeRigidBody(cursorBody);
+      dragJoint = null;
+      cursorBody = null;
+      dragged = null;
+      lastPointerPosition = null;
+      dragStartPosition = null;
+      controls.enabled = true;
+      renderer.domElement.style.cursor = 'default';
+      if (!playedYeet) setStatus(active ? 'active' : 'ready', active ? 'Physics live' : 'Ready to drop');
+    };
+
+    const normalizeBoneName = (name) => name.replace(/[^a-z0-9]/gi, '').toLowerCase();
+
+    const buildRagdoll = () => {
+      const bones = new Map();
+      character.traverse((object) => {
+        if (object.isBone) {
+          bones.set(normalizeBoneName(object.name), object);
+          restPose.set(object, { position: object.position.clone(), quaternion: object.quaternion.clone(), scale: object.scale.clone() });
+        }
+      });
+
+      for (const definition of segmentDefinitions) {
+        const bone = bones.get(normalizeBoneName(definition.bone));
+        const endBone = bones.get(normalizeBoneName(definition.end));
+        if (!bone || !endBone) throw new Error(`Ruby's rig is missing ${definition.bone} or ${definition.end}.`);
+        const start = bone.getWorldPosition(new THREE.Vector3());
+        const end = endBone.getWorldPosition(new THREE.Vector3());
+        const direction = end.clone().sub(start);
+        const length = direction.length();
+        if (length < 0.02) throw new Error(`Ruby's ${definition.id} bone is too short to simulate.`);
+        const rotation = new THREE.Quaternion().setFromUnitVectors(VERTICAL, direction.normalize());
+        const center = start.clone().lerp(end, 0.5);
+        const motionProfile = getMotionProfile();
+        const bodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
+          .setTranslation(center.x, center.y, center.z)
+          .setRotation({ x: rotation.x, y: rotation.y, z: rotation.z, w: rotation.w })
+          .setLinearDamping(motionProfile.linearDamping)
+          .setAngularDamping(motionProfile.angularDamping)
+          .setCanSleep(true)
+          .setCcdEnabled(true);
+        const body = world.createRigidBody(bodyDesc);
+        const halfHeight = Math.max(0.012, length * 0.5 - definition.radius);
+        const collider = RAPIER.ColliderDesc.capsule(halfHeight, definition.radius)
+          .setFriction(0.82)
+          .setRestitution(0.04)
+          .setDensity(1.15);
+        world.createCollider(collider, body);
+        const boneQuaternion = bone.getWorldQuaternion(new THREE.Quaternion());
+        const scale = bone.getWorldScale(new THREE.Vector3());
+        const segment = { ...definition, bone, endBone, body, poseSupport: poseSupportBySegment[definition.id] || 0, restStart: start, restEnd: end, restCenter: center, restQuaternion: rotation, restBoneQuaternion: boneQuaternion, restBoneScale: scale };
+        ragdollBodies.push(segment);
+        bodyById.set(definition.id, segment);
+        bodyByHandle.set(body.handle, segment);
+      }
+
+      for (const child of ragdollBodies) {
+        if (!child.parent) continue;
+        const parent = bodyById.get(child.parent);
+        const anchor = child.restStart;
+        child.restRelativeQuaternion = parent.restQuaternion.clone().invert().multiply(child.restQuaternion);
+        const joint = world.createImpulseJoint(
+          RAPIER.JointData.spherical(worldPointToLocal(parent, anchor), worldPointToLocal(child, anchor)),
+          parent.body,
+          child.body,
+          true
+        );
+        if (joint.setContactsEnabled) joint.setContactsEnabled(false);
+      }
+    };
+
+    const init = async () => {
+      try {
+        loadingTitle.textContent = 'Starting physics';
+        loadingCopy.textContent = 'Warming up the ragdoll simulation.';
+        progressBar.style.width = '25%';
+        await RAPIER.init();
+        world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
+        const groundBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, -0.22, 0));
+        world.createCollider(RAPIER.ColliderDesc.cylinder(0.18, STAGE_RADIUS).setFriction(0.94).setRestitution(0.02), groundBody);
+
+        loadingTitle.textContent = 'Loading Ruby';
+        loadingCopy.textContent = 'Receiving the rigged character model.';
+        progressBar.style.width = '42%';
+        const loader = new GLTFLoader();
+        const gltf = await loader.loadAsync(MODEL_URL, (event) => {
+          if (event.lengthComputable) progressBar.style.width = `${Math.max(42, Math.min(86, 42 + event.loaded / event.total * 44))}%`;
+        });
+        character = gltf.scene;
+        character.name = 'Ruby';
+        character.traverse((object) => {
+          if (object.isMesh) {
+            const materials = Array.isArray(object.material) ? object.material : [object.material];
+            for (const material of materials) {
+              material.transparent = false;
+              material.opacity = 1;
+              material.alphaTest = 0;
+              material.alphaMap = null;
+              material.depthWrite = true;
+              material.depthTest = true;
+              material.side = THREE.DoubleSide;
+              material.needsUpdate = true;
+            }
+            object.castShadow = true;
+            object.receiveShadow = true;
+            object.frustumCulled = false;
+            characterMesh ||= object;
+          }
+        });
+        if (!characterMesh) throw new Error('Ruby’s GLB loaded without a visible mesh.');
+
+        scene.add(character);
+        // The source GLB retains Blender's Z-up armature transform; normalize it for a Y-up scene.
+        character.rotation.set(-Math.PI / 2, 0, 0);
+        character.updateMatrixWorld(true);
+        const rawBounds = new THREE.Box3().setFromObject(character);
+        const rawHeight = rawBounds.getSize(new THREE.Vector3()).y;
+        if (!Number.isFinite(rawHeight) || rawHeight <= 0) throw new Error('Ruby’s GLB has an invalid size.');
+        const modelScale = 4.15 / rawHeight;
+        character.scale.setScalar(modelScale);
+        character.updateMatrixWorld(true);
+        const positionedBounds = new THREE.Box3().setFromObject(character);
+        character.position.y += 2.25 - positionedBounds.min.y;
+        character.updateMatrixWorld(true);
+
+        loadingTitle.textContent = 'Connecting joints';
+        loadingCopy.textContent = 'Mapping Ruby’s Mixamo skeleton to the ragdoll.';
+        progressBar.style.width = '92%';
+        buildRagdoll();
+        resetRagdoll();
+        physicsReady = true;
+        dropButton.disabled = false;
+        tossButton.disabled = false;
+        resetButton.disabled = false;
+        loading.hidden = true;
+        setStatus('ready', 'Ready to drop');
+        introSplash.hidden = false;
+        introSplash.focus();
+      } catch (error) {
+        showFailure(error instanceof Error ? error.message : 'Ruby could not be prepared.');
+      }
+    };
+
+    dropButton.addEventListener('click', () => {
+      unlockYeetSound();
+      startMusic();
+      releaseRagdoll();
+    });
+    tossButton.addEventListener('click', giveToss);
+    resetButton.addEventListener('click', resetRagdoll);
+    introSplash.addEventListener('pointerup', (event) => {
+      if (event.isPrimary) enterDemo();
+    });
+    introSplash.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        enterDemo();
+      }
+    });
+    settingsButton.addEventListener('click', () => {
+      const opening = settingsPanel.hidden;
+      settingsPanel.hidden = !opening;
+      settingsButton.setAttribute('aria-expanded', String(opening));
+    });
+    stiffJointsToggle.addEventListener('change', () => {
+      physicsSettings.stiffJoints = stiffJointsToggle.checked;
+      poseSupportTime = physicsSettings.stiffJoints && active ? 0.45 : 0;
+      applyPhysicsTuning();
+    });
+    musicToggle.addEventListener('change', () => {
+      if (musicToggle.checked) startMusic();
+      else music.pause();
+    });
+    soundToggle.addEventListener('change', () => {
+      if (!soundToggle.checked) yeetSound.pause();
+    });
+    selectionCursorToggle.addEventListener('change', () => {
+      physicsSettings.showSelectionCursor = selectionCursorToggle.checked;
+      if (!physicsSettings.showSelectionCursor && !dragged) selectionMarker.visible = false;
+    });
+    arenaGridToggle.addEventListener('change', () => {
+      physicsSettings.showArenaGrid = arenaGridToggle.checked;
+      grid.visible = physicsSettings.showArenaGrid;
+      ring.visible = physicsSettings.showArenaGrid;
+    });
+    window.addEventListener('keydown', (event) => {
+      if (event.key.toLowerCase() === 'r') resetRagdoll();
+      if (event.code === 'Space' && physicsReady) {
+        event.preventDefault();
+        giveToss();
+      }
+    });
+
+    renderer.domElement.addEventListener('pointerdown', (event) => {
+      if (beginDrag(event)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }, true);
+    renderer.domElement.addEventListener('pointermove', moveDrag);
+    renderer.domElement.addEventListener('pointerup', () => releaseDrag(true));
+    renderer.domElement.addEventListener('pointercancel', releaseDrag);
+    renderer.domElement.addEventListener('pointerleave', () => {
+      if (!dragged) selectionMarker.visible = false;
+    });
+    renderer.domElement.addEventListener('contextmenu', (event) => event.preventDefault());
+    window.addEventListener('blur', releaseDrag);
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    const tick = () => {
+      timer.update();
+      const delta = Math.min(timer.getDelta(), 0.08);
+      accumulator += delta;
+      let stepCount = 0;
+      while (physicsReady && accumulator >= STEP_SECONDS && stepCount < MAX_STEPS_PER_FRAME) {
+        world.timestep = STEP_SECONDS;
+        world.step();
+        applyPoseSupport();
+        capRagdollVelocity();
+        poseSupportTime = Math.max(0, poseSupportTime - STEP_SECONDS);
+        if (launchFlightTime > 0) {
+          launchFlightTime = Math.max(0, launchFlightTime - STEP_SECONDS);
+          if (launchFlightTime === 0) applyPhysicsTuning();
+        }
+        accumulator -= STEP_SECONDS;
+        stepCount += 1;
+      }
+      if (stepCount === MAX_STEPS_PER_FRAME) accumulator = 0;
+      if (physicsReady) {
+        applyPoseFromPhysics();
+        const hips = bodyById.get('hips');
+        if (active && hips && hips.body.translation().y < -8) resetRagdoll();
+      }
+      controls.update();
+      renderer.render(scene, camera);
+    };
+
+    renderer.setAnimationLoop(tick);
+    init();
+  </script>
+</body>
+</html>

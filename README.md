@@ -45,6 +45,10 @@ https://shoozes.github.io/public-html5-demos/my-demo/
 
 ## Current demos
 
+### Ruby Ragdoll Lab
+
+A mobile- and desktop-friendly Three.js physics playground using the rigged Ruby GLB model. Grab and throw the character, orbit the scene, or reset the ragdoll. It includes optional music and sound effects, enabled from a tap-to-start splash screen. Share it at [Ruby Ragdoll Lab](https://shoozes.github.io/public-html5-demos/ragdoll-ruby/).
+
 ### Anthrocybernetics Guided Demo
 
 A mobile-first interactive presentation explaining feedback loops, the five observation lenses, evidence labels, and what actually moves when a cloud agent is ported to a local model.
