@@ -83,8 +83,9 @@ const requiredLowLatencyAudio = [
   'const source = context.createBufferSource();',
   'source.start();',
   'const MUSIC_VOLUME = 0.1;',
-  'const YEET_MIN_VOLUME = 0.035;',
-  'const YEET_MAX_VOLUME = 0.1;',
+  'const YEET_MIN_VOLUME = 0.1;',
+  'const YEET_MAX_VOLUME = 0.22;',
+  'const YEET_FULL_VOLUME_RELEASE_IMPULSE = 9;',
   'const getYeetVolume = (releaseStrength) => {',
   'playedYeet = playYeet(getYeetVolume(releaseStrength));'
 ];

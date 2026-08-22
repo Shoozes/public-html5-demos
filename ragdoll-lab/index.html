@@ -249,8 +249,9 @@
     const yeetSound = document.getElementById('yeet-sound');
     const music = document.getElementById('music');
     const MUSIC_VOLUME = 0.1;
-    const YEET_MIN_VOLUME = 0.035;
-    const YEET_MAX_VOLUME = 0.1;
+    const YEET_MIN_VOLUME = 0.1;
+    const YEET_MAX_VOLUME = 0.22;
+    const YEET_FULL_VOLUME_RELEASE_IMPULSE = 9;
     yeetSound.volume = YEET_MAX_VOLUME;
     music.volume = MUSIC_VOLUME;
 
@@ -554,7 +555,7 @@
 
     const getYeetVolume = (releaseStrength) => {
       const strengthProgress = THREE.MathUtils.clamp(
-        (releaseStrength - MIN_YEET_RELEASE_IMPULSE) / (MAX_DRAG_THROW_STRENGTH - MIN_YEET_RELEASE_IMPULSE),
+        (releaseStrength - MIN_YEET_RELEASE_IMPULSE) / (YEET_FULL_VOLUME_RELEASE_IMPULSE - MIN_YEET_RELEASE_IMPULSE),
         0,
         1
       );
