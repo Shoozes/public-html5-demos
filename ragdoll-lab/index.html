@@ -248,7 +248,7 @@
     const arenaGridToggle = document.getElementById('arena-grid-toggle');
     const yeetSound = document.getElementById('yeet-sound');
     const music = document.getElementById('music');
-    const MUSIC_VOLUME = 0.1;
+    const MUSIC_VOLUME = 0.09;
     const YEET_MIN_VOLUME = 0.1;
     const YEET_MAX_VOLUME = 0.22;
     const YEET_FULL_VOLUME_RELEASE_IMPULSE = 9;
@@ -318,23 +318,39 @@
       }, 220);
     };
 
-    const playYeet = (volume) => {
+    const playYeet = (releaseStrength) => {
       if (yeetPlayed) return false;
       yeetPlayed = true;
       if (soundToggle.checked) {
+        const intensity = getYeetIntensity(releaseStrength);
+        const volume = getYeetVolume(releaseStrength);
         const context = getYeetAudioContext();
         if (context?.state === 'running' && yeetBuffer) {
           const source = context.createBufferSource();
           const gain = context.createGain();
-          gain.gain.value = volume;
           source.buffer = yeetBuffer;
           source.connect(gain).connect(context.destination);
-          source.start();
+          const now = context.currentTime;
+          gain.gain.setValueAtTime(volume, now);
+          source.start(now);
+          if (intensity < 1) {
+            const fadeEnd = getYeetFadeEnd(yeetBuffer.duration, intensity);
+            const fadeDuration = Math.min(0.14, fadeEnd);
+            gain.gain.setValueAtTime(volume, now + Math.max(0, fadeEnd - fadeDuration));
+            gain.gain.linearRampToValueAtTime(0.0001, now + fadeEnd);
+            source.stop(now + fadeEnd + 0.02);
+          }
         } else {
           unlockYeetSound();
           yeetSound.volume = volume;
           yeetSound.currentTime = 0;
           yeetSound.play().catch(() => {});
+          if (intensity < 1) {
+            window.setTimeout(() => {
+              yeetSound.pause();
+              yeetSound.currentTime = 0;
+            }, getYeetFadeEnd(yeetSound.duration || 0.38, intensity) * 1000);
+          }
         }
       }
       setStatus('active', 'YEET!');
@@ -553,13 +569,21 @@
       return MAX_DRAG_THROW_STRENGTH * (1 - Math.exp(-chargedDistance / DRAG_THROW_RESPONSE_PIXELS));
     };
 
-    const getYeetVolume = (releaseStrength) => {
-      const strengthProgress = THREE.MathUtils.clamp(
+    const getYeetIntensity = (releaseStrength) => {
+      return THREE.MathUtils.clamp(
         (releaseStrength - MIN_YEET_RELEASE_IMPULSE) / (YEET_FULL_VOLUME_RELEASE_IMPULSE - MIN_YEET_RELEASE_IMPULSE),
         0,
         1
       );
-      return THREE.MathUtils.lerp(YEET_MIN_VOLUME, YEET_MAX_VOLUME, strengthProgress);
+    };
+
+    const getYeetVolume = (releaseStrength) => {
+      return THREE.MathUtils.lerp(YEET_MIN_VOLUME, YEET_MAX_VOLUME, getYeetIntensity(releaseStrength));
+    };
+
+    const getYeetFadeEnd = (soundDuration, intensity) => {
+      const weakYeetDuration = Math.min(0.38, soundDuration);
+      return THREE.MathUtils.lerp(weakYeetDuration, soundDuration, intensity);
     };
 
     const worldPointToLocal = (segment, worldPoint) => {
@@ -905,7 +929,7 @@
             const willYeet = willLaunchExitArena(launchVelocity);
             launchRagdoll(launchVelocity);
             if (willYeet && releaseStrength >= MIN_YEET_RELEASE_IMPULSE && planarLaunchSpeed >= MIN_YEET_PLANAR_SPEED) {
-              playedYeet = playYeet(getYeetVolume(releaseStrength));
+              playedYeet = playYeet(releaseStrength);
             }
           }
         }

@@ -81,13 +81,16 @@ const requiredLowLatencyAudio = [
   'const warmYeetBuffer = (context) => {',
   'context.decodeAudioData(audioData)',
   'const source = context.createBufferSource();',
-  'source.start();',
-  'const MUSIC_VOLUME = 0.1;',
+  'source.start(now);',
+  'const MUSIC_VOLUME = 0.09;',
   'const YEET_MIN_VOLUME = 0.1;',
   'const YEET_MAX_VOLUME = 0.22;',
   'const YEET_FULL_VOLUME_RELEASE_IMPULSE = 9;',
+  'const getYeetIntensity = (releaseStrength) => {',
   'const getYeetVolume = (releaseStrength) => {',
-  'playedYeet = playYeet(getYeetVolume(releaseStrength));'
+  'const getYeetFadeEnd = (soundDuration, intensity) => {',
+  'gain.gain.linearRampToValueAtTime(0.0001, now + fadeEnd);',
+  'playedYeet = playYeet(releaseStrength);'
 ];
 for (const value of requiredLowLatencyAudio) {
   if (!html.includes(value)) throw new Error(`Missing required low-latency audio behavior: ${value}`);
