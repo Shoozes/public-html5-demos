@@ -475,6 +475,55 @@
       { id: 'rightShin', bone: 'mixamorig:RightLeg', end: 'mixamorig:RightFoot', radius: 0.15, parent: 'rightThigh' },
       { id: 'rightFoot', bone: 'mixamorig:RightFoot', end: 'mixamorig:RightToeBase', radius: 0.13, parent: 'rightShin' }
     ];
+    const RAGDOLL_COLLISION_GROUP_BY_SEGMENT = {
+      hips: 1 << 0,
+      spine: 1 << 1,
+      chest: 1 << 2,
+      upperChest: 1 << 3,
+      neck: 1 << 4,
+      head: 1 << 5,
+      leftUpperArm: 1 << 6,
+      leftForearm: 1 << 7,
+      rightUpperArm: 1 << 8,
+      // Rapier exposes 16 collision bits; forearms are distant enough to safely share one.
+      rightForearm: 1 << 7,
+      leftThigh: 1 << 9,
+      leftShin: 1 << 10,
+      leftFoot: 1 << 11,
+      rightThigh: 1 << 12,
+      rightShin: 1 << 13,
+      rightFoot: 1 << 14
+    };
+    const STAGE_COLLISION_GROUP = 1 << 15;
+    const ALL_RAGDOLL_COLLISION_GROUPS = [...new Set(Object.values(RAGDOLL_COLLISION_GROUP_BY_SEGMENT))]
+      .reduce((groups, group) => groups | group, 0);
+    const collisionNeighborsBySegment = new Map(segmentDefinitions.map((definition) => [definition.id, new Set()]));
+    for (const definition of segmentDefinitions) {
+      if (!definition.parent) continue;
+      collisionNeighborsBySegment.get(definition.id).add(definition.parent);
+      collisionNeighborsBySegment.get(definition.parent).add(definition.id);
+    }
+    const getRagdollCollisionGroups = (segmentId) => {
+      const excludedSegmentIds = new Set();
+      let frontier = new Set([segmentId]);
+      for (let depth = 0; depth < 2; depth += 1) {
+        const nextFrontier = new Set();
+        for (const currentId of frontier) {
+          for (const neighborId of collisionNeighborsBySegment.get(currentId)) {
+            if (neighborId === segmentId) continue;
+            excludedSegmentIds.add(neighborId);
+            nextFrontier.add(neighborId);
+          }
+        }
+        frontier = nextFrontier;
+      }
+      let excludedGroups = 0;
+      for (const excludedId of excludedSegmentIds) excludedGroups |= RAGDOLL_COLLISION_GROUP_BY_SEGMENT[excludedId];
+      const membership = RAGDOLL_COLLISION_GROUP_BY_SEGMENT[segmentId];
+      const filter = (ALL_RAGDOLL_COLLISION_GROUPS & ~excludedGroups) | STAGE_COLLISION_GROUP;
+      return ((membership << 16) | filter) >>> 0;
+    };
+    const STAGE_COLLISION_GROUPS = ((STAGE_COLLISION_GROUP << 16) | ALL_RAGDOLL_COLLISION_GROUPS) >>> 0;
 
     const physicsSettings = {
       stiffJoints: true,
@@ -545,9 +594,6 @@
     };
     const MAX_LINEAR_SPEED = 28;
     const MAX_ANGULAR_SPEED = 18;
-    // Ragdoll capsules only collide with the stage, never with another Soldier capsule.
-    const RAGDOLL_COLLISION_GROUP = 0x00010002;
-    const STAGE_COLLISION_GROUP = 0x00020001;
     const MAX_DRAG_THROW_STRENGTH = 12;
     const DRAG_THROW_DEAD_ZONE_PIXELS = 14;
     const DRAG_THROW_RESPONSE_PIXELS = 210;
@@ -1047,7 +1093,7 @@
         const collider = RAPIER.ColliderDesc.capsule(halfHeight, definition.radius)
           .setFriction(0.72)
           .setRestitution(0)
-          .setCollisionGroups(RAGDOLL_COLLISION_GROUP)
+          .setCollisionGroups(getRagdollCollisionGroups(definition.id))
           .setDensity(1.15);
         world.createCollider(collider, body);
         const boneQuaternion = bone.getWorldQuaternion(new THREE.Quaternion());
@@ -1132,7 +1178,7 @@
           RAPIER.ColliderDesc.cylinder(0.18, STAGE_RADIUS)
             .setFriction(0.86)
             .setRestitution(0)
-            .setCollisionGroups(STAGE_COLLISION_GROUP),
+            .setCollisionGroups(STAGE_COLLISION_GROUPS),
           groundBody
         );
 
