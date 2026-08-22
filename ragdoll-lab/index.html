@@ -416,7 +416,7 @@
     };
 
     const getMotionProfile = () => physicsSettings.stiffJoints
-      ? { linearDamping: 3.1, angularDamping: 13.5, maxAngularVelocity: 6.5 }
+      ? { linearDamping: 3.65, angularDamping: 16, maxAngularVelocity: 5.5 }
       : { linearDamping: 0.65, angularDamping: 2.2, maxAngularVelocity: 40 };
 
     const poseSupportBySegment = {
@@ -436,6 +436,23 @@
       rightShin: 22,
       rightFoot: 8
     };
+    const poseDeadZoneBySegment = {
+      spine: 0.14,
+      chest: 0.16,
+      upperChest: 0.16,
+      neck: 0.24,
+      head: 0.28,
+      leftUpperArm: 0.5,
+      leftForearm: 0.62,
+      rightUpperArm: 0.5,
+      rightForearm: 0.62,
+      leftThigh: 0.36,
+      leftShin: 0.5,
+      leftFoot: 0.45,
+      rightThigh: 0.36,
+      rightShin: 0.5,
+      rightFoot: 0.45
+    };
     const MAX_LINEAR_SPEED = 28;
     const MAX_ANGULAR_SPEED = 18;
     const DRAG_THROW_MULTIPLIER = 3.8;
@@ -445,6 +462,9 @@
     const LAUNCH_FLIGHT_SECONDS = 0.95;
     const LAUNCH_LINEAR_DAMPING = 0.12;
     const MIN_LAUNCH_LIFT = 6;
+    const RESTING_LINEAR_SPEED = 0.16;
+    const RESTING_ANGULAR_SPEED = 0.5;
+    const RESTING_SECONDS_BEFORE_SLEEP = 0.22;
 
     let world;
     let character;
@@ -458,6 +478,7 @@
     let accumulator = 0;
     let poseSupportTime = 0;
     let launchFlightTime = 0;
+    let restSettleTime = 0;
     let dragged = null;
     let dragJoint = null;
     let cursorBody = null;
@@ -556,6 +577,7 @@
     const launchRagdoll = (velocity) => {
       launchFlightTime = LAUNCH_FLIGHT_SECONDS;
       poseSupportTime = Math.max(poseSupportTime, 0.35);
+      restSettleTime = 0;
       for (const segment of ragdollBodies) {
         segment.body.setLinvel({ x: velocity.x, y: velocity.y, z: velocity.z }, true);
         segment.body.setLinearDamping(LAUNCH_LINEAR_DAMPING);
@@ -583,29 +605,48 @@
         }
         const angle = 2 * Math.acos(THREE.MathUtils.clamp(rotationError.w, -1, 1));
         const axisScale = Math.sqrt(Math.max(0, 1 - rotationError.w * rotationError.w));
-        if (axisScale < 0.0001 || angle < 0.001) continue;
+        const bendAmount = Math.max(0, angle - child.poseDeadZone);
+        if (axisScale < 0.0001 || bendAmount <= 0) continue;
 
         const axis = new THREE.Vector3(rotationError.x, rotationError.y, rotationError.z).multiplyScalar(1 / axisScale);
         const parentVelocity = parent.body.angvel();
         const childVelocity = child.body.angvel();
-        const childLinearVelocity = child.body.linvel();
-        const jointAngularSpeed = Math.hypot(
-          childVelocity.x - parentVelocity.x,
-          childVelocity.y - parentVelocity.y,
-          childVelocity.z - parentVelocity.z
-        );
-        const childLinearSpeed = Math.hypot(childLinearVelocity.x, childLinearVelocity.y, childLinearVelocity.z);
-        if (jointAngularSpeed < 0.55 && childLinearSpeed < 0.3) continue;
-        const correction = axis.multiplyScalar(Math.min(angle, 1.2) * child.poseSupport)
+        const correction = axis.multiplyScalar(Math.min(bendAmount, 0.85) * child.poseSupport)
           .addScaledVector(
             new THREE.Vector3(childVelocity.x - parentVelocity.x, childVelocity.y - parentVelocity.y, childVelocity.z - parentVelocity.z),
-            -child.poseSupport * 0.16
+            -child.poseSupport * 0.12
           );
-        if (correction.length() > 4.8) correction.setLength(4.8);
+        if (correction.length() > 3.2) correction.setLength(3.2);
         correction.multiplyScalar(STEP_SECONDS);
         child.body.applyTorqueImpulse({ x: correction.x, y: correction.y, z: correction.z }, true);
         parent.body.applyTorqueImpulse({ x: -correction.x * 0.75, y: -correction.y * 0.75, z: -correction.z * 0.75 }, true);
       }
+    };
+
+    const settleRagdollAtRest = () => {
+      const hips = bodyById.get('hips');
+      if (!active || dragged || poseSupportTime > 0 || launchFlightTime > 0 || !hips || hips.body.translation().y > 0.9) {
+        restSettleTime = 0;
+        return;
+      }
+      const isQuiet = ragdollBodies.every((segment) => {
+        const linear = segment.body.linvel();
+        const angular = segment.body.angvel();
+        return Math.hypot(linear.x, linear.y, linear.z) <= RESTING_LINEAR_SPEED
+          && Math.hypot(angular.x, angular.y, angular.z) <= RESTING_ANGULAR_SPEED;
+      });
+      if (!isQuiet) {
+        restSettleTime = 0;
+        return;
+      }
+      restSettleTime += STEP_SECONDS;
+      if (restSettleTime < RESTING_SECONDS_BEFORE_SLEEP) return;
+      for (const segment of ragdollBodies) {
+        segment.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+        segment.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+        if (typeof segment.body.sleep === 'function') segment.body.sleep();
+      }
+      restSettleTime = 0;
     };
 
     const capRagdollVelocity = () => {
@@ -680,6 +721,7 @@
       active = false;
       poseSupportTime = 0;
       launchFlightTime = 0;
+      restSettleTime = 0;
       resetSkeleton();
       for (const segment of ragdollBodies) {
         segment.body.setBodyType(RAPIER.RigidBodyType.KinematicPositionBased, true);
@@ -696,7 +738,8 @@
     const releaseRagdoll = () => {
       if (active) return;
       active = true;
-      poseSupportTime = 1.1;
+      poseSupportTime = 0;
+      restSettleTime = 0;
       for (const segment of ragdollBodies) {
         segment.body.setBodyType(RAPIER.RigidBodyType.Dynamic, true);
         segment.body.wakeUp();
@@ -711,8 +754,9 @@
       unlockYeetSound();
       startMusic();
       releaseRagdoll();
-      poseSupportTime = 1.1;
+      poseSupportTime = 0.45;
       launchFlightTime = 0;
+      restSettleTime = 0;
       applyPhysicsTuning();
       const impulse = new THREE.Vector3((Math.random() - 0.5) * 1.4, 2.4, (Math.random() - 0.5) * 1.1);
       const target = bodyById.get('upperChest') || bodyById.get('hips');
@@ -733,6 +777,7 @@
       yeetPlayed = false;
       const hitPoint = hit.point;
       const selected = hit.segment;
+      restSettleTime = 0;
 
       const cursorDesc = RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(hitPoint.x, hitPoint.y, hitPoint.z);
       cursorBody = world.createRigidBody(cursorDesc);
@@ -831,13 +876,13 @@
         const body = world.createRigidBody(bodyDesc);
         const halfHeight = Math.max(0.012, length * 0.5 - definition.radius);
         const collider = RAPIER.ColliderDesc.capsule(halfHeight, definition.radius)
-          .setFriction(0.82)
-          .setRestitution(0.04)
+          .setFriction(0.72)
+          .setRestitution(0)
           .setDensity(1.15);
         world.createCollider(collider, body);
         const boneQuaternion = bone.getWorldQuaternion(new THREE.Quaternion());
         const scale = bone.getWorldScale(new THREE.Vector3());
-        const segment = { ...definition, bone, endBone, body, poseSupport: poseSupportBySegment[definition.id] || 0, restStart: start, restEnd: end, restCenter: center, restQuaternion: rotation, restBoneQuaternion: boneQuaternion, restBoneScale: scale };
+        const segment = { ...definition, bone, endBone, body, poseSupport: poseSupportBySegment[definition.id] || 0, poseDeadZone: poseDeadZoneBySegment[definition.id] || 0, restStart: start, restEnd: end, restCenter: center, restQuaternion: rotation, restBoneQuaternion: boneQuaternion, restBoneScale: scale };
         ragdollBodies.push(segment);
         bodyById.set(definition.id, segment);
         bodyByHandle.set(body.handle, segment);
@@ -865,8 +910,10 @@
         progressBar.style.width = '25%';
         await RAPIER.init();
         world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
+        world.integrationParameters.numSolverIterations = 8;
+        world.integrationParameters.numAdditionalFrictionIterations = 4;
         const groundBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, -0.22, 0));
-        world.createCollider(RAPIER.ColliderDesc.cylinder(0.18, STAGE_RADIUS).setFriction(0.94).setRestitution(0.02), groundBody);
+        world.createCollider(RAPIER.ColliderDesc.cylinder(0.18, STAGE_RADIUS).setFriction(0.86).setRestitution(0), groundBody);
 
         loadingTitle.textContent = 'Loading Soldier';
         loadingCopy.textContent = 'Receiving the rigged character model.';
@@ -1014,6 +1061,7 @@
           launchFlightTime = Math.max(0, launchFlightTime - STEP_SECONDS);
           if (launchFlightTime === 0) applyPhysicsTuning();
         }
+        settleRagdollAtRest();
         accumulator -= STEP_SECONDS;
         stepCount += 1;
       }

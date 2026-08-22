@@ -35,6 +35,20 @@ if (html.includes('raw.githubusercontent.com') || html.includes('github.com/mrdo
   throw new Error('Soldier demo unexpectedly depends on an external model URL.');
 }
 
+const requiredPhysicsTuning = [
+  'const poseDeadZoneBySegment = {',
+  'const settleRagdollAtRest = () => {',
+  'const RESTING_SECONDS_BEFORE_SLEEP = 0.22;',
+  'world.integrationParameters.numSolverIterations = 8;',
+  'world.integrationParameters.numAdditionalFrictionIterations = 4;',
+  '.setCanSleep(true)',
+  '.setRestitution(0)',
+  'poseSupportTime = 0;'
+];
+for (const value of requiredPhysicsTuning) {
+  if (!html.includes(value)) throw new Error(`Missing required physics tuning: ${value}`);
+}
+
 for (const asset of requiredAssets) {
   await access(asset);
   if ((await stat(asset)).size === 0) throw new Error(`Asset is empty: ${asset}`);
