@@ -803,8 +803,8 @@
     const buildRagdoll = () => {
       const bones = new Map();
       character.traverse((object) => {
+        if (object.name) bones.set(normalizeBoneName(object.name), object);
         if (object.isBone) {
-          bones.set(normalizeBoneName(object.name), object);
           restPose.set(object, { position: object.position.clone(), quaternion: object.quaternion.clone(), scale: object.scale.clone() });
         }
       });
