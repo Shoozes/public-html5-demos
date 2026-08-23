@@ -4,3 +4,5 @@
 # Ephemeral state and screenshots from local browser regression checks.
 .playwright-cli/
 output/playwright/
+
+output/parity/

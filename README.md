@@ -51,7 +51,7 @@ A mobile- and desktop-friendly Three.js physics playground using the local Soldi
 
 ### Soldier Ragdoll Math Lab
 
-A separate Three.js-rendered, custom-physics implementation of the Soldier ragdoll. It maps the same skeleton into explicit capsule-like rigid bodies with sequential joint and finite-stage contact solves, without a Rapier dependency. See [the portable solver math and current limits](ragdoll-math-lab/MATH.md), then open [Soldier Ragdoll Math Lab](https://shoozes.github.io/public-html5-demos/ragdoll-math-lab/).
+A separate Three.js-rendered, custom-physics implementation of the Soldier ragdoll. Its portable JavaScript/TypeScript core owns mass and inertia, impulses, damping, and point effective-mass kernels; Three.js remains the rendering and adapter layer, with no Rapier runtime dependency. See [the portable solver math and current limits](ragdoll-math-lab/MATH.md) and [the parity pitfalls ledger](docs/parity/PITFALLS.md), then open [Soldier Ragdoll Math Lab](https://shoozes.github.io/public-html5-demos/ragdoll-math-lab/). The pinned Playwright dependency is development-only and used by the local parity harness.
 
 ### Anthrocybernetics Guided Demo
 

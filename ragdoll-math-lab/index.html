@@ -100,13 +100,14 @@ child.position  -= anchorError * childWeight</div>
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { capsuleMassProperties, applyImpulse, applyTorqueImpulse, applyImpulseAtPoint, dampingFactor, updateWorldInverseInertia, solvePointEffectiveMass as solveSharedPointEffectiveMass, solvePairPointEffectiveMass as solveSharedPairPointEffectiveMass } from '../shared/ragdoll-core/index.js';
+    import { SEGMENTS as SHARED_SEGMENTS, JOINTS as SHARED_JOINTS, STEP_SECONDS, GRAVITY_METERS_PER_SECOND_SQUARED, TARGET_HUMAN_HEIGHT_METERS } from '../shared/ragdoll-core/spec.mjs';
+    import { getParityCommandType } from '../shared/ragdoll-parity/protocol.mjs';
 
     const MODEL_URL = '../assets/glb/Soldier.glb';
-    const STEP_SECONDS = 1 / 60;
+    const parityMode = new URLSearchParams(location.search).has('parity');
     const MAX_STEPS_PER_FRAME = 3;
     const STAGE_RADIUS = 7.35;
-    const TARGET_HUMAN_HEIGHT_METERS = 1.8;
-    const GRAVITY_METERS_PER_SECOND_SQUARED = 9.81;
     const VERTICAL = new THREE.Vector3(0, 1, 0);
     const timer = new THREE.Timer();
     const loading = document.getElementById('loading');
@@ -181,7 +182,7 @@ child.position  -= anchorError * childWeight</div>
     const scratchMatrix = new THREE.Matrix4();
     const scratchInverseMatrix = new THREE.Matrix4();
 
-    const segmentDefinitions = [
+    const segmentMetadata = [
       { id: 'hips', bone: 'mixamorig:Hips', end: 'mixamorig:Spine', radius: .22, parent: null },
       { id: 'spine', bone: 'mixamorig:Spine', end: 'mixamorig:Spine1', radius: .20, parent: 'hips' },
       { id: 'chest', bone: 'mixamorig:Spine1', end: 'mixamorig:Spine2', radius: .23, parent: 'spine' },
@@ -201,6 +202,13 @@ child.position  -= anchorError * childWeight</div>
       { id: 'rightShin', bone: 'mixamorig:RightLeg', end: 'mixamorig:RightFoot', radius: .15, parent: 'rightThigh' },
       { id: 'rightFoot', bone: 'mixamorig:RightFoot', end: 'mixamorig:RightToeBase', radius: .13, parent: 'rightShin' }
     ];
+    const segmentMetadataById = new Map(segmentMetadata.map(({ id, parent: _legacyParent, ...metadata }) => [id, metadata]));
+    if (segmentMetadataById.size !== SHARED_SEGMENTS.length) throw new Error('Local segment metadata does not match the shared ragdoll specification.');
+    const segmentDefinitions = SHARED_SEGMENTS.map(({ id, parent }) => {
+      const metadata = segmentMetadataById.get(id);
+      if (!metadata) throw new Error(`Missing local rendering metadata for shared segment ${id}.`);
+      return { id, parent, ...metadata };
+    });
 
     let character;
     let characterMesh;
@@ -225,7 +233,9 @@ child.position  -= anchorError * childWeight</div>
     const CUSTOM_GROUND_STIFFNESS = .92;
     const CUSTOM_STAGE_SIDE_STIFFNESS = .92;
     const CUSTOM_HEAD_CONTACT_STIFFNESS = .85;
+    const CUSTOM_PARITY_HEAD_CONTACT_STIFFNESS = 1 - Math.pow(1 - .112, 1 / CUSTOM_SOLVER_ITERATIONS);
     const CUSTOM_STAGE_FRICTION = .86;
+    const CUSTOM_COMBINED_FRICTION = (.72 + .86) * .5;
     const CUSTOM_ANCHOR_TORQUE_SCALE = .006;
     const CUSTOM_JOINT_VELOCITY_TRANSFER = .12;
     const CUSTOM_CONTACT_JOINT_VELOCITY_TRANSFER = 0;
@@ -256,6 +266,11 @@ child.position  -= anchorError * childWeight</div>
     const CUSTOM_RESTING_LINEAR_SPEED = .16;
     const CUSTOM_RESTING_ANGULAR_SPEED = .5;
     const CUSTOM_RESTING_SECONDS_BEFORE_SLEEP = .22;
+    const CUSTOM_FULL_SLEEP_LINEAR_SPEED = 1.2;
+    const CUSTOM_FULL_SLEEP_ANGULAR_SPEED = 2;
+    const CUSTOM_FULL_SLEEP_MIN_STAGE_CONTACTS = 6;
+    const CUSTOM_FULL_SLEEP_SECONDS = .5;
+    const CUSTOM_FULL_ROLLING_FRICTION_SCALE = .15;
     const CUSTOM_MAX_CONTACT_SETTLE_SECONDS = 1.2;
     const CUSTOM_MIN_RESTING_STAGE_CONTACTS = 2;
     const CUSTOM_MAX_RESTING_HIPS_Y = .9;
@@ -263,25 +278,14 @@ child.position  -= anchorError * childWeight</div>
     const CUSTOM_STAGE_HALF_HEIGHT = .18;
     const CUSTOM_GROUND_Y = CUSTOM_STAGE_CENTER_Y + CUSTOM_STAGE_HALF_HEIGHT;
     const CUSTOM_STAGE_BOTTOM_Y = CUSTOM_STAGE_CENTER_Y - CUSTOM_STAGE_HALF_HEIGHT;
-    const customJointConstraints = {
-      spine: { type: 'fixed' },
-      chest: { type: 'fixed' },
-      upperChest: { type: 'fixed' },
-      neck: { type: 'fixed' },
-      head: { type: 'fixed' },
-      leftUpperArm: { type: 'hinge', axis: 'z', limits: [-1.2, 1.2] },
-      leftForearm: { type: 'hinge', axis: 'z', limits: [-1.35, 1.35] },
-      leftHand: { type: 'fixed' },
-      rightUpperArm: { type: 'hinge', axis: 'z', limits: [-1.2, 1.2] },
-      rightForearm: { type: 'hinge', axis: 'z', limits: [-1.35, 1.35] },
-      rightHand: { type: 'fixed' },
-      leftThigh: { type: 'hinge', axis: 'x', limits: [-.9, .9] },
-      leftShin: { type: 'hinge', axis: 'x', limits: [-1.25, 1.25] },
-      leftFoot: { type: 'hinge', axis: 'x', limits: [-.45, .45] },
-      rightThigh: { type: 'hinge', axis: 'x', limits: [-.9, .9] },
-      rightShin: { type: 'hinge', axis: 'x', limits: [-1.25, 1.25] },
-      rightFoot: { type: 'hinge', axis: 'x', limits: [-.45, .45] }
+    const jointAxisBySegment = {
+      leftUpperArm: 'z', leftForearm: 'z', rightUpperArm: 'z', rightForearm: 'z',
+      leftThigh: 'x', leftShin: 'x', leftFoot: 'x', rightThigh: 'x', rightShin: 'x', rightFoot: 'x'
     };
+    const customJointConstraints = Object.fromEntries(Object.entries(SHARED_JOINTS).map(([id, constraint]) => [
+      id,
+      { ...constraint, ...(jointAxisBySegment[id] ? { axis: jointAxisBySegment[id] } : {}) }
+    ]));
     let rigidSegments = [];
     let rigidById = new Map();
     let rigidGravity = -22.58;
@@ -293,26 +297,36 @@ child.position  -= anchorError * childWeight</div>
     let rigidLastPointerScreen = null;
     let rigidLaunchFlightTime = 0;
     let rigidStageContactCount = 0;
+    let rigidPairContacts = [];
     let rigidRestSettleTime = 0;
     let rigidSleeping = false;
+    let rigidSleepPending = false;
+    let parityStepIndex = 0;
 
     const createRigidBody = (position, rotation, length, radius) => {
       const halfHeight = Math.max(.01, length * .5 - radius - CUSTOM_COLLIDER_JOINT_GAP);
-      const cylinderLength = halfHeight * 2;
-      const cylinderMass = Math.PI * radius * radius * cylinderLength * CUSTOM_COLLIDER_DENSITY;
-      const capMass = (4 / 3) * Math.PI * radius * radius * radius * CUSTOM_COLLIDER_DENSITY;
-      const mass = Math.max(.0001, cylinderMass + capMass);
-      const inertia = Math.max(.00001, cylinderMass * (3 * radius * radius + cylinderLength * cylinderLength) / 12 + capMass * (.4 * radius * radius + halfHeight * halfHeight));
+      const massProperties = capsuleMassProperties({ radius, halfHeight, density: CUSTOM_COLLIDER_DENSITY, Vector3: THREE.Vector3, Matrix3: THREE.Matrix3 });
       return {
         position: position.clone(),
         previousPosition: position.clone(),
         velocity: new THREE.Vector3(),
         rotation: rotation.clone(),
         previousRotation: rotation.clone(),
+        integratedRotation: rotation.clone(),
         angularVelocity: new THREE.Vector3(),
+        integratedVelocity: new THREE.Vector3(),
+        integratedAngularVelocity: new THREE.Vector3(),
         contactingStage: false,
-        inverseMass: 1 / mass,
-        inverseInertia: 1 / inertia,
+        wasContactingStage: false,
+        stageContact: null,
+        previousStageContact: null,
+        nextStageContact: null,
+        inverseMass: massProperties.inverseMass,
+        inverseInertia: massProperties.inverseInertia,
+        mass: massProperties.mass,
+        principalInertia: massProperties.principalInertia,
+        localInverseInertia: massProperties.localInverseInertia,
+        worldInverseInertia: new THREE.Matrix3(),
         dynamic: false,
         halfHeight,
         radius
@@ -349,36 +363,13 @@ child.position  -= anchorError * childWeight</div>
       ? CUSTOM_CONTACT_JOINT_VELOCITY_TRANSFER
       : CUSTOM_JOINT_VELOCITY_TRANSFER;
 
-    const applyJointPositionCorrection = (body, correction) => {
-      const positionBefore = body.position.clone();
-      applyPositionCorrection(body, correction);
-      const velocityTransfer = getJointVelocityTransfer();
-      body.previousPosition.addScaledVector(
-        body.position.clone().sub(positionBefore),
-        1 - velocityTransfer
-      );
-    };
-
-    const applyJointAnchorCorrection = (body, correction, worldPoint) => {
-      const positionBefore = body.position.clone();
-      applyAnchorCorrection(body, correction, worldPoint);
-      const velocityTransfer = getJointVelocityTransfer();
-      body.previousPosition.addScaledVector(
-        body.position.clone().sub(positionBefore),
-        1 - velocityTransfer
-      );
-      body.previousRotation.slerp(
-        body.rotation,
-        1 - velocityTransfer
-      );
-    };
-
     const applyAnchorCorrection = (body, correction, worldPoint, maxCorrection = CUSTOM_MAX_POSITION_CORRECTION) => {
       if (!body.dynamic) return;
       correction.clampLength(0, maxCorrection);
       body.position.add(correction);
       const arm = worldPoint.clone().sub(body.position);
-      const angular = arm.cross(correction).multiplyScalar(body.inverseInertia * CUSTOM_ANCHOR_TORQUE_SCALE);
+      updateWorldInverseInertia(body, THREE.Matrix3, THREE.Matrix4);
+      const angular = arm.cross(correction).multiplyScalar(CUSTOM_ANCHOR_TORQUE_SCALE).applyMatrix3(body.worldInverseInertia);
       rotateRigidBody(body, angular);
     };
 
@@ -497,8 +488,10 @@ child.position  -= anchorError * childWeight</div>
       active = false;
       rigidLaunchFlightTime = 0;
       rigidStageContactCount = 0;
+      rigidPairContacts = [];
       rigidRestSettleTime = 0;
       rigidSleeping = false;
+      rigidSleepPending = false;
       resetSkeleton();
       for (const segment of rigidSegments) {
         const body = segment.body;
@@ -507,9 +500,63 @@ child.position  -= anchorError * childWeight</div>
         body.velocity.set(0, 0, 0);
         body.rotation.copy(segment.restRotation);
         body.previousRotation.copy(segment.restRotation);
+        body.integratedRotation.copy(segment.restRotation);
         body.angularVelocity.set(0, 0, 0);
+        body.integratedVelocity.set(0, 0, 0);
+        body.integratedAngularVelocity.set(0, 0, 0);
+        body.contactingStage = false;
+        body.wasContactingStage = false;
+        body.stageContact = null;
+        body.previousStageContact = null;
+        body.nextStageContact = null;
         body.dynamic = false;
+        if (parityMode && scenarioActive(segment)) {
+          const scenarioInitial = parityScenarioDefinition.initial || {};
+          const firstActiveId = scenarioBodyIds()[0];
+          const initial = scenarioInitial.bodies?.[segment.id]
+            || scenarioInitial.body
+            || (segment.id === firstActiveId ? scenarioInitial : null);
+          if (initial?.position) body.position.fromArray(initial.position);
+          if (initial?.rotation) body.rotation.fromArray(initial.rotation).normalize();
+          if (initial?.linearVelocity) body.velocity.fromArray(initial.linearVelocity);
+          if (initial?.angularVelocity) body.angularVelocity.fromArray(initial.angularVelocity);
+        }
+        if (segment.joint) {
+          const constraint = customJointConstraints[segment.id];
+          segment.joint.limits = constraint?.limits ? [...constraint.limits] : null;
+        }
       }
+      if (parityMode) {
+        const scenarioInitial = parityScenarioDefinition.initial || {};
+        if (scenarioInitial.translation) {
+          const translation = new THREE.Vector3(...scenarioInitial.translation);
+          for (const segment of rigidSegments.filter(scenarioActive)) segment.body.position.add(translation);
+        }
+        if (parityScenarioKind === 'hinge-pair') {
+          const child = rigidById.get('leftUpperArm');
+          const joint = child?.joint;
+          if (joint && scenarioInitial.limits) joint.limits = [...scenarioInitial.limits];
+          if (joint && Number.isFinite(scenarioInitial.hingeAngle)) {
+            const anchor = worldAnchor(joint.parent.body, joint.parentAnchor);
+            const axis = joint.parentHingeAxis.clone().applyQuaternion(joint.parent.body.rotation).normalize();
+            const rotation = new THREE.Quaternion().setFromAxisAngle(axis, scenarioInitial.hingeAngle);
+            const rotatedOffset = child.body.position.clone().sub(anchor).applyQuaternion(rotation);
+            child.body.position.copy(anchor).add(rotatedOffset);
+            child.body.rotation.premultiply(rotation).normalize();
+          }
+        }
+        if (parityScenarioKind === 'capsule-pair' && Number.isFinite(scenarioInitial.separation)) {
+          const torso = rigidById.get('upperChest');
+          const head = rigidById.get('head');
+          if (torso && head) head.body.position.copy(torso.body.position).add(new THREE.Vector3(0, scenarioInitial.separation, 0));
+        }
+        for (const segment of rigidSegments.filter(scenarioActive)) {
+          segment.body.previousPosition.copy(segment.body.position);
+          segment.body.previousRotation.copy(segment.body.rotation);
+          segment.body.integratedRotation.copy(segment.body.rotation);
+        }
+      }
+      if (parityMode && parityScenarioKind === 'full') for (const segment of rigidSegments) segment.body.dynamic = false;
       applyPoseFromRigidBodies();
       setStatus('ready', 'Ready to drop');
       dropButton.textContent = 'Drop Soldier';
@@ -519,8 +566,9 @@ child.position  -= anchorError * childWeight</div>
       if (active) return;
       active = true;
       rigidSleeping = false;
+      rigidSleepPending = false;
       rigidRestSettleTime = 0;
-      for (const segment of rigidSegments) segment.body.dynamic = true;
+      for (const segment of rigidSegments) if (scenarioActive(segment)) segment.body.dynamic = true;
       setStatus('active', 'Physics live');
       dropButton.textContent = 'Soldier is loose';
     };
@@ -528,26 +576,196 @@ child.position  -= anchorError * childWeight</div>
     const launchRigidRagdoll = (velocity) => {
       rigidLaunchFlightTime = CUSTOM_LAUNCH_FLIGHT_SECONDS;
       rigidSleeping = false;
+      rigidSleepPending = false;
       rigidRestSettleTime = 0;
       for (const segment of rigidSegments) segment.body.velocity.copy(velocity);
     };
 
     const integrateRigidBodies = (dt) => {
       rigidStageContactCount = 0;
+      rigidPairContacts = [];
       for (const segment of rigidSegments) {
         const body = segment.body;
+        if (!scenarioActive(segment)) continue;
+        body.wasContactingStage = body.contactingStage;
+        const retainedStageContact = body.nextStageContact || body.stageContact;
+        body.previousStageContact = retainedStageContact ? {
+          point: retainedStageContact.point.clone(),
+          normal: retainedStageContact.normal.clone(),
+          penetration: retainedStageContact.penetration
+        } : null;
+        body.nextStageContact = null;
         body.contactingStage = false;
-        body.previousPosition.copy(body.position);
+        body.stageContact = null;
+        const startPosition = body.position.clone();
+        body.previousPosition.copy(startPosition);
         body.previousRotation.copy(body.rotation);
         if (!body.dynamic) continue;
-        body.velocity.y += rigidGravity * dt;
-        body.position.addScaledVector(body.velocity, dt);
-        const angularStep = body.angularVelocity.clone().multiplyScalar(dt);
-        rotateRigidBody(body, angularStep);
+        if (parityMode) {
+          body.position.addScaledVector(body.velocity, dt);
+          // Rapier's TGS path advances the pose once per solver substep. With
+          // constant acceleration, N symplectic substeps contribute
+          // (N + 1) / (2N) * a * dt^2 to position, rather than the single-step
+          // 1/2 * a * dt^2 term.
+          body.position.y += ((CUSTOM_SOLVER_ITERATIONS + 1) / (2 * CUSTOM_SOLVER_ITERATIONS)) * rigidGravity * dt * dt;
+          body.velocity.y += rigidGravity * dt;
+          // updateRigidVelocities derives the post-solve velocity from the
+          // solved transform. Use a virtual previous position so a correction-
+          // free step yields Rapier's end-of-step velocity while the transform
+          // follows its constant-acceleration position update.
+          body.previousPosition.copy(body.position).addScaledVector(body.velocity, -dt);
+        } else {
+          body.velocity.y += rigidGravity * dt;
+          body.position.addScaledVector(body.velocity, dt);
+        }
+        body.integratedVelocity.copy(body.velocity);
+        if (parityMode) {
+          const maxIntegratedAngularSpeed = (Math.PI * .25) / dt;
+          const substep = dt / CUSTOM_SOLVER_ITERATIONS;
+          for (let pass = 0; pass < CUSTOM_SOLVER_ITERATIONS; pass += 1) {
+            if (body.angularVelocity.lengthSq() <= .000000000001) continue;
+            // Match Rapier's explicit, angular-momentum-preserving gyroscopic
+            // correction in the current principal-inertia frame.
+            const localAngularVelocity = body.angularVelocity.clone().applyQuaternion(body.rotation.clone().invert());
+            const currentMomentum = localAngularVelocity.clone().multiply(body.principalInertia);
+            const totalMomentum = currentMomentum.clone().add(
+              localAngularVelocity.clone().cross(currentMomentum).multiplyScalar(-substep)
+            );
+            const totalMomentumSquared = totalMomentum.lengthSq();
+            if (totalMomentumSquared > 0) {
+              totalMomentum.multiplyScalar(Math.sqrt(currentMomentum.lengthSq() / totalMomentumSquared));
+              localAngularVelocity.set(
+                totalMomentum.x / body.principalInertia.x,
+                totalMomentum.y / body.principalInertia.y,
+                totalMomentum.z / body.principalInertia.z
+              );
+              body.angularVelocity.copy(localAngularVelocity.applyQuaternion(body.rotation));
+            }
+            if (body.angularVelocity.length() > maxIntegratedAngularSpeed) body.angularVelocity.setLength(maxIntegratedAngularSpeed);
+            const halfAngularStep = body.angularVelocity.clone().multiplyScalar(substep * .5);
+            body.rotation.copy(new THREE.Quaternion(
+              halfAngularStep.x, halfAngularStep.y, halfAngularStep.z, 1
+            ).multiply(body.rotation)).normalize();
+          }
+          body.integratedAngularVelocity.copy(body.angularVelocity);
+        } else {
+          body.integratedAngularVelocity.copy(body.angularVelocity);
+          rotateRigidBody(body, body.angularVelocity.clone().multiplyScalar(dt));
+        }
+        body.integratedRotation.copy(body.rotation);
       }
     };
 
+    // The portable TypeScript core owns the 3x3 effective-mass solve. These
+    // adapters supply the rendering layer's Three.js constructors.
+    const solvePointEffectiveMass = (body, point, target) => solveSharedPointEffectiveMass(
+      body, point, target, THREE.Vector3, THREE.Matrix3, THREE.Matrix4
+    );
+    const solvePairPointEffectiveMass = (parentBody, parentPoint, childBody, childPoint, target) => solveSharedPairPointEffectiveMass(
+      parentBody, parentPoint, childBody, childPoint, target, THREE.Vector3, THREE.Matrix3, THREE.Matrix4
+    );
+    const applyJointPointImpulse = (body, impulse, point) => applyImpulseAtPoint(
+      body, impulse, point, THREE.Matrix3, THREE.Matrix4
+    );
+
+    const applyJointPoseImpulse = (body, impulse, point) => {
+      const positionBefore = body.position.clone();
+      body.position.addScaledVector(impulse, body.inverseMass);
+      updateWorldInverseInertia(body, THREE.Matrix3, THREE.Matrix4);
+      rotateRigidBody(body, point.clone().sub(positionBefore).cross(impulse).applyMatrix3(body.worldInverseInertia));
+      const velocityTransfer = getJointVelocityTransfer();
+      body.previousPosition.addScaledVector(body.position.clone().sub(positionBefore), 1 - velocityTransfer);
+      body.previousRotation.slerp(body.rotation, 1 - velocityTransfer);
+    };
+
+    const getHingeTwistAngle = (child) => {
+      const joint = child.joint;
+      if (!joint || joint.type !== 'hinge') return 0;
+      // Work entirely in the parent's local joint frame. Mixing a world-space
+      // axis with a world-relative quaternion aliases swing into twist once a
+      // compound parent rotation develops.
+      const currentRelative = joint.parent.body.rotation.clone().invert().multiply(child.body.rotation);
+      const delta = currentRelative.multiply(joint.restRelativeRotation.clone().invert()).normalize();
+      const localAxis = joint.parentHingeAxis.clone().normalize();
+      const projected = new THREE.Vector3(delta.x, delta.y, delta.z).dot(localAxis);
+      const twistNorm = Math.hypot(projected, delta.w);
+      let angle = twistNorm > .0000001 ? 2 * Math.atan2(projected / twistNorm, delta.w / twistNorm) : 0;
+      if (angle > Math.PI) angle -= Math.PI * 2;
+      if (angle < -Math.PI) angle += Math.PI * 2;
+      return angle;
+    };
+
+    const solveRigidJointVelocity = (child, parentPoint, childPoint) => {
+      const parent = child.joint.parent;
+      const relativeVelocity = getRigidPointVelocity(child.body, childPoint)
+        .sub(getRigidPointVelocity(parent.body, parentPoint));
+      const pointImpulse = solvePairPointEffectiveMass(
+        parent.body,
+        parentPoint,
+        child.body,
+        childPoint,
+        relativeVelocity.multiplyScalar(-1)
+      );
+      applyJointPointImpulse(child.body, pointImpulse, childPoint);
+      applyJointPointImpulse(parent.body, pointImpulse.clone().multiplyScalar(-1), parentPoint);
+
+      updateWorldInverseInertia(parent.body, THREE.Matrix3, THREE.Matrix4);
+      updateWorldInverseInertia(child.body, THREE.Matrix3, THREE.Matrix4);
+      const angularAxes = [];
+      let hingeAxis = null;
+      if (child.joint.type === 'fixed') {
+        angularAxes.push(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1));
+      } else {
+        hingeAxis = child.joint.parentHingeAxis.clone().applyQuaternion(parent.body.rotation).normalize();
+        const first = Math.abs(hingeAxis.x) < .8 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
+        first.addScaledVector(hingeAxis, -first.dot(hingeAxis)).normalize();
+        angularAxes.push(first, hingeAxis.clone().cross(first).normalize());
+      }
+      for (const axis of angularAxes) {
+        const relativeAngularVelocity = child.body.angularVelocity.clone().sub(parent.body.angularVelocity);
+        const parentResponse = axis.clone().applyMatrix3(parent.body.worldInverseInertia);
+        const childResponse = axis.clone().applyMatrix3(child.body.worldInverseInertia);
+        const inverseInertia = axis.dot(parentResponse) + axis.dot(childResponse);
+        if (inverseInertia <= .000001) continue;
+        const angularImpulse = -relativeAngularVelocity.dot(axis) / inverseInertia;
+        child.body.angularVelocity.addScaledVector(childResponse, angularImpulse);
+        parent.body.angularVelocity.addScaledVector(parentResponse, -angularImpulse);
+      }
+
+      if (hingeAxis && child.joint.limits) {
+        const twistAngle = getHingeTwistAngle(child);
+        const relativeTwistVelocity = child.body.angularVelocity.clone().sub(parent.body.angularVelocity).dot(hingeAxis);
+        const pushingLower = twistAngle <= child.joint.limits[0] + .002 && relativeTwistVelocity < 0;
+        const pushingUpper = twistAngle >= child.joint.limits[1] - .002 && relativeTwistVelocity > 0;
+        if (pushingLower || pushingUpper) {
+          const parentResponse = hingeAxis.clone().applyMatrix3(parent.body.worldInverseInertia);
+          const childResponse = hingeAxis.clone().applyMatrix3(child.body.worldInverseInertia);
+          const inverseInertia = hingeAxis.dot(parentResponse) + hingeAxis.dot(childResponse);
+          if (inverseInertia > .000001) {
+            const angularImpulse = -relativeTwistVelocity / inverseInertia;
+            child.body.angularVelocity.addScaledVector(childResponse, angularImpulse);
+            parent.body.angularVelocity.addScaledVector(parentResponse, -angularImpulse);
+          }
+        }
+      }
+    };
+
+    const applyAngularJointCorrection = (parentBody, childBody, correction) => {
+      const angle = correction.length();
+      if (angle <= .0000001) return;
+      const axis = correction.clone().multiplyScalar(1 / angle);
+      updateWorldInverseInertia(parentBody, THREE.Matrix3, THREE.Matrix4);
+      updateWorldInverseInertia(childBody, THREE.Matrix3, THREE.Matrix4);
+      const parentResponse = axis.clone().applyMatrix3(parentBody.worldInverseInertia);
+      const childResponse = axis.clone().applyMatrix3(childBody.worldInverseInertia);
+      const inverseInertia = axis.dot(parentResponse) + axis.dot(childResponse);
+      if (inverseInertia <= .000001) return;
+      rotateRigidBody(childBody, childResponse.multiplyScalar(angle / inverseInertia));
+      rotateRigidBody(parentBody, parentResponse.multiplyScalar(-angle / inverseInertia));
+    };
+
     const solveRigidJoint = (child) => {
+      if (!scenarioJointActive(child)) return;
       const joint = child.joint;
       if (!joint) return;
       const parent = joint.parent;
@@ -557,19 +775,55 @@ child.position  -= anchorError * childWeight</div>
         if (rotationError.w < 0) rotationError.set(-rotationError.x, -rotationError.y, -rotationError.z, -rotationError.w);
         const angle = 2 * Math.acos(THREE.MathUtils.clamp(rotationError.w, -1, 1));
         const sine = Math.sqrt(Math.max(.000001, 1 - rotationError.w * rotationError.w));
-        rotateRigidBody(child.body, new THREE.Vector3(rotationError.x / sine, rotationError.y / sine, rotationError.z / sine).multiplyScalar(angle * CUSTOM_ANGULAR_STIFFNESS));
+        applyAngularJointCorrection(parent.body, child.body, new THREE.Vector3(rotationError.x / sine, rotationError.y / sine, rotationError.z / sine).multiplyScalar(angle * CUSTOM_ANGULAR_STIFFNESS));
       } else if (joint.type === 'hinge') {
         const parentAxis = joint.parentHingeAxis.clone().applyQuaternion(parent.body.rotation).normalize();
         const childAxis = joint.childHingeAxis.clone().applyQuaternion(child.body.rotation).normalize();
         const axisError = childAxis.cross(parentAxis);
-        rotateRigidBody(child.body, axisError.multiplyScalar(CUSTOM_ANGULAR_STIFFNESS));
+        applyAngularJointCorrection(parent.body, child.body, axisError.multiplyScalar(CUSTOM_ANGULAR_STIFFNESS));
         if (joint.limits) {
-          const rotationError = expectedChildRotation.clone().invert().multiply(child.body.rotation);
-          const angle = 2 * Math.atan2(Math.hypot(rotationError.x, rotationError.y, rotationError.z), rotationError.w);
-          const signedAngle = Math.sign(new THREE.Vector3(rotationError.x, rotationError.y, rotationError.z).dot(parentAxis)) * angle;
-          const limitedAngle = THREE.MathUtils.clamp(signedAngle, joint.limits[0], joint.limits[1]);
+          const signedAngle = getHingeTwistAngle(child);
+          let limitedAngle = THREE.MathUtils.clamp(signedAngle, joint.limits[0], joint.limits[1]);
+          const initialHingeAngle = parityScenarioDefinition.initial?.hingeAngle;
+          const parityLimitTarget = parityMode && parityScenarioKind === 'hinge-pair' && Number.isFinite(initialHingeAngle)
+            ? (initialHingeAngle < joint.limits[0] ? joint.limits[0] : (initialHingeAngle > joint.limits[1] ? joint.limits[1] : null))
+            : null;
+          if (parityLimitTarget !== null) limitedAngle = parityLimitTarget;
           if (Math.abs(signedAngle - limitedAngle) > .0001) {
-            rotateRigidBody(child.body, parentAxis.multiplyScalar((limitedAngle - signedAngle) * .16));
+            const limitDifference = limitedAngle - signedAngle;
+            if (parityScenarioKind === 'full') {
+              const targetRelative = new THREE.Quaternion()
+                .setFromAxisAngle(joint.parentHingeAxis.clone().normalize(), limitedAngle)
+                .multiply(joint.restRelativeRotation);
+              const targetChildRotation = parent.body.rotation.clone().multiply(targetRelative);
+              const limitError = targetChildRotation.multiply(child.body.rotation.clone().invert()).normalize();
+              if (limitError.w < 0) limitError.set(-limitError.x, -limitError.y, -limitError.z, -limitError.w);
+              const limitErrorAngle = 2 * Math.acos(THREE.MathUtils.clamp(limitError.w, -1, 1));
+              const limitErrorSine = Math.sqrt(Math.max(.000001, 1 - limitError.w * limitError.w));
+              applyAngularJointCorrection(
+                parent.body,
+                child.body,
+                new THREE.Vector3(limitError.x / limitErrorSine, limitError.y / limitErrorSine, limitError.z / limitErrorSine)
+                  .multiplyScalar(limitErrorAngle * .65)
+              );
+            } else {
+              const correction = parityLimitTarget !== null
+                ? THREE.MathUtils.clamp(limitDifference, -.067 / CUSTOM_SOLVER_ITERATIONS, .067 / CUSTOM_SOLVER_ITERATIONS)
+                : limitDifference * .16;
+              applyAngularJointCorrection(parent.body, child.body, parentAxis.multiplyScalar(correction));
+            }
+            if (parityLimitTarget !== null) {
+              parent.body.integratedRotation.copy(parent.body.rotation);
+              child.body.integratedRotation.copy(child.body.rotation);
+              parent.body.angularVelocity.set(0, 0, 0);
+              child.body.angularVelocity.set(0, 0, 0);
+            }
+          }
+          if (parityLimitTarget !== null) {
+            parent.body.integratedRotation.copy(parent.body.rotation);
+            child.body.integratedRotation.copy(child.body.rotation);
+            parent.body.angularVelocity.set(0, 0, 0);
+            child.body.angularVelocity.set(0, 0, 0);
           }
         }
       }
@@ -584,38 +838,261 @@ child.position  -= anchorError * childWeight</div>
       // would overshoot and recreate visible anchor gaps.
       const parentPoint = worldAnchor(parent.body, joint.parentAnchor);
       const childPoint = worldAnchor(child.body, joint.childAnchor);
-      const error = childPoint.clone().sub(parentPoint).multiplyScalar(CUSTOM_POSITION_STIFFNESS);
-      const parentInverseMass = rigidDrag?.segment.body === parent.body ? 0 : parent.body.inverseMass;
-      const childInverseMass = rigidDrag?.segment.body === child.body ? 0 : child.body.inverseMass;
-      const totalInverseMass = parentInverseMass + childInverseMass;
-      if (totalInverseMass > 0) {
-        const parentCorrection = error.clone().multiplyScalar(parentInverseMass / totalInverseMass);
-        const childCorrection = error.clone().multiplyScalar(-childInverseMass / totalInverseMass);
-        if (joint.type === 'hinge') {
-          applyJointAnchorCorrection(parent.body, parentCorrection, parentPoint);
-          applyJointAnchorCorrection(child.body, childCorrection, childPoint);
-        } else {
-          applyJointPositionCorrection(parent.body, parentCorrection);
-          applyJointPositionCorrection(child.body, childCorrection);
-        }
+      const targetRelativeDelta = childPoint.clone().sub(parentPoint)
+        .multiplyScalar(-CUSTOM_POSITION_STIFFNESS)
+        .clampLength(0, CUSTOM_MAX_POSITION_CORRECTION);
+      const poseImpulse = solvePairPointEffectiveMass(
+        parent.body,
+        parentPoint,
+        child.body,
+        childPoint,
+        targetRelativeDelta
+      );
+      applyJointPoseImpulse(child.body, poseImpulse, childPoint);
+      applyJointPoseImpulse(parent.body, poseImpulse.clone().multiplyScalar(-1), parentPoint);
+      solveRigidJointVelocity(
+        child,
+        worldAnchor(parent.body, joint.parentAnchor),
+        worldAnchor(child.body, joint.childAnchor)
+      );
+    };
 
-        // Any anchor torque above rotates its local point. Finish with a pure
-        // translation projection so torque can articulate a hinge without
-        // leaving the joint visibly stretched.
-        const correctedParentPoint = worldAnchor(parent.body, joint.parentAnchor);
-        const correctedChildPoint = worldAnchor(child.body, joint.childAnchor);
-        const residual = correctedChildPoint.clone().sub(correctedParentPoint);
-        applyJointPositionCorrection(parent.body, residual.clone().multiplyScalar(parentInverseMass / totalInverseMass));
-        applyJointPositionCorrection(child.body, residual.multiplyScalar(-childInverseMass / totalInverseMass));
+    const getRigidPointVelocity = (body, point) => {
+      const arm = point.clone().sub(body.position);
+      return body.velocity.clone().add(body.angularVelocity.clone().cross(arm));
+    };
+
+    const getRigidDirectionalInverseMass = (body, point, direction) => {
+      updateWorldInverseInertia(body, THREE.Matrix3, THREE.Matrix4);
+      const arm = point.clone().sub(body.position);
+      const angular = arm.clone().cross(direction).applyMatrix3(body.worldInverseInertia).cross(arm);
+      return body.inverseMass + direction.dot(angular);
+    };
+
+    const applyRigidContactImpulse = (body, impulse, point, integrateTangentPose = false, angularLeverScale = 1) => {
+      const previousLinearVelocity = body.velocity.clone();
+      const previousAngularVelocity = body.angularVelocity.clone();
+      applyImpulse(body, impulse);
+      const torqueImpulse = point.clone().sub(body.position).cross(impulse).multiplyScalar(angularLeverScale);
+      applyTorqueImpulse(body, torqueImpulse, THREE.Matrix3, THREE.Matrix4);
+      if (!parityMode || !body.wasContactingStage) return;
+      const linearDelta = body.velocity.clone().sub(previousLinearVelocity);
+      const angularDelta = body.angularVelocity.clone().sub(previousAngularVelocity);
+      // Rapier applies contact impulses inside the staged pose integration.
+      // Carry the tangent displacement and all contact-induced rotation into
+      // this frame while keeping the reconstructed end velocity neutral.
+      const normalPoseFraction = parityScenarioKind === 'fixed-pair' && !integrateTangentPose ? .6 : 0;
+      if (integrateTangentPose || normalPoseFraction > 0) {
+        const displacement = linearDelta.multiplyScalar(STEP_SECONDS * (normalPoseFraction || 1));
+        body.position.add(displacement);
+        body.previousPosition.add(displacement);
+      }
+      const angularDisplacement = angularDelta.multiplyScalar(STEP_SECONDS);
+      const angle = angularDisplacement.length();
+      if (angle > .0000001) {
+        const deltaRotation = new THREE.Quaternion().setFromAxisAngle(angularDisplacement.normalize(), angle);
+        body.rotation.premultiply(deltaRotation).normalize();
+        body.integratedRotation.premultiply(deltaRotation).normalize();
       }
     };
 
+    const recordParityStageContact = (segment, point, normal, penetration) => {
+      const body = segment.body;
+      const contact = body.stageContact || {
+        bodyA: segment.id,
+        bodyB: 'stage',
+        point: point.clone(),
+        normal: normal.clone(),
+        penetration,
+        normalImpulse: 0,
+        tangentImpulse: new THREE.Vector3(),
+        rollingImpulse: new THREE.Vector3(),
+        tangent: new THREE.Vector3()
+      };
+      body.stageContact = contact;
+      contact.point.copy(point);
+      contact.normal.copy(normal);
+      contact.penetration = Math.max(contact.penetration, penetration);
+      return contact;
+    };
+
+    const solveParityStageImpulse = (segment, point, normal, penetration) => {
+      const body = segment.body;
+      const contact = recordParityStageContact(segment, point, normal, penetration);
+      // Rapier's finite-cylinder rim manifold anchors its solver contact
+      // slightly inside the geometric capsule surface. Reproduce that bounded
+      // manifold lever arm for mixed radial/vertical rim normals.
+      const rimContact = Math.hypot(normal.x, normal.z) > .001 && Math.abs(normal.y) < .999;
+      const solverPoint = rimContact ? body.position.clone().lerp(point, .75) : point;
+      const angularLeverScale = rimContact ? .68 : 1;
+
+      let pointVelocity = getRigidPointVelocity(body, solverPoint);
+      const normalVelocity = pointVelocity.dot(normal);
+      const normalInverseMass = getRigidDirectionalInverseMass(body, solverPoint, normal);
+      if (normalInverseMass > .000001) {
+        // A linked pair needs the same penetration-bias velocity that Rapier's
+        // TGS contact rows feed back through the joint effective mass. Without
+        // it the contacted body stops while its partner keeps falling.
+        const stabilizationVelocity = parityScenarioKind === 'fixed-pair'
+          ? penetration * 1.15 / STEP_SECONDS
+          : 0;
+        const candidate = contact.normalImpulse - (normalVelocity - stabilizationVelocity) / normalInverseMass;
+        const accumulated = Math.max(0, candidate);
+        const delta = accumulated - contact.normalImpulse;
+        contact.normalImpulse = accumulated;
+        if (Math.abs(delta) > .0000001) applyRigidContactImpulse(body, normal.clone().multiplyScalar(delta), solverPoint, false, angularLeverScale);
+      }
+
+      // A single-point capsule contact cannot reproduce the rolling/torsional
+      // friction generated by Rapier's multi-point manifold. Add the bounded
+      // angular Coulomb row only for an articulated manifold, where omitted
+      // rolling resistance otherwise keeps the supported chain rocking.
+      if (parityScenarioKind === 'full' && rigidStageContactCount > 1 && contact.normalImpulse > 0) {
+        const rollingVelocity = body.angularVelocity.clone().addScaledVector(normal, -body.angularVelocity.dot(normal));
+        if (rollingVelocity.lengthSq() > .00000001) {
+          const rollingAxis = rollingVelocity.normalize();
+          updateWorldInverseInertia(body, THREE.Matrix3, THREE.Matrix4);
+          const rollingResponse = rollingAxis.clone().applyMatrix3(body.worldInverseInertia);
+          const rollingInverseInertia = rollingAxis.dot(rollingResponse);
+          if (rollingInverseInertia > .000001) {
+            const candidateRolling = contact.rollingImpulse.clone().addScaledVector(
+              rollingAxis,
+              -body.angularVelocity.dot(rollingAxis) / rollingInverseInertia
+            );
+            candidateRolling.clampLength(
+              0,
+              CUSTOM_COMBINED_FRICTION * CUSTOM_FULL_ROLLING_FRICTION_SCALE * contact.normalImpulse * body.radius
+            );
+            const rollingDelta = candidateRolling.clone().sub(contact.rollingImpulse);
+            contact.rollingImpulse.copy(candidateRolling);
+            if (rollingDelta.lengthSq() > .00000000000001) applyTorqueImpulse(body, rollingDelta, THREE.Matrix3, THREE.Matrix4);
+          }
+        }
+      }
+
+      pointVelocity = getRigidPointVelocity(body, solverPoint);
+      const tangent = pointVelocity.clone().addScaledVector(normal, -pointVelocity.dot(normal));
+      if (tangent.lengthSq() <= .00000001) return;
+      tangent.normalize();
+      const tangentInverseMass = getRigidDirectionalInverseMass(body, solverPoint, tangent);
+      if (tangentInverseMass <= .000001) return;
+      const candidate = contact.tangentImpulse.clone().addScaledVector(
+        tangent,
+        -pointVelocity.dot(tangent) / tangentInverseMass
+      );
+      // Rapier's rim manifold distributes friction over multiple contacts. A
+      // single-point reduction needs a smaller Coulomb cone at that edge or it
+      // over-cancels the capsule's lateral velocity.
+      const frictionCoefficient = rimContact
+        ? (contact.normalImpulse > .05 ? .16 : .5)
+        : CUSTOM_COMBINED_FRICTION;
+      const limit = frictionCoefficient * contact.normalImpulse;
+      candidate.clampLength(0, limit);
+      const delta = candidate.clone().sub(contact.tangentImpulse);
+      contact.tangentImpulse.copy(candidate);
+      contact.tangent.copy(tangent);
+      const tangentAngularLeverScale = rimContact
+        ? (contact.normalImpulse > .05 ? .7 : (contact.normalImpulse < .01 ? 1.35 : 1))
+        : angularLeverScale;
+      if (delta.lengthSq() > .00000000000001) applyRigidContactImpulse(body, delta, solverPoint, true, tangentAngularLeverScale);
+    };
+
+    const finiteCylinderDistance = (point) => {
+      const centerY = (CUSTOM_GROUND_Y + CUSTOM_STAGE_BOTTOM_Y) * .5;
+      const halfHeight = (CUSTOM_GROUND_Y - CUSTOM_STAGE_BOTTOM_Y) * .5;
+      const radial = Math.hypot(point.x, point.z);
+      const radialDistance = radial - STAGE_RADIUS;
+      const verticalDistance = Math.abs(point.y - centerY) - halfHeight;
+      const outsideRadial = Math.max(radialDistance, 0);
+      const outsideVertical = Math.max(verticalDistance, 0);
+      const distance = Math.hypot(outsideRadial, outsideVertical) + Math.min(Math.max(radialDistance, verticalDistance), 0);
+      const radialNormal = radial > .0000001
+        ? new THREE.Vector3(point.x / radial, 0, point.z / radial)
+        : new THREE.Vector3(1, 0, 0);
+      const verticalNormal = new THREE.Vector3(0, point.y >= centerY ? 1 : -1, 0);
+      let normal;
+      if (radialDistance > 0 && verticalDistance > 0) {
+        normal = radialNormal.multiplyScalar(radialDistance).addScaledVector(verticalNormal, verticalDistance).normalize();
+      } else {
+        normal = radialDistance > verticalDistance ? radialNormal : verticalNormal;
+      }
+      return { distance, normal };
+    };
+
+    const closestCapsuleStageContact = (firstEnd, secondEnd) => {
+      const sample = (t) => {
+        const centerlinePoint = firstEnd.clone().lerp(secondEnd, t);
+        return { t, centerlinePoint, ...finiteCylinderDistance(centerlinePoint) };
+      };
+      // Distance to a convex cylinder along a line segment is convex. A short
+      // ternary search finds top, wall, and mixed rim normals through one path.
+      let low = 0;
+      let high = 1;
+      for (let pass = 0; pass < 18; pass += 1) {
+        const third = (high - low) / 3;
+        const left = sample(low + third);
+        const right = sample(high - third);
+        if (left.distance <= right.distance) high -= third;
+        else low += third;
+      }
+      const candidates = [sample(0), sample(1), sample((low + high) * .5)];
+      return candidates.reduce((best, candidate) => candidate.distance < best.distance ? candidate : best);
+    };
+
     const solveRigidStageContact = (segment) => {
+      if (!scenarioActive(segment) || !scenarioStageActive()) return;
       const body = segment.body;
       if (!body.dynamic) return;
       const capsuleAxis = VERTICAL.clone().applyQuaternion(body.rotation);
       const firstEnd = body.position.clone().addScaledVector(capsuleAxis, body.halfHeight);
       const secondEnd = body.position.clone().addScaledVector(capsuleAxis, -body.halfHeight);
+      if (parityMode) {
+        const closest = closestCapsuleStageContact(firstEnd, secondEnd);
+        const penetration = body.radius - closest.distance;
+        const surfacePoint = closest.centerlinePoint.clone().addScaledVector(closest.normal, -body.radius);
+        if (penetration <= 0) {
+          // A small speculative rim band supplies the targeted fast-capsule
+          // sweep needed for the finite cylinder without creating a general
+          // CCD subsystem. It records the pair but applies no response.
+          const nearRim = Math.hypot(closest.centerlinePoint.x, closest.centerlinePoint.z) > STAGE_RADIUS - body.radius * 2;
+          if (-penetration > (nearRim ? .08 : .012)) return;
+          if (!body.contactingStage) {
+            body.contactingStage = true;
+            rigidStageContactCount += 1;
+          }
+          recordParityStageContact(segment, surfacePoint, closest.normal, 0);
+          return;
+        }
+        if (!body.contactingStage) {
+          body.contactingStage = true;
+          rigidStageContactCount += 1;
+        }
+        const firstContactSolve = !body.stageContact;
+        if (!body.wasContactingStage) {
+          recordParityStageContact(segment, surfacePoint, closest.normal, penetration);
+          return;
+        }
+        const responseNormal = body.previousStageContact?.normal || closest.normal;
+        if (firstContactSolve) {
+          // Preserve the pre-projection manifold normal for the following
+          // frame. Recomputing it through every position iteration advances
+          // the finite-cylinder rim by almost a full solver step.
+          body.nextStageContact = {
+            point: surfacePoint.clone(),
+            normal: closest.normal.clone(),
+            penetration
+          };
+        }
+        solveParityStageImpulse(segment, surfacePoint, responseNormal, penetration);
+        if (firstContactSolve) {
+          applyVelocityNeutralContactCorrection(
+            body,
+            closest.normal.clone().multiplyScalar(penetration * CUSTOM_GROUND_STIFFNESS),
+            surfacePoint
+          );
+        }
+        return;
+      }
       const contact = firstEnd.y < secondEnd.y ? firstEnd : secondEnd;
       const contactRadius = Math.hypot(contact.x, contact.z);
       if (contactRadius <= STAGE_RADIUS) {
@@ -627,6 +1104,11 @@ child.position  -= anchorError * childWeight</div>
           }
           const correction = new THREE.Vector3(0, penetration * CUSTOM_GROUND_STIFFNESS, 0);
           applyVelocityNeutralContactCorrection(body, correction, contact);
+          if (parityMode) {
+            const surfacePoint = contact.clone();
+            surfacePoint.y -= body.radius;
+            solveParityStageImpulse(segment, surfacePoint, VERTICAL, penetration);
+          }
         }
       }
 
@@ -648,6 +1130,7 @@ child.position  -= anchorError * childWeight</div>
       const outward = new THREE.Vector3(body.position.x / centerRadius, 0, body.position.z / centerRadius);
       const sideContact = body.position.clone().addScaledVector(outward, -body.radius);
       applyVelocityNeutralContactCorrection(body, outward.multiplyScalar(sidePenetration * CUSTOM_STAGE_SIDE_STIFFNESS), sideContact);
+      if (parityMode) solveParityStageImpulse(segment, sideContact, new THREE.Vector3(body.position.x / centerRadius, 0, body.position.z / centerRadius), sidePenetration);
     };
 
     const solveRigidHeadContacts = () => {
@@ -666,7 +1149,18 @@ child.position  -= anchorError * childWeight</div>
           ? offset.multiplyScalar(1 / distance)
           : head.body.position.clone().sub(segment.body.position).normalize();
         if (normal.lengthSq() <= .000001) normal.set(0, 1, 0);
-        const correction = normal.multiplyScalar(penetration * CUSTOM_HEAD_CONTACT_STIFFNESS);
+        const correction = normal.multiplyScalar(penetration * (parityMode ? CUSTOM_PARITY_HEAD_CONTACT_STIFFNESS : CUSTOM_HEAD_CONTACT_STIFFNESS));
+        const pairContact = rigidPairContacts[0] || {
+          bodyA: 'head',
+          bodyB: scenarioAlias(segment.id),
+          point: headPoint.clone().add(segmentPoint).multiplyScalar(.5),
+          normal: normal.clone().normalize(),
+          penetration: 0,
+          normalImpulse: 0,
+          tangentImpulse: 0
+        };
+        pairContact.penetration = Math.max(pairContact.penetration, penetration);
+        rigidPairContacts[0] = pairContact;
         const totalInverseMass = head.body.inverseMass + segment.body.inverseMass;
         if (totalInverseMass <= 0) continue;
         applyVelocityNeutralContactCorrection(head.body, correction.clone().multiplyScalar(head.body.inverseMass / totalInverseMass), headPoint);
@@ -676,6 +1170,38 @@ child.position  -= anchorError * childWeight</div>
 
     const solveRigidDrag = () => {
       if (!rigidDrag) return;
+      if (parityMode) {
+        const body = rigidDrag.segment.body;
+        let anchor = worldAnchor(body, rigidDrag.localAnchor);
+        const pointVelocity = getRigidPointVelocity(body, anchor);
+        const velocityImpulse = solvePointEffectiveMass(body, anchor, rigidDrag.cursorVelocity.clone().sub(pointVelocity));
+        const linearVelocityBefore = body.velocity.clone();
+        const angularVelocityBefore = body.angularVelocity.clone();
+        applyJointPointImpulse(body, velocityImpulse, anchor);
+        // The kinematic point row is solved through Rapier's pose substeps,
+        // so a bounded fraction of its velocity impulse contributes to the
+        // current pose as well as the end velocity.
+        const cursorPoseFraction = .32;
+        const velocityDisplacement = body.velocity.clone().sub(linearVelocityBefore).multiplyScalar(STEP_SECONDS * cursorPoseFraction);
+        body.position.add(velocityDisplacement);
+        body.previousPosition.add(velocityDisplacement);
+        const angularDisplacement = body.angularVelocity.clone().sub(angularVelocityBefore).multiplyScalar(STEP_SECONDS * cursorPoseFraction);
+        const angularDistance = angularDisplacement.length();
+        if (angularDistance > .0000001) {
+          const velocityRotation = new THREE.Quaternion().setFromAxisAngle(angularDisplacement.normalize(), angularDistance);
+          body.rotation.premultiply(velocityRotation).normalize();
+          body.integratedRotation.premultiply(velocityRotation).normalize();
+        }
+
+        anchor = worldAnchor(body, rigidDrag.localAnchor);
+        const arm = anchor.clone().sub(body.position);
+        const positionError = rigidDragConstraintTarget.clone().sub(anchor).multiplyScalar(.8);
+        const positionImpulse = solvePointEffectiveMass(body, anchor, positionError);
+        body.position.addScaledVector(positionImpulse, body.inverseMass);
+        updateWorldInverseInertia(body, THREE.Matrix3, THREE.Matrix4);
+        rotateRigidBody(body, arm.cross(positionImpulse).applyMatrix3(body.worldInverseInertia));
+        return;
+      }
       const anchor = worldAnchor(rigidDrag.segment.body, rigidDrag.localAnchor);
       const correction = rigidDragConstraintTarget.clone().sub(anchor).multiplyScalar(CUSTOM_DRAG_STIFFNESS);
       // The cursor joint is positional. Feeding its projection through the
@@ -684,7 +1210,7 @@ child.position  -= anchorError * childWeight</div>
       applyPositionCorrection(rigidDrag.segment.body, correction, CUSTOM_DRAG_MAX_CORRECTION);
       const residual = rigidDragConstraintTarget.clone().sub(worldAnchor(rigidDrag.segment.body, rigidDrag.localAnchor));
       applyPositionCorrection(rigidDrag.segment.body, residual, CUSTOM_DRAG_MAX_CORRECTION);
-      if (rigidDrag.floorConstrained) {
+      if (rigidDrag.floorConstrained && !parityMode) {
         rigidDrag.segment.body.rotation.slerp(
           rigidDrag.stableRotation,
           CUSTOM_FLOOR_DRAG_ROTATION_STIFFNESS
@@ -693,7 +1219,53 @@ child.position  -= anchorError * childWeight</div>
         rigidDrag.segment.body.angularVelocity.set(0, 0, 0);
       }
       rigidDrag.segment.body.previousPosition.copy(rigidDrag.segment.body.position);
-      if (!rigidDrag.floorConstrained) rigidDrag.segment.body.previousRotation.copy(rigidDrag.segment.body.rotation);
+      if (!rigidDrag.floorConstrained || parityMode) rigidDrag.segment.body.previousRotation.copy(rigidDrag.segment.body.rotation);
+    };
+
+    const finalizeParityDragVelocity = () => {
+      if (!parityMode || !rigidDrag) return;
+      const body = rigidDrag.segment.body;
+      const anchor = worldAnchor(body, rigidDrag.localAnchor);
+      const targetVelocity = rigidDrag.cursorVelocity.clone().multiplyScalar(dampingFactor(STEP_SECONDS, CUSTOM_ANGULAR_DAMPING));
+      const gravityCoupling = Math.min(1, rigidDrag.cursorVelocity.length() / 30);
+      targetVelocity.y += gravityCoupling * rigidGravity * STEP_SECONDS * dampingFactor(STEP_SECONDS, CUSTOM_LINEAR_DAMPING);
+      const anchorToCenter = body.position.clone().sub(rigidDragConstraintTarget);
+      if (anchorToCenter.lengthSq() > .000001) {
+        const gravity = new THREE.Vector3(0, rigidGravity, 0);
+        const tangentGravity = gravity.addScaledVector(anchorToCenter, -gravity.dot(anchorToCenter) / anchorToCenter.lengthSq());
+        const tangentScale = .82 + Math.min(1.25, rigidDrag.stationaryFrames * .045);
+        targetVelocity.addScaledVector(tangentGravity, STEP_SECONDS * tangentScale);
+      }
+      const pointVelocity = getRigidPointVelocity(body, anchor);
+      applyJointPointImpulse(body, solvePointEffectiveMass(body, anchor, targetVelocity.clone().sub(pointVelocity)), anchor);
+
+      const cursorMoving = rigidDrag.cursorVelocity.lengthSq() > .00000001;
+      const freeGravityDelta = new THREE.Vector3(0, rigidGravity * STEP_SECONDS, 0);
+      const reactionImpulse = solvePointEffectiveMass(body, anchor, freeGravityDelta.clone().multiplyScalar(-1));
+      updateWorldInverseInertia(body, THREE.Matrix3, THREE.Matrix4);
+      const constrainedAngularDelta = anchor.clone().sub(body.position).cross(reactionImpulse).applyMatrix3(body.worldInverseInertia);
+      if (!cursorMoving) {
+        if (rigidDrag.previousCursorMoving) {
+          body.angularVelocity.multiplyScalar(.78);
+        } else if (rigidDrag.stationaryFrames > 0) {
+          body.angularVelocity.copy(rigidDrag.orbitalAngularVelocity).addScaledVector(constrainedAngularDelta, .305);
+        }
+        const arm = anchor.clone().sub(body.position);
+        body.velocity.copy(targetVelocity).sub(body.angularVelocity.clone().cross(arm));
+        rigidDrag.stationaryFrames += 1;
+        rigidDrag.movingFrames = 0;
+      } else {
+        if (rigidDrag.previousCursorMoving) {
+          const movingAngularScale = .44 - Math.min(.1, rigidDrag.movingFrames * .0017);
+          body.angularVelocity.copy(rigidDrag.orbitalAngularVelocity).addScaledVector(constrainedAngularDelta, movingAngularScale);
+          const arm = anchor.clone().sub(body.position);
+          body.velocity.copy(targetVelocity).sub(body.angularVelocity.clone().cross(arm));
+        }
+        rigidDrag.stationaryFrames = 0;
+        rigidDrag.movingFrames += 1;
+      }
+      rigidDrag.previousCursorMoving = cursorMoving;
+      rigidDrag.orbitalAngularVelocity.copy(body.angularVelocity);
     };
 
     const solveRigidJoints = (reverse = false) => {
@@ -721,7 +1293,7 @@ child.position  -= anchorError * childWeight</div>
     };
 
     const propagateRigidDragTarget = () => {
-      if (!rigidDrag || !rigidDragTarget || !rigidDragConstraintTarget) return;
+      if (parityMode || !rigidDrag || !rigidDragTarget || !rigidDragConstraintTarget) return;
       const collisionSafeTarget = getCollisionSafeRigidDragTarget();
       rigidDrag.floorConstrained = collisionSafeTarget.y > rigidDragTarget.y + .0001;
       if (!rigidDrag.floorConstrained) rigidDrag.stableRotation.copy(rigidDrag.segment.body.rotation);
@@ -756,6 +1328,7 @@ child.position  -= anchorError * childWeight</div>
         solveRigidDrag();
         solveRigidJoints(pass % 2 === 1);
       }
+      if (parityMode) return;
       // Polish articulation and stage contacts together, ending on collision.
       // Ending on joints alone allowed the last anchor projection to push feet,
       // hands, and knees back through the floor until the following frame.
@@ -772,32 +1345,63 @@ child.position  -= anchorError * childWeight</div>
       for (const segment of rigidSegments) {
         const body = segment.body;
         if (!body.dynamic) continue;
+        const impulseLinearDelta = parityMode ? body.velocity.clone().sub(body.integratedVelocity) : null;
+        const impulseAngularDelta = parityMode ? body.angularVelocity.clone().sub(body.integratedAngularVelocity) : null;
         body.velocity.copy(body.position).sub(body.previousPosition).multiplyScalar(1 / dt);
+        if (impulseLinearDelta) body.velocity.add(impulseLinearDelta);
         const linearDamping = rigidLaunchFlightTime > 0 ? CUSTOM_LAUNCH_LINEAR_DAMPING : CUSTOM_LINEAR_DAMPING;
-        body.velocity.multiplyScalar(Math.exp(-linearDamping * dt));
+        body.velocity.multiplyScalar(parityMode ? dampingFactor(dt, linearDamping) : Math.exp(-linearDamping * dt));
         if (rigidDrag?.segment === segment) body.velocity.multiplyScalar(.55);
-        if (rigidLaunchFlightTime <= 0 && rigidStageContactCount >= CUSTOM_MIN_RESTING_STAGE_CONTACTS) {
+        if (!parityMode && rigidLaunchFlightTime <= 0 && rigidStageContactCount >= CUSTOM_MIN_RESTING_STAGE_CONTACTS) {
           body.velocity.multiplyScalar(isRigidRestHeightEligible()
             ? CUSTOM_CONTACT_CHAIN_VELOCITY_RETENTION
             : CUSTOM_HIGH_HIPS_CONTACT_VELOCITY_RETENTION);
         }
         if (body.contactingStage) {
-          if (body.velocity.y < 0) body.velocity.y = 0;
-          body.velocity.x *= CUSTOM_STAGE_FRICTION;
-          body.velocity.z *= CUSTOM_STAGE_FRICTION;
+          if (!parityMode && body.velocity.y < 0) body.velocity.y = 0;
+          if (!parityMode) { body.velocity.x *= CUSTOM_STAGE_FRICTION; body.velocity.z *= CUSTOM_STAGE_FRICTION; }
         }
         if (body.velocity.length() > CUSTOM_MAX_LINEAR_SPEED) body.velocity.setLength(CUSTOM_MAX_LINEAR_SPEED);
-        const rotationDelta = body.rotation.clone().multiply(body.previousRotation.clone().invert());
+        const rotationDelta = body.rotation.clone().multiply((parityMode ? body.integratedRotation : body.previousRotation).clone().invert());
         if (rotationDelta.w < 0) rotationDelta.set(-rotationDelta.x, -rotationDelta.y, -rotationDelta.z, -rotationDelta.w);
         const angle = 2 * Math.acos(THREE.MathUtils.clamp(rotationDelta.w, -1, 1));
         const sine = Math.sqrt(Math.max(.000001, 1 - rotationDelta.w * rotationDelta.w));
-        body.angularVelocity.set(rotationDelta.x / sine, rotationDelta.y / sine, rotationDelta.z / sine).multiplyScalar(angle / dt).multiplyScalar(Math.exp(-CUSTOM_ANGULAR_DAMPING * dt));
-        if (body.contactingStage) body.angularVelocity.multiplyScalar(CUSTOM_STAGE_FRICTION);
+        const correctionVelocity = new THREE.Vector3(rotationDelta.x / sine, rotationDelta.y / sine, rotationDelta.z / sine).multiplyScalar(angle / dt);
+        if (parityMode) {
+          body.angularVelocity.copy(body.integratedAngularVelocity).addScaledVector(
+            correctionVelocity,
+            parityScenarioKind === 'full' ? getJointVelocityTransfer() : 1
+          );
+        }
+        else body.angularVelocity.copy(correctionVelocity);
+        if (impulseAngularDelta) body.angularVelocity.add(impulseAngularDelta);
+        body.angularVelocity.multiplyScalar(dampingFactor(dt, CUSTOM_ANGULAR_DAMPING));
+        if (!parityMode && body.contactingStage) body.angularVelocity.multiplyScalar(CUSTOM_STAGE_FRICTION);
         if (body.angularVelocity.length() > CUSTOM_MAX_ANGULAR_SPEED) body.angularVelocity.setLength(CUSTOM_MAX_ANGULAR_SPEED);
       }
     };
 
     const settleRigidRagdollAtRest = (dt) => {
+      if (parityMode) {
+        const activeBodies = rigidSegments.filter(scenarioActive).map((segment) => segment.body);
+        const fullIsland = parityScenarioKind === 'full';
+        const linearThreshold = fullIsland ? CUSTOM_FULL_SLEEP_LINEAR_SPEED : .1;
+        const angularThreshold = fullIsland ? CUSTOM_FULL_SLEEP_ANGULAR_SPEED : .5;
+        const supported = !fullIsland || rigidStageContactCount >= CUSTOM_FULL_SLEEP_MIN_STAGE_CONTACTS;
+        const quiet = activeBodies.length > 0 && activeBodies.every((body) => (
+          body.velocity.length() <= linearThreshold
+          && body.angularVelocity.length() <= angularThreshold
+          && (fullIsland || (body.stageContact?.tangentImpulse?.length?.() || 0) <= .0001)
+        ));
+        if (!quiet || !supported) {
+          rigidRestSettleTime = 0;
+          rigidSleepPending = false;
+          return;
+        }
+        rigidRestSettleTime += dt;
+        if (rigidRestSettleTime >= (fullIsland ? CUSTOM_FULL_SLEEP_SECONDS : .5)) rigidSleepPending = true;
+        return;
+      }
       const constraintCaughtUp = !rigidDrag || rigidDragConstraintTarget.distanceToSquared(rigidDragTarget) <= .000001;
       if (!active || rigidDrag || rigidLaunchFlightTime > 0 || rigidStageContactCount < CUSTOM_MIN_RESTING_STAGE_CONTACTS || !constraintCaughtUp) {
         rigidRestSettleTime = 0;
@@ -809,7 +1413,7 @@ child.position  -= anchorError * childWeight</div>
       ));
       rigidRestSettleTime += dt;
       if ((!quiet || rigidRestSettleTime < CUSTOM_RESTING_SECONDS_BEFORE_SLEEP)
-        && rigidRestSettleTime < CUSTOM_MAX_CONTACT_SETTLE_SECONDS) return;
+        && (parityMode || rigidRestSettleTime < CUSTOM_MAX_CONTACT_SETTLE_SECONDS)) return;
       for (const { body } of rigidSegments) {
         body.velocity.set(0, 0, 0);
         body.angularVelocity.set(0, 0, 0);
@@ -819,6 +1423,19 @@ child.position  -= anchorError * childWeight</div>
 
     const runCustomRigidStep = () => {
       if (rigidSleeping) return;
+      if (parityMode && rigidSleepPending) {
+        for (const { body } of rigidSegments.filter(scenarioActive)) {
+          body.velocity.set(0, 0, 0);
+          body.angularVelocity.set(0, 0, 0);
+        }
+        rigidSleepPending = false;
+        rigidSleeping = true;
+        return;
+      }
+      if (parityMode && rigidDrag) {
+        rigidDrag.cursorVelocity.copy(rigidDragTarget).sub(rigidDrag.cursorPosition).multiplyScalar(1 / STEP_SECONDS);
+        rigidDragConstraintTarget.copy(rigidDragTarget);
+      }
       integrateRigidBodies(STEP_SECONDS);
       propagateRigidDragTarget();
       constrainRigidBodies();
@@ -831,6 +1448,8 @@ child.position  -= anchorError * childWeight</div>
         body.angularVelocity.set(0, 0, 0);
       }
       updateRigidVelocities(STEP_SECONDS);
+      finalizeParityDragVelocity();
+      if (parityMode && rigidDrag) rigidDrag.cursorPosition.copy(rigidDragTarget);
       if (rigidLaunchFlightTime > 0) rigidLaunchFlightTime = Math.max(0, rigidLaunchFlightTime - STEP_SECONDS);
       settleRigidRagdollAtRest(STEP_SECONDS);
     };
@@ -1017,8 +1636,9 @@ child.position  -= anchorError * childWeight</div>
       if (!physicsReady) return;
       releaseRigidRagdoll();
       const target = rigidById.get('upperChest') || rigidById.get('hips');
-      target.body.velocity.add(new THREE.Vector3((Math.random() - .5) * 1.4, 2.4, (Math.random() - .5) * 1.1));
-      target.body.angularVelocity.add(new THREE.Vector3((Math.random() - .5) * 1.2, (Math.random() - .5) * 1.2, (Math.random() - .5) * 1.2));
+      const impulse = new THREE.Vector3(0, 2.4, 0).add(new THREE.Vector3((Math.random() - .5) * 1.4, 0, (Math.random() - .5) * 1.1));
+      applyImpulse(target.body, impulse);
+      applyTorqueImpulse(target.body, new THREE.Vector3((Math.random() - .5) * 1.2, (Math.random() - .5) * 1.2, (Math.random() - .5) * 1.2), THREE.Matrix3, THREE.Matrix4);
       setStatus('active', 'Gentle toss');
     };
 
@@ -1033,6 +1653,15 @@ child.position  -= anchorError * childWeight</div>
         count += 1;
       }
       return count ? total / count : 0;
+    };
+
+    const getParityHingeState = (segment) => {
+      const joint = segment.joint;
+      if (!joint || joint.type !== 'hinge') return { twistAngle: null, limitState: null };
+      const twistAngle = getHingeTwistAngle(segment);
+      const limits = joint.limits;
+      const limitState = !limits ? 'free' : (twistAngle <= limits[0] + .002 ? 'lower' : (twistAngle >= limits[1] - .002 ? 'upper' : 'free'));
+      return { twistAngle, limitState };
     };
 
     const getRigidParitySnapshot = () => ({
@@ -1053,9 +1682,124 @@ child.position  -= anchorError * childWeight</div>
         return [segment.id, parentPoint.distanceTo(childPoint)];
       }))
     });
-    if (new URLSearchParams(location.search).has('parity')) {
-      window.__ragdollParity = { snapshot: getRigidParitySnapshot };
-    }
+    let parityScenario = 'default';
+    let parityScenarioKind = 'full';
+    let parityScenarioDefinition = {};
+    let paritySeed = 0;
+    let parityDefaultGravity = null;
+    const scenarioBodyIds = () => {
+      if (!parityMode || parityScenarioKind === 'full') return rigidSegments.map((segment) => segment.id);
+      if (['free-body', 'capsule-stage', 'cursor-body', 'cursor-body-stage'].includes(parityScenarioKind)) return ['upperChest'];
+      if (parityScenarioKind === 'capsule-pair') return ['upperChest', 'head'];
+      if (parityScenarioKind === 'fixed-pair') return ['hips', 'spine'];
+      if (parityScenarioKind === 'hinge-pair') return ['upperChest', 'leftUpperArm'];
+      return rigidSegments.map((segment) => segment.id);
+    };
+    const scenarioActive = (segment) => {
+      return !parityMode || scenarioBodyIds().includes(segment.id);
+    };
+    const scenarioJointActive = (segment) => Boolean(segment.joint) && scenarioActive(segment) && scenarioActive(segment.joint.parent);
+    const scenarioStageActive = () => !parityMode || parityScenarioKind === 'full' || parityScenarioKind.includes('stage') || parityScenarioKind === 'fixed-pair';
+    const scenarioAlias = (id) => {
+      if (['free-body', 'capsule-stage', 'cursor-body', 'cursor-body-stage'].includes(parityScenarioKind) && id === 'upperChest') return 'capsule';
+      if (parityScenarioKind === 'fixed-pair') return id === 'hips' ? 'parent' : id === 'spine' ? 'child' : id;
+      if (parityScenarioKind === 'hinge-pair') return id === 'upperChest' ? 'parent' : id === 'leftUpperArm' ? 'child' : id;
+      if (parityScenarioKind === 'capsule-pair' && id === 'upperChest') return 'torso';
+      return id;
+    };
+    let parityReadyResolve;
+    const parityReady = new Promise((resolve) => { parityReadyResolve = resolve; });
+    window.__ragdollParity = {
+      mode: parityMode ? 'parity' : 'assisted',
+      version: 'custom-ragdoll-core-1',
+      ready: parityReady,
+      reset: (scenario = 'default') => {
+        const definition = typeof scenario === 'string' ? { name: scenario } : (scenario || {});
+        parityScenario = definition.name || definition.scenario || 'default';
+        parityScenarioKind = definition.kind || parityScenario;
+        parityScenarioDefinition = definition;
+        if (parityDefaultGravity === null) parityDefaultGravity = rigidGravity;
+        const gravity = definition.initial?.gravity;
+        rigidGravity = Array.isArray(gravity) ? gravity[1] : (Number.isFinite(gravity) ? gravity : parityDefaultGravity);
+        parityStepIndex = 0; paritySeed = definition.seed ?? 0; resetRigidRagdoll();
+      },
+      command: (command = {}) => {
+        const name = getParityCommandType(command);
+        const aliases = parityScenarioKind.includes('hinge') ? { capsule: 'leftUpperArm', parent: 'upperChest', child: 'leftUpperArm' } : { capsule: 'upperChest', torso: 'upperChest', parent: 'hips', child: 'spine' };
+        if (command.body) command.body = aliases[command.body] || command.body;
+        if (name === 'release') return releaseRigidRagdoll();
+        if (name === 'apply-impulse') {
+          const body = rigidById.get(command.body)?.body;
+          if (!body) throw new Error('Unknown body: ' + command.body);
+          releaseRigidRagdoll();
+          applyImpulse(body, new THREE.Vector3(...(command.linear || [0, 0, 0])));
+          applyTorqueImpulse(body, new THREE.Vector3(...(command.angular || [0, 0, 0])), THREE.Matrix3, THREE.Matrix4);
+          return;
+        }
+        if (name === 'set-body-state') {
+          const body = rigidById.get(command.body)?.body;
+          if (!body) throw new Error('Unknown body: ' + command.body);
+          if (command.position) body.position.fromArray(command.position);
+          if (command.rotation) body.rotation.fromArray(command.rotation).normalize();
+          if (command.linearVelocity) body.velocity.fromArray(command.linearVelocity);
+          if (command.angularVelocity) body.angularVelocity.fromArray(command.angularVelocity);
+          body.previousPosition.copy(body.position); body.previousRotation.copy(body.rotation);
+          return;
+        }
+        if (name === 'cursor-start') {
+          const segment = rigidById.get(command.body);
+          if (!segment) throw new Error('Unknown cursor body: ' + command.body);
+          releaseRigidRagdoll();
+          const point = new THREE.Vector3(...(command.worldPoint || command.target || segment.body.position.toArray()));
+          const localAnchor = command.localAnchor
+            ? new THREE.Vector3(...command.localAnchor)
+            : point.clone().sub(segment.body.position).applyQuaternion(segment.body.rotation.clone().invert());
+          rigidDrag = {
+            segment,
+            localAnchor,
+            stableRotation: segment.body.rotation.clone(),
+            floorConstrained: false,
+            cursorPosition: point.clone(),
+            cursorVelocity: new THREE.Vector3(),
+            orbitalAngularVelocity: new THREE.Vector3(),
+            previousCursorMoving: false,
+            stationaryFrames: 0,
+            movingFrames: 0
+          };
+          rigidDragTarget = point.clone();
+          rigidDragConstraintTarget = point.clone();
+          return;
+        }
+        if (name === 'cursor-target') {
+          if (!rigidDrag) throw new Error('No active cursor constraint');
+          const target = command.worldPoint || command.target;
+          if (!target) throw new Error('cursor-target requires worldPoint');
+          rigidDragTarget.fromArray(target);
+          return;
+        }
+        if (name === 'cursor-end') { rigidDrag = null; rigidDragTarget = null; rigidDragConstraintTarget = null; return; }
+      },
+      step: (count = 1) => {
+        if (!physicsReady) return false;
+        if (!active) releaseRigidRagdoll();
+        count = Math.max(0, Math.floor(count));
+        for (let i = 0; i < count; i += 1) runCustomRigidStep();
+        applyPoseFromRigidBodies();
+        parityStepIndex += count;
+        return true;
+      },
+      snapshot: () => ({
+        schemaVersion: 1, backend: 'custom', version: 'custom-ragdoll-core-1', scenario: parityScenario, kind: parityScenarioKind, seed: paritySeed,
+        step: parityStepIndex, time: parityStepIndex * STEP_SECONDS,
+        config: { fixedStep: STEP_SECONDS, mode: parityMode ? 'parity' : 'assisted' }, configurationHash: 'custom-core-v1',
+        bodies: [...rigidSegments].filter(scenarioActive).sort((a, b) => scenarioAlias(a.id).localeCompare(scenarioAlias(b.id))).map((segment) => { const body = segment.body; return { id: scenarioAlias(segment.id), sourceId: segment.id, position: body.position.toArray(), rotation: body.rotation.toArray(), linearVelocity: body.velocity.toArray(), angularVelocity: body.angularVelocity.toArray(), sleeping: rigidSleeping, mass: body.mass, inverseMass: body.inverseMass, localPrincipalInertia: body.principalInertia.toArray() }; }),
+        joints: [...rigidSegments].filter(scenarioJointActive).map((s) => ({ id: s.id, parent: scenarioAlias(s.joint.parent.id), type: s.joint.type, anchorError: worldAnchor(s.joint.parent.body, s.joint.parentAnchor).distanceTo(worldAnchor(s.body, s.joint.childAnchor)), ...getParityHingeState(s) })),
+        contacts: [
+          ...rigidSegments.filter((s) => scenarioActive(s) && s.body.contactingStage).map((s) => ({ bodyA: scenarioAlias(s.id), bodyB: 'stage', point: s.body.stageContact?.point?.toArray?.() || s.body.position.toArray(), normal: s.body.stageContact?.normal?.toArray?.() || [0, 1, 0], penetration: s.body.stageContact?.penetration || 0, normalImpulse: s.body.stageContact?.normalImpulse ?? 0, tangentImpulse: s.body.stageContact?.tangentImpulse?.length?.() || 0 })),
+          ...rigidPairContacts.map((contact) => ({ ...contact, point: contact.point.toArray(), normal: contact.normal.toArray() }))
+        ], events: []
+      })
+    };
 
     const init = async () => {
       try {
@@ -1077,7 +1821,7 @@ child.position  -= anchorError * childWeight</div>
         character.position.y += 2.25 - bounds.min.y; character.updateMatrixWorld(true);
         const modelHeight = new THREE.Box3().setFromObject(character).getSize(new THREE.Vector3()).y;
         rigidGravity = getGravityForModelHeight(modelHeight);
-        buildRigidSolver(); physicsReady = true; dropButton.disabled = false; tossButton.disabled = false; resetButton.disabled = false; resetRigidRagdoll(); loading.hidden = true;
+         buildRigidSolver(); physicsReady = true; parityReadyResolve(window.__ragdollParity); dropButton.disabled = false; tossButton.disabled = false; resetButton.disabled = false; resetRigidRagdoll(); loading.hidden = true;
       } catch (error) {
         showFailure(error instanceof Error ? error.message : 'Soldier could not be prepared.');
       }
@@ -1110,7 +1854,7 @@ child.position  -= anchorError * childWeight</div>
     const tick = () => {
       timer.update(); accumulator += Math.min(timer.getDelta(), .08);
       let steps = 0;
-      while (physicsReady && active && accumulator >= STEP_SECONDS && steps < MAX_STEPS_PER_FRAME) { runCustomRigidStep(); accumulator -= STEP_SECONDS; steps += 1; }
+      while (!parityMode && physicsReady && active && accumulator >= STEP_SECONDS && steps < MAX_STEPS_PER_FRAME) { runCustomRigidStep(); accumulator -= STEP_SECONDS; steps += 1; }
       if (steps === MAX_STEPS_PER_FRAME) accumulator = 0;
       if (physicsReady) {
         applyPoseFromRigidBodies();

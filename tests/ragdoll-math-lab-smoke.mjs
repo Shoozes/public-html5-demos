@@ -14,11 +14,14 @@ for (const value of [
   "import * as THREE from 'three';",
   "import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';",
   "import { OrbitControls } from 'three/addons/controls/OrbitControls.js';",
+  "from '../shared/ragdoll-core/spec.mjs';",
+  "from '../shared/ragdoll-parity/protocol.mjs';",
+  'solvePointEffectiveMass as solveSharedPointEffectiveMass',
+  'solvePairPointEffectiveMass as solveSharedPairPointEffectiveMass',
   "const MODEL_URL = '../assets/glb/Soldier.glb';",
-  'const STEP_SECONDS = 1 / 60;',
   'const MAX_STEPS_PER_FRAME = 3;',
-  'const TARGET_HUMAN_HEIGHT_METERS = 1.8;',
-  'const GRAVITY_METERS_PER_SECOND_SQUARED = 9.81;',
+  'const segmentDefinitions = SHARED_SEGMENTS.map',
+  'const customJointConstraints = Object.fromEntries(Object.entries(SHARED_JOINTS)',
   'const getGravityForModelHeight = (modelHeight) => -GRAVITY_METERS_PER_SECOND_SQUARED * (modelHeight / TARGET_HUMAN_HEIGHT_METERS);',
   'const CUSTOM_SOLVER_ITERATIONS = 20;',
   'const CUSTOM_COLLIDER_DENSITY = 1.15;',
@@ -34,6 +37,8 @@ for (const value of [
   'const CUSTOM_DRAG_COHERENT_TRANSLATION = .6;',
   'const CUSTOM_FLOOR_DRAG_ROTATION_STIFFNESS = .18;',
   'const CUSTOM_RESTING_SECONDS_BEFORE_SLEEP = .22;',
+  'const CUSTOM_FULL_SLEEP_SECONDS = .5;',
+  'const CUSTOM_FULL_ROLLING_FRICTION_SCALE = .15;',
   'const CUSTOM_MAX_CONTACT_SETTLE_SECONDS = 1.2;',
   'const CUSTOM_MAX_RESTING_HIPS_Y = .9;',
   'const createRigidBody = (position, rotation, length, radius) => {',
@@ -42,8 +47,8 @@ for (const value of [
   'const solveRigidStageContact = (segment) => {',
   'const applyVelocityNeutralContactCorrection = (body, correction, worldPoint) => {',
   'const applyPositionCorrection = (body, correction, maxCorrection = CUSTOM_MAX_POSITION_CORRECTION) => {',
-  'const applyJointPositionCorrection = (body, correction) => {',
-  'const applyJointAnchorCorrection = (body, correction, worldPoint) => {',
+  'const solvePointEffectiveMass = (body, point, target) => solveSharedPointEffectiveMass(',
+  'const solvePairPointEffectiveMass = (parentBody, parentPoint, childBody, childPoint, target) => solveSharedPairPointEffectiveMass(',
   'const closestPointsOnSegments = (firstStart, firstEnd, secondStart, secondEnd) => {',
   'const solveRigidHeadContacts = () => {',
   'const solveRigidJoints = (reverse = false) => {',
@@ -59,7 +64,6 @@ for (const value of [
   'const isRigidRestHeightEligible = () => {',
   'solveRigidJoints(pass % 2 === 1);',
   'for (const segment of rigidSegments) solveRigidStageContact(segment);',
-  'const parentInverseMass = rigidDrag?.segment.body === parent.body ? 0 : parent.body.inverseMass;',
   'rigidDrag.segment.body.previousPosition.copy(rigidDrag.segment.body.position);',
   'const CUSTOM_STAGE_CENTER_Y = -.22;',
   'const CUSTOM_STAGE_HALF_HEIGHT = .18;',
@@ -75,7 +79,6 @@ for (const value of [
   'const runCustomRigidStep = () => {',
   'const applyPoseFromRigidBodies = () => {',
   'const getRigidJointError = () => {',
-  'window.__ragdollParity = { snapshot: getRigidParitySnapshot };',
   "id: 'leftHand', bone: 'mixamorig:LeftHand', end: 'mixamorig:LeftHandMiddle4'",
   "id: 'rightHand', bone: 'mixamorig:RightHand', end: 'mixamorig:RightHandMiddle4'",
   'Physics playground',
@@ -85,6 +88,7 @@ for (const value of [
   if (!html.includes(value)) throw new Error('Missing manual-solver behavior: ' + value);
 }
 
+if (!/window\.__ragdollParity\s*=\s*\{[\s\S]*snapshot\s*:/.test(html)) throw new Error('Missing manual-solver parity snapshot hook.');
 if (html.includes('RAPIER') || html.includes('rapier')) {
   throw new Error('Ragdoll Math Lab must not import or reference Rapier.');
 }

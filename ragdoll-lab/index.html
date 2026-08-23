@@ -238,15 +238,24 @@
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import RAPIER from '@dimforge/rapier3d-compat';
+    import { SEGMENTS as SHARED_SEGMENTS, JOINTS as SHARED_JOINTS, STEP_SECONDS, GRAVITY_METERS_PER_SECOND_SQUARED, TARGET_HUMAN_HEIGHT_METERS } from '../shared/ragdoll-core/spec.mjs';
+    import { getParityCommandType } from '../shared/ragdoll-parity/protocol.mjs';
 
     const MODEL_URL = '../assets/glb/Soldier.glb';
-    const STEP_SECONDS = 1 / 60;
     const MAX_STEPS_PER_FRAME = 3;
     const STAGE_RADIUS = 7.35;
     const YEET_EXIT_RADIUS = STAGE_RADIUS + 0.35;
-    const TARGET_HUMAN_HEIGHT_METERS = 1.8;
-    const GRAVITY_METERS_PER_SECOND_SQUARED = 9.81;
     const RAGDOLL_SOLVER_ITERATIONS = 20;
+    const parityMode = new URLSearchParams(location.search).get('parity') === '1';
+    let parityStep = 0;
+    let parityScenario = 'default';
+    let paritySeed = 'explicit';
+    let parityScenarioIds = null;
+    let parityScenarioAlias = new Map();
+    let parityStageEnabled = true;
+    let parityScenarioDefinition = {};
+    let resolveParityReady;
+    const parityReady = new Promise((resolve) => { resolveParityReady = resolve; });
     const VERTICAL = new THREE.Vector3(0, 1, 0);
     const timer = new THREE.Timer();
 
@@ -366,14 +375,18 @@
     const enterDemo = () => {
       if (introStarted) return;
       introStarted = true;
-      unlockAudio();
-      startMusic();
+      if (!parityMode) { unlockAudio(); startMusic(); }
       introSplash.classList.add('is-leaving');
       window.setTimeout(() => {
         introSplash.hidden = true;
         introSplash.classList.remove('is-leaving');
       }, 220);
     };
+    if (parityMode) {
+      introStarted = true;
+      introSplash.hidden = true;
+      introSplash.style.display = 'none';
+    }
 
     const playYeet = (releaseStrength) => {
       if (yeetPlayed) return false;
@@ -509,7 +522,7 @@
     const inverseMatrixScratch = new THREE.Matrix4();
     const restWorldScale = new THREE.Vector3();
 
-    const segmentDefinitions = [
+    const segmentMetadata = [
       { id: 'hips', bone: 'mixamorig:Hips', end: 'mixamorig:Spine', radius: 0.22, parent: null },
       { id: 'spine', bone: 'mixamorig:Spine', end: 'mixamorig:Spine1', radius: 0.2, parent: 'hips' },
       { id: 'chest', bone: 'mixamorig:Spine1', end: 'mixamorig:Spine2', radius: 0.23, parent: 'spine' },
@@ -529,6 +542,13 @@
       { id: 'rightShin', bone: 'mixamorig:RightLeg', end: 'mixamorig:RightFoot', radius: 0.15, parent: 'rightThigh' },
       { id: 'rightFoot', bone: 'mixamorig:RightFoot', end: 'mixamorig:RightToeBase', radius: 0.13, parent: 'rightShin' }
     ];
+    const segmentMetadataById = new Map(segmentMetadata.map(({ id, parent: _legacyParent, ...metadata }) => [id, metadata]));
+    if (segmentMetadataById.size !== SHARED_SEGMENTS.length) throw new Error('Local segment metadata does not match the shared ragdoll specification.');
+    const segmentDefinitions = SHARED_SEGMENTS.map(({ id, parent }) => {
+      const metadata = segmentMetadataById.get(id);
+      if (!metadata) throw new Error(`Missing local rendering metadata for shared segment ${id}.`);
+      return { id, parent, ...metadata };
+    });
     const BODY_COLLISION_GROUP = 1 << 0;
     const HEAD_COLLISION_GROUP = 1 << 1;
     const STAGE_COLLISION_GROUP = 1 << 2;
@@ -553,25 +573,14 @@
       return -GRAVITY_METERS_PER_SECOND_SQUARED * worldUnitsPerMeter;
     };
 
-    const jointConstraintBySegment = {
-      spine: { type: 'fixed' },
-      chest: { type: 'fixed' },
-      upperChest: { type: 'fixed' },
-      neck: { type: 'fixed' },
-      head: { type: 'fixed' },
-      leftUpperArm: { type: 'hinge', axis: 'z', limits: [-1.2, 1.2] },
-      leftForearm: { type: 'hinge', axis: 'z', limits: [-1.35, 1.35] },
-      leftHand: { type: 'fixed' },
-      rightUpperArm: { type: 'hinge', axis: 'z', limits: [-1.2, 1.2] },
-      rightForearm: { type: 'hinge', axis: 'z', limits: [-1.35, 1.35] },
-      rightHand: { type: 'fixed' },
-      leftThigh: { type: 'hinge', axis: 'x', limits: [-0.9, 0.9] },
-      leftShin: { type: 'hinge', axis: 'x', limits: [-1.25, 1.25] },
-      leftFoot: { type: 'hinge', axis: 'x', limits: [-0.45, 0.45] },
-      rightThigh: { type: 'hinge', axis: 'x', limits: [-0.9, 0.9] },
-      rightShin: { type: 'hinge', axis: 'x', limits: [-1.25, 1.25] },
-      rightFoot: { type: 'hinge', axis: 'x', limits: [-0.45, 0.45] }
+    const jointAxisBySegment = {
+      leftUpperArm: 'z', leftForearm: 'z', rightUpperArm: 'z', rightForearm: 'z',
+      leftThigh: 'x', leftShin: 'x', leftFoot: 'x', rightThigh: 'x', rightShin: 'x', rightFoot: 'x'
     };
+    const jointConstraintBySegment = Object.fromEntries(Object.entries(SHARED_JOINTS).map(([id, constraint]) => [
+      id,
+      { ...constraint, ...(jointAxisBySegment[id] ? { axis: jointAxisBySegment[id] } : {}) }
+    ]));
     const JOINT_FRAME_X = new THREE.Vector3(1, 0, 0);
     const JOINT_FRAME_Z = new THREE.Vector3(0, 0, 1);
     const COLLIDER_RADIUS_SCALE = 0.84;
@@ -613,6 +622,8 @@
     let dragStartPosition = null;
     let lastPointerScreen = null;
     let dragStartScreen = null;
+    let parityDefaultGravity = null;
+    let groundCollider = null;
 
     const updatePointer = (event) => {
       const bounds = renderer.domElement.getBoundingClientRect();
@@ -906,34 +917,37 @@
       settleGuardTime = 0;
       restSettleTime = 0;
       for (const segment of ragdollBodies) {
-        segment.body.setBodyType(RAPIER.RigidBodyType.Dynamic, true);
-        segment.body.wakeUp();
+        const enabledForScenario = !parityScenarioIds || parityScenarioIds.has(segment.id);
+        segment.body.setBodyType(enabledForScenario ? RAPIER.RigidBodyType.Dynamic : RAPIER.RigidBodyType.KinematicPositionBased, true);
+        if (enabledForScenario) segment.body.wakeUp();
       }
       setStatus('active', 'Physics live');
       dropButton.textContent = 'Soldier is loose';
       tossButton.disabled = false;
     };
 
-    const giveToss = () => {
+    const dispatchToss = (impulse, torqueImpulse) => {
       if (!physicsReady) return;
-      unlockAudio();
-      startMusic();
+      if (!parityMode) { unlockAudio(); startMusic(); }
       releaseRagdoll();
       settleGuardTime = 0.45;
       launchFlightTime = 0;
       restSettleTime = 0;
       applyPhysicsTuning();
-      const impulse = new THREE.Vector3((Math.random() - 0.5) * 1.4, 2.4, (Math.random() - 0.5) * 1.1);
       const target = bodyById.get('upperChest') || bodyById.get('hips');
       target.body.applyImpulse(impulse, true);
-      target.body.applyTorqueImpulse({ x: (Math.random() - 0.5) * 1.2, y: (Math.random() - 0.5) * 1.2, z: (Math.random() - 0.5) * 1.2 }, true);
+      target.body.applyTorqueImpulse(torqueImpulse, true);
       setStatus('active', 'Gentle toss');
     };
 
+    const giveToss = () => dispatchToss(
+      new THREE.Vector3((Math.random() - 0.5) * 1.4, 2.4, (Math.random() - 0.5) * 1.1),
+      { x: (Math.random() - 0.5) * 1.2, y: (Math.random() - 0.5) * 1.2, z: (Math.random() - 0.5) * 1.2 }
+    );
+
     const beginDrag = (event) => {
       if (!physicsReady || dragged) return false;
-      unlockAudio();
-      startMusic();
+      if (!parityMode) { unlockAudio(); startMusic(); }
       updatePointer(event);
       const hit = updateSelectionCursor();
       if (!hit?.segment) return false;
@@ -1056,10 +1070,10 @@
           .setRestitution(0)
           .setCollisionGroups(definition.id === 'head' ? HEAD_COLLISION_GROUPS : BODY_COLLISION_GROUPS)
           .setDensity(1.15);
-        world.createCollider(collider, body);
+        const bodyCollider = world.createCollider(collider, body);
         const boneQuaternion = bone.getWorldQuaternion(new THREE.Quaternion());
         const scale = bone.getWorldScale(new THREE.Vector3());
-        const segment = { ...definition, bone, endBone, body, restStart: start, restEnd: end, restCenter: center, restQuaternion: rotation, restBoneQuaternion: boneQuaternion, restBoneScale: scale, joint: null };
+        const segment = { ...definition, bone, endBone, body, collider: bodyCollider, restStart: start, restEnd: end, restCenter: center, restQuaternion: rotation, restBoneQuaternion: boneQuaternion, restBoneScale: scale, joint: null };
         ragdollBodies.push(segment);
         bodyById.set(definition.id, segment);
         bodyByHandle.set(body.handle, segment);
@@ -1121,9 +1135,8 @@
         const gravityY = getGravityForModelHeight(modelHeight);
         world = new RAPIER.World({ x: 0, y: gravityY, z: 0 });
         world.integrationParameters.numSolverIterations = RAGDOLL_SOLVER_ITERATIONS;
-        world.integrationParameters.numAdditionalFrictionIterations = 4;
         const groundBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, -0.22, 0));
-        world.createCollider(
+        groundCollider = world.createCollider(
           RAPIER.ColliderDesc.cylinder(0.18, STAGE_RADIUS)
             .setFriction(0.86)
             .setRestitution(0)
@@ -1144,6 +1157,7 @@
         setStatus('ready', 'Ready to drop');
         introSplash.hidden = false;
         introSplash.focus();
+        resolveParityReady();
       } catch (error) {
         showFailure(error instanceof Error ? error.message : 'Soldier could not be prepared.');
       }
@@ -1229,21 +1243,294 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
+    const paritySnapshot = () => {
+      const visible = parityScenarioIds ? ragdollBodies.filter((s) => parityScenarioIds.has(s.id)) : ragdollBodies;
+      const bodies = visible.slice().sort((a, b) => a.id.localeCompare(b.id)).map((segment) => {
+        const body = segment.body;
+        const t = body.translation();
+        const r = body.rotation();
+        const v = body.linvel();
+        const w = body.angvel();
+        const position = [t.x, t.y, t.z];
+        const rotation = [r.x, r.y, r.z, r.w];
+        const linearVelocity = [v.x, v.y, v.z];
+        const angularVelocity = [w.x, w.y, w.z];
+        const localPrincipalInertia = typeof body.principalInertia === 'function' ? body.principalInertia() : null;
+        return {
+          id: parityScenarioAlias.get(segment.id) || segment.id, sourceId: segment.id, position, rotation, linearVelocity, angularVelocity,
+          transform: { position, rotation }, velocity: { linear: linearVelocity, angular: angularVelocity },
+          sleeping: typeof body.isSleeping === 'function' ? body.isSleeping() : null,
+          mass: typeof body.mass === 'function' ? body.mass() : null,
+          localPrincipalInertia,
+          inverseMass: typeof body.invMass === 'function' ? body.invMass() : null
+        };
+      });
+      const joints = visible.filter((s) => s.joint && (!parityScenarioIds || parityScenarioIds.has(s.parent))).map((s) => {
+        const a = s.joint.anchor1(); const b = s.joint.anchor2(); const parent = bodyById.get(s.parent)?.body;
+        const worldAnchor = (body, local) => { const p = body.translation(); const q = body.rotation(); const v = new THREE.Vector3(local.x, local.y, local.z).applyQuaternion(new THREE.Quaternion(q.x, q.y, q.z, q.w)); return new THREE.Vector3(p.x, p.y, p.z).add(v); };
+        const wa = parent ? worldAnchor(parent, a) : null; const wb = worldAnchor(s.body, b);
+        const anchorError = wa ? wa.distanceTo(wb) : null;
+        let twistAngle = null;
+        let limitState = null;
+        const constraint = jointConstraintBySegment[s.id];
+        if (constraint?.type === 'hinge' && parent) {
+          const parentRotationValue = parent.rotation();
+          const childRotationValue = s.body.rotation();
+          const parentRotation = new THREE.Quaternion(parentRotationValue.x, parentRotationValue.y, parentRotationValue.z, parentRotationValue.w);
+          const childRotation = new THREE.Quaternion(childRotationValue.x, childRotationValue.y, childRotationValue.z, childRotationValue.w);
+          const restRelative = bodyById.get(s.parent).restQuaternion.clone().invert().multiply(s.restQuaternion);
+          const expected = parentRotation.clone().multiply(restRelative);
+          const delta = childRotation.clone().multiply(expected.invert()).normalize();
+          const restAxis = constraint.axis === 'z' ? JOINT_FRAME_Z : JOINT_FRAME_X;
+          const localAxis = restAxis.clone().applyQuaternion(bodyById.get(s.parent).restQuaternion.clone().invert());
+          const worldAxis = localAxis.applyQuaternion(parentRotation).normalize();
+          const projected = new THREE.Vector3(delta.x, delta.y, delta.z).dot(worldAxis);
+          const twistNorm = Math.hypot(projected, delta.w);
+          twistAngle = twistNorm > .0000001 ? 2 * Math.atan2(projected / twistNorm, delta.w / twistNorm) : 0;
+          if (twistAngle > Math.PI) twistAngle -= Math.PI * 2;
+          if (twistAngle < -Math.PI) twistAngle += Math.PI * 2;
+          const limits = parityScenarioDefinition.initial?.limits || constraint.limits;
+          limitState = twistAngle <= limits[0] + .002 ? 'lower' : (twistAngle >= limits[1] - .002 ? 'upper' : 'free');
+        }
+        return { id: s.id, anchorError, twistAngle, limitState };
+      }).sort((a, b) => a.id.localeCompare(b.id));
+      const contacts = [];
+      if (parityStep > 0) for (const segment of visible) if (segment.collider && world.contactPairsWith) world.contactPairsWith(segment.collider, (other) => {
+        const otherBody = other.parent?.(); const bodyA = parityScenarioAlias.get(segment.id) || segment.id; const otherSourceId = bodyByHandle.get(otherBody?.handle)?.id; const bodyB = otherSourceId ? (parityScenarioAlias.get(otherSourceId) || otherSourceId) : null;
+        if (!bodyB && other !== groundCollider) return;
+        if (other === groundCollider && !parityStageEnabled) return;
+        if (otherSourceId && parityScenarioIds && !parityScenarioIds.has(otherSourceId)) return;
+        const stableB = bodyB || 'stage'; if (bodyA >= stableB && stableB !== 'stage') return;
+        world.contactPair(segment.collider, other, (manifold) => {
+          const normalValue = manifold.normal?.();
+          const pointValue = manifold.numSolverContacts?.() > 0 ? manifold.solverContactPoint(0) : null;
+          let penetration = 0;
+          for (let index = 0; index < (manifold.numContacts?.() || 0); index += 1) penetration = Math.max(penetration, -(manifold.contactDist?.(index) || 0));
+          let normalImpulse = 0;
+          let tangentImpulseSquared = 0;
+          for (let index = 0; index < (manifold.numContacts?.() || 0); index += 1) {
+            normalImpulse += manifold.contactImpulse?.(index) || 0;
+            const tangentX = manifold.contactTangentImpulseX?.(index) || 0;
+            const tangentY = manifold.contactTangentImpulseY?.(index) || 0;
+            tangentImpulseSquared += tangentX * tangentX + tangentY * tangentY;
+          }
+          contacts.push({
+            bodyA,
+            bodyB: stableB,
+            point: pointValue ? [pointValue.x, pointValue.y, pointValue.z] : null,
+            normal: normalValue ? [normalValue.x, normalValue.y, normalValue.z] : null,
+            penetration,
+            normalImpulse,
+            tangentImpulse: Math.sqrt(tangentImpulseSquared)
+          });
+        });
+      });
+      const config = { timestep: STEP_SECONDS, solverIterations: world?.integrationParameters?.numSolverIterations ?? null, gravity: world?.gravity ?? null, additionalFrictionIterations: world?.integrationParameters?.numAdditionalFrictionIterations ?? null, setMaxAngvel: typeof ragdollBodies[0]?.body?.setMaxAngvel === 'function' };
+      const configText = JSON.stringify(config);
+      let hash = 2166136261; for (let i = 0; i < configText.length; i += 1) { hash ^= configText.charCodeAt(i); hash = Math.imul(hash, 16777619); };
+      return {
+        schemaVersion: 1, backend: 'rapier3d-compat', version: '0.20.0', scenario: parityScenario,
+        seed: paritySeed, step: parityStep, time: parityStep * STEP_SECONDS,
+        configurationHash: (hash >>> 0).toString(16).padStart(8, '0'), config, bodies, joints, contacts, events: []
+      };
+    };
+
+    const configureParityScenario = (scenario = 'full') => {
+      const kind = typeof scenario === 'object' ? (scenario.kind || 'full') : scenario;
+      const scenarioInitial = typeof scenario === 'object' ? (scenario.initial || {}) : {};
+      parityScenarioDefinition = typeof scenario === 'object' ? scenario : { kind };
+      parityScenarioIds = null; parityScenarioAlias = new Map();
+      for (const segment of ragdollBodies) { segment.body.setEnabled?.(true); segment.collider?.setEnabled?.(true); }
+      parityStageEnabled = kind === 'full' || kind.includes('stage') || kind === 'fixed-pair';
+      groundCollider?.setEnabled?.(parityStageEnabled);
+      if (parityDefaultGravity === null && world) parityDefaultGravity = [world.gravity.x, world.gravity.y, world.gravity.z];
+      const gravity = Array.isArray(scenarioInitial.gravity) ? scenarioInitial.gravity : parityDefaultGravity;
+      if (gravity && world) world.gravity = { x: gravity[0], y: gravity[1], z: gravity[2] };
+      if (kind === 'full') {
+        rebuildRagdollJoints();
+        for (const segment of ragdollBodies) {
+          const body = segment.body;
+          body.setBodyType(RAPIER.RigidBodyType.Dynamic, true);
+          body.setTranslation(segment.restCenter, true);
+          body.setRotation(segment.restQuaternion, true);
+          body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+          body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+          body.resetForces?.(true);
+          body.resetTorques?.(true);
+          body.recomputeMassPropertiesFromColliders?.();
+        }
+        world.propagateModifiedBodyPositionsToColliders?.();
+        return;
+      }
+      const by = (id) => bodyById.get(id);
+      let ids;
+      if (kind === 'free-body' || kind === 'capsule-stage' || kind === 'cursor-body' || kind === 'cursor-body-stage') ids = ['upperChest'];
+      else if (kind === 'fixed-pair') ids = ['hips', 'spine'];
+      else if (kind === 'hinge-pair') ids = ['upperChest', 'leftUpperArm'];
+      else if (kind === 'capsule-pair') ids = ['upperChest', 'head'];
+      else ids = ragdollBodies.map((s) => s.id);
+      parityScenarioIds = new Set(ids.filter((id) => by(id)));
+      for (const segment of ragdollBodies) if (!parityScenarioIds.has(segment.id)) { segment.body.setEnabled?.(false); segment.collider?.setEnabled?.(false); }
+      if (kind !== 'capsule-pair' && kind !== 'fixed-pair' && kind !== 'hinge-pair') { const sole = by(ids[0]); if (sole) parityScenarioAlias.set(sole.id, 'capsule'); }
+      if (kind === 'fixed-pair' || kind === 'hinge-pair') { parityScenarioAlias.set(ids[0], 'parent'); parityScenarioAlias.set(ids[1], 'child'); }
+      if (kind === 'capsule-pair') { parityScenarioAlias.set('upperChest', 'torso'); parityScenarioAlias.set('head', 'head'); }
+      rebuildRagdollJoints();
+      for (const segment of ragdollBodies) {
+        if (!segment.joint) continue;
+        if (parityScenarioIds.has(segment.id) && parityScenarioIds.has(segment.parent)) continue;
+        world.removeImpulseJoint(segment.joint, true);
+        segment.joint = null;
+      }
+      // Position-based kinematic bodies derive their velocity from the next
+      // pose, so setLinvel/setAngvel are not a stable observable initial state.
+      // Parity mode has no automatic advancement; selected micro bodies can be
+      // dynamic immediately and still remain frozen until an explicit step.
+      for (const id of parityScenarioIds) {
+        const body = bodyById.get(id)?.body;
+        if (!body) continue;
+        body.setBodyType(RAPIER.RigidBodyType.Dynamic, true);
+        body.recomputeMassPropertiesFromColliders?.();
+        body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+        body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+      }
+      const initial = scenarioInitial;
+      if (initial.translation) {
+        for (const id of parityScenarioIds) {
+          const body = bodyById.get(id)?.body;
+          if (!body) continue;
+          const position = body.translation();
+          body.setTranslation({
+            x: position.x + initial.translation[0],
+            y: position.y + initial.translation[1],
+            z: position.z + initial.translation[2]
+          }, true);
+        }
+      }
+      const first = bodyById.get(ids[0]);
+      if (first) {
+        if (initial.position) first.body.setTranslation({ x: initial.position[0], y: initial.position[1], z: initial.position[2] }, true);
+        if (initial.rotation) first.body.setRotation(Array.isArray(initial.rotation) ? { x: initial.rotation[0], y: initial.rotation[1], z: initial.rotation[2], w: initial.rotation[3] } : initial.rotation, true);
+        if (initial.linearVelocity) first.body.setLinvel({ x: initial.linearVelocity[0], y: initial.linearVelocity[1], z: initial.linearVelocity[2] }, true);
+        if (initial.angularVelocity) first.body.setAngvel({ x: initial.angularVelocity[0], y: initial.angularVelocity[1], z: initial.angularVelocity[2] }, true);
+      }
+      if (kind === 'hinge-pair') {
+        const parent = bodyById.get('upperChest');
+        const child = bodyById.get('leftUpperArm');
+        if (child?.joint && initial.limits) child.joint.setLimits(initial.limits[0], initial.limits[1]);
+        if (parent && child?.joint && Number.isFinite(initial.hingeAngle)) {
+          const localAnchor = child.joint.anchor1();
+          const parentPosition = parent.body.translation();
+          const parentRotationValue = parent.body.rotation();
+          const parentRotation = new THREE.Quaternion(parentRotationValue.x, parentRotationValue.y, parentRotationValue.z, parentRotationValue.w);
+          const anchor = new THREE.Vector3(localAnchor.x, localAnchor.y, localAnchor.z)
+            .applyQuaternion(parentRotation)
+            .add(new THREE.Vector3(parentPosition.x, parentPosition.y, parentPosition.z));
+          const childPositionValue = child.body.translation();
+          const childRotationValue = child.body.rotation();
+          const delta = new THREE.Quaternion().setFromAxisAngle(JOINT_FRAME_Z, initial.hingeAngle);
+          const childPosition = new THREE.Vector3(childPositionValue.x, childPositionValue.y, childPositionValue.z)
+            .sub(anchor).applyQuaternion(delta).add(anchor);
+          const childRotation = delta.multiply(new THREE.Quaternion(childRotationValue.x, childRotationValue.y, childRotationValue.z, childRotationValue.w)).normalize();
+          child.body.setTranslation(childPosition, true);
+          child.body.setRotation(childRotation, true);
+        }
+      }
+      if (kind === 'capsule-pair' && Number.isFinite(initial.separation)) {
+        const torso = bodyById.get('upperChest');
+        const head = bodyById.get('head');
+        if (torso && head) {
+          const torsoPosition = torso.body.translation();
+          head.body.setTranslation({ x: torsoPosition.x, y: torsoPosition.y + initial.separation, z: torsoPosition.z }, true);
+        }
+      }
+    };
+
+    const parityBody = (id) => {
+      const sourceId = [...parityScenarioAlias].find(([, alias]) => alias === id)?.[0] || id;
+      return bodyById.get(sourceId);
+    };
+    const parityCommand = (command = {}) => {
+      const type = getParityCommandType(command);
+      if (type === 'reset') { const scenario = command.scenario; const objectScenario = typeof scenario === 'object' ? scenario : { name: scenario || 'default', kind: 'full' }; parityScenario = objectScenario.name || objectScenario.kind || 'default'; paritySeed = objectScenario.seed ?? 'explicit'; parityStep = 0; resetRagdoll(); configureParityScenario(objectScenario); return paritySnapshot(); }
+      if (type === 'release') { releaseRagdoll(); return paritySnapshot(); }
+      if (type === 'apply-impulse') {
+        const segment = parityBody(command.body);
+        if (!segment) throw new Error(`Unknown parity body: ${command.body}`);
+        const linear = command.linear || [0, 0, 0];
+        const angular = command.angular || [0, 0, 0];
+        releaseRagdoll();
+        segment.body.applyImpulse({ x: linear[0], y: linear[1], z: linear[2] }, true);
+        segment.body.applyTorqueImpulse({ x: angular[0], y: angular[1], z: angular[2] }, true);
+        return paritySnapshot();
+      }
+      if (type === 'set-body-state') {
+        const segment = parityBody(command.body);
+        if (!segment) throw new Error(`Unknown parity body: ${command.body}`);
+        const position = command.position || command.translation; const rotation = command.rotation;
+        const linear = command.linearVelocity || command.linear; const angular = command.angularVelocity || command.angular;
+        if (command.bodyType) segment.body.setBodyType(RAPIER.RigidBodyType[command.bodyType], true);
+        if (position) segment.body.setTranslation({ x: position[0], y: position[1], z: position[2] }, true);
+        if (rotation) segment.body.setRotation(Array.isArray(rotation) ? { x: rotation[0], y: rotation[1], z: rotation[2], w: rotation[3] } : rotation, true);
+        if (linear) segment.body.setLinvel({ x: linear[0], y: linear[1], z: linear[2] }, true);
+        if (angular) segment.body.setAngvel({ x: angular[0], y: angular[1], z: angular[2] }, true);
+        return paritySnapshot();
+      }
+      if (type === 'cursor-start') {
+        const segment = parityBody(command.body);
+        if (!segment) throw new Error(`Unknown parity body: ${command.body}`);
+        const point = command.worldPoint || [segment.restCenter.x, segment.restCenter.y, segment.restCenter.z];
+        releaseRagdoll();
+        cursorBody = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(point[0], point[1], point[2]));
+        const rawLocal = command.localAnchor; const local = rawLocal ? (Array.isArray(rawLocal) ? { x: rawLocal[0], y: rawLocal[1], z: rawLocal[2] } : rawLocal) : worldPointToCurrentBodyLocal(segment, new THREE.Vector3(point[0], point[1], point[2]));
+        dragJoint = world.createImpulseJoint(RAPIER.JointData.spherical({ x: 0, y: 0, z: 0 }, { x: local.x, y: local.y, z: local.z }), cursorBody, segment.body, true);
+        if (dragJoint.setContactsEnabled) dragJoint.setContactsEnabled(false);
+        dragged = segment;
+        return paritySnapshot();
+      }
+      if (type === 'cursor-target') {
+        if (!cursorBody) throw new Error('Parity cursor is not active');
+        const point = command.worldPoint || command.target; if (!point) throw new Error('cursor-target requires worldPoint');
+        cursorBody.setNextKinematicTranslation({ x: point[0], y: point[1], z: point[2] });
+        return paritySnapshot();
+      }
+      if (type === 'cursor-end') { releaseDrag(Boolean(command.throwOnRelease)); return paritySnapshot(); }
+    };
+
+    window.__ragdollParity = {
+      ready: parityReady,
+      reset: (scenario) => parityCommand({ type: 'reset', scenario }),
+      command: parityCommand,
+      step: (count = 1) => { if (!physicsReady) throw new Error('Ragdoll parity is not ready'); const steps = Math.min(100000, Math.max(0, Math.floor(Number(count)))); for (let i = 0; i < steps; i += 1) advancePhysics(); return paritySnapshot(); },
+      snapshot: paritySnapshot
+    };
+
+    const advancePhysics = () => {
+      if (!physicsReady) return;
+      world.timestep = STEP_SECONDS;
+      world.step();
+      capRagdollVelocity();
+      settleGuardTime = Math.max(0, settleGuardTime - STEP_SECONDS);
+      if (launchFlightTime > 0) {
+        launchFlightTime = Math.max(0, launchFlightTime - STEP_SECONDS);
+        if (launchFlightTime === 0) applyPhysicsTuning();
+      }
+      settleRagdollAtRest();
+      parityStep += 1;
+    };
+
     const tick = () => {
       timer.update();
+      if (parityMode) {
+        applyPoseFromPhysics();
+        controls.update();
+        renderer.render(scene, camera);
+        return;
+      }
       const delta = Math.min(timer.getDelta(), 0.08);
       accumulator += delta;
       let stepCount = 0;
       while (physicsReady && accumulator >= STEP_SECONDS && stepCount < MAX_STEPS_PER_FRAME) {
-        world.timestep = STEP_SECONDS;
-        world.step();
-        capRagdollVelocity();
-        settleGuardTime = Math.max(0, settleGuardTime - STEP_SECONDS);
-        if (launchFlightTime > 0) {
-          launchFlightTime = Math.max(0, launchFlightTime - STEP_SECONDS);
-          if (launchFlightTime === 0) applyPhysicsTuning();
-        }
-        settleRagdollAtRest();
+        advancePhysics();
         accumulator -= STEP_SECONDS;
         stepCount += 1;
       }

@@ -42,17 +42,17 @@ if (html.includes('raw.githubusercontent.com') || html.includes('github.com/mrdo
 }
 
 const requiredPhysicsTuning = [
-  'const jointConstraintBySegment = {',
-  "spine: { type: 'fixed' },",
-  "neck: { type: 'fixed' },",
-  "head: { type: 'fixed' },",
-  "leftUpperArm: { type: 'hinge', axis: 'z', limits: [-1.2, 1.2] },",
-  "leftForearm: { type: 'hinge', axis: 'z', limits: [-1.35, 1.35] },",
-  "leftHand: { type: 'fixed' },",
-  "rightHand: { type: 'fixed' },",
+  "from '../shared/ragdoll-core/spec.mjs';",
+  "from '../shared/ragdoll-parity/protocol.mjs';",
+  'if (parityMode) {\n      introStarted = true;\n      introSplash.hidden = true;',
+  "introSplash.style.display = 'none';",
+  'const segmentDefinitions = SHARED_SEGMENTS.map',
+  'const jointConstraintBySegment = Object.fromEntries(Object.entries(SHARED_JOINTS)',
+  "leftUpperArm: 'z'",
+  "leftForearm: 'z'",
   "{ id: 'leftHand', bone: 'mixamorig:LeftHand', end: 'mixamorig:LeftHandMiddle4', radius: 0.095, parent: 'leftForearm' },",
   "{ id: 'rightHand', bone: 'mixamorig:RightHand', end: 'mixamorig:RightHandMiddle4', radius: 0.095, parent: 'rightForearm' },",
-  "leftThigh: { type: 'hinge', axis: 'x', limits: [-0.9, 0.9] },",
+  "leftThigh: 'x'",
   'const createRagdollJoint = (child) => {',
   "const isHead = child.id === 'head';",
   'if ((!physicsSettings.humanoidJointLimits || !constraint) && !isHead) {',
@@ -70,13 +70,11 @@ const requiredPhysicsTuning = [
   'resetRagdoll();\n      rebuildRagdollJoints();',
   'const settleRagdollAtRest = () => {',
   'const RESTING_SECONDS_BEFORE_SLEEP = 0.22;',
-  'world.integrationParameters.numAdditionalFrictionIterations = 4;',
   '.setCanSleep(true)',
   '.setRestitution(0)',
   'settleGuardTime = 0;',
   'const COLLIDER_RADIUS_SCALE = 0.84;',
   'const COLLIDER_JOINT_GAP = 0.018;',
-  'const TARGET_HUMAN_HEIGHT_METERS = 1.8;',
   'const RAGDOLL_SOLVER_ITERATIONS = 20;',
   'const getGravityForModelHeight = (modelHeight) => {',
   'const gravityY = getGravityForModelHeight(modelHeight);',
@@ -98,6 +96,9 @@ const requiredPhysicsTuning = [
 ];
 for (const value of requiredPhysicsTuning) {
   if (!html.includes(value)) throw new Error(`Missing required physics tuning: ${value}`);
+}
+if (html.includes('numAdditionalFrictionIterations =')) {
+  throw new Error('Ragdoll lab must not assign the removed additional-friction-iterations API');
 }
 for (const staleController of ['configureJointMotors', 'applyJointSupport', 'applyPoseSupport', 'applyHumanoidJointLimits', 'JointData.revoluteWithAxes']) {
   if (html.includes(staleController)) throw new Error(`Stale competing joint controller remains: ${staleController}`);

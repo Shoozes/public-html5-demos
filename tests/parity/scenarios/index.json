@@ -1,0 +1,161 @@
+[
+  {
+    "name": "free-fall-120",
+    "kind": "free-body",
+    "steps": 120,
+    "commands": [{ "step": 0, "type": "release" }],
+    "tolerances": { "position": 0.0001, "rotation": 0.0001, "linearVelocity": 0.0001, "angularVelocity": 0.0001, "joint": 0.0001 }
+  },
+  {
+    "name": "linear-damping-120",
+    "kind": "free-body",
+    "steps": 120,
+    "initial": { "linearVelocity": [2, 0, 0], "gravity": [0, 0, 0] },
+    "commands": [{ "step": 0, "type": "release" }],
+    "tolerances": { "position": 0.0001, "rotation": 0.0001, "linearVelocity": 0.0001, "angularVelocity": 0.0001, "joint": 0.0001 }
+  },
+  {
+    "name": "angular-damping-120",
+    "kind": "free-body",
+    "steps": 120,
+    "initial": { "angularVelocity": [1.2, -0.4, 0.7], "gravity": [0, 0, 0] },
+    "commands": [{ "step": 0, "type": "release" }],
+    "tolerances": { "position": 0.0001, "rotation": 0.0002, "linearVelocity": 0.0001, "angularVelocity": 0.0002, "joint": 0.0001 }
+  },
+  {
+    "name": "center-impulse",
+    "kind": "free-body",
+    "steps": 1,
+    "commands": [{ "step": 0, "type": "apply-impulse", "body": "capsule", "linear": [0.41, 2.4, -0.18], "angular": [0, 0, 0] }],
+    "tolerances": { "position": 0.0001, "rotation": 0.0001, "linearVelocity": 0.0001, "angularVelocity": 0.0001, "joint": 0.0001 }
+  },
+  {
+    "name": "torque-impulse",
+    "kind": "free-body",
+    "steps": 1,
+    "commands": [{ "step": 0, "type": "apply-impulse", "body": "capsule", "linear": [0, 0, 0], "angular": [0.32, -0.11, 0.47] }],
+    "tolerances": { "position": 0.0001, "rotation": 0.0002, "linearVelocity": 0.0001, "angularVelocity": 0.0002, "joint": 0.0001 }
+  },
+  {
+    "name": "capsule-floor-drop",
+    "kind": "capsule-stage",
+    "steps": 120,
+    "initial": { "position": [0, 1.2, 0] },
+    "commands": [{ "step": 0, "type": "release" }],
+    "tolerances": { "position": 0.025, "rotation": 0.05, "linearVelocity": 0.15, "angularVelocity": 0.3, "joint": 0.001, "contactStep": 2, "sleepStep": 1 }
+  },
+  {
+    "name": "capsule-floor-slide",
+    "kind": "capsule-stage",
+    "steps": 120,
+    "initial": { "position": [0, 0.35, 0], "linearVelocity": [2, 0, 0] },
+    "commands": [{ "step": 0, "type": "release" }],
+    "tolerances": { "position": 0.04, "rotation": 0.08, "linearVelocity": 0.2, "angularVelocity": 0.4, "joint": 0.001, "contactStep": 2 }
+  },
+  {
+    "name": "capsule-rim-tip",
+    "kind": "capsule-stage",
+    "steps": 120,
+    "initial": { "position": [7.18, 0.55, 0], "rotation": [0, 0, 0.2588190451, 0.9659258263], "linearVelocity": [1.5, 0, 0] },
+    "commands": [{ "step": 0, "type": "release" }],
+    "tolerances": { "position": 0.06, "rotation": 0.12, "linearVelocity": 0.35, "angularVelocity": 0.7, "joint": 0.001, "contactStep": 3 }
+  },
+  {
+    "name": "fixed-pair-drop",
+    "kind": "fixed-pair",
+    "steps": 120,
+    "initial": { "translation": [0, -4.3, 0], "gravity": [0, -2.26175, 0] },
+    "commands": [{ "step": 0, "type": "release" }],
+    "tolerances": { "position": 0.025, "rotation": 0.06, "linearVelocity": 0.2, "angularVelocity": 0.4, "joint": 0.008, "contactStep": 2, "sleepStep": 24 }
+  },
+  {
+    "name": "hinge-free",
+    "kind": "hinge-pair",
+    "steps": 120,
+    "commands": [{ "step": 0, "type": "apply-impulse", "body": "child", "linear": [0.0004, 0, 0], "angular": [0, 0, 0.00016] }],
+    "tolerances": { "position": 0.035, "rotation": 0.08, "linearVelocity": 0.25, "angularVelocity": 0.5, "joint": 0.01, "sleepStep": 6 }
+  },
+  {
+    "name": "hinge-lower-limit",
+    "kind": "hinge-pair",
+    "steps": 120,
+    "initial": { "hingeAngle": -1.1, "limits": [-0.75, 0.75], "gravity": [0, 0, 0] },
+    "commands": [{ "step": 0, "type": "release" }],
+    "tolerances": { "position": 0.035, "rotation": 0.12, "linearVelocity": 0.25, "angularVelocity": 0.5, "joint": 0.01, "sleepStep": 6 }
+  },
+  {
+    "name": "hinge-upper-limit",
+    "kind": "hinge-pair",
+    "steps": 120,
+    "initial": { "hingeAngle": 1.1, "limits": [-0.75, 0.75], "gravity": [0, 0, 0] },
+    "commands": [{ "step": 0, "type": "release" }],
+    "tolerances": { "position": 0.035, "rotation": 0.12, "linearVelocity": 0.25, "angularVelocity": 0.5, "joint": 0.01, "sleepStep": 6 }
+  },
+  {
+    "name": "head-torso-overlap",
+    "kind": "capsule-pair",
+    "steps": 60,
+    "initial": { "separation": 0.35, "gravity": [0, 0, 0] },
+    "commands": [{ "step": 0, "type": "release" }],
+    "tolerances": { "position": 0.025, "rotation": 0.06, "linearVelocity": 0.2, "angularVelocity": 0.4, "joint": 0.001, "contactStep": 1, "sleepStep": 15 }
+  },
+  {
+    "name": "cursor-step",
+    "kind": "cursor-body",
+    "steps": 30,
+    "commands": [
+      { "step": 0, "type": "cursor-start", "body": "capsule", "worldPoint": [0, 1.2, 0] },
+      { "step": 0, "type": "cursor-target", "worldPoint": [0.5, 1.2, 0] }
+    ],
+    "tolerances": { "position": 0.035, "rotation": 0.08, "linearVelocity": 0.3, "angularVelocity": 0.6, "joint": 0.015 }
+  },
+  {
+    "name": "cursor-ramp",
+    "kind": "cursor-body",
+    "steps": 60,
+    "commands": [{ "step": 0, "type": "cursor-start", "body": "capsule", "worldPoint": [0, 1.2, 0] }],
+    "cursorTrajectory": { "from": [0, 1.2, 0], "to": [1.2, 1.6, -0.3], "startStep": 0, "endStep": 59 },
+    "tolerances": { "position": 0.11, "rotation": 0.1, "linearVelocity": 0.4, "angularVelocity": 0.8, "joint": 0.02 }
+  },
+  {
+    "name": "cursor-floor-push",
+    "kind": "cursor-body-stage",
+    "steps": 60,
+    "commands": [{ "step": 0, "type": "cursor-start", "body": "capsule", "worldPoint": [0, 0.5, 0] }],
+    "cursorTrajectory": { "from": [0, 0.5, 0], "to": [0.8, -0.1, 0], "startStep": 0, "endStep": 59 },
+    "tolerances": { "position": 0.06, "rotation": 0.12, "linearVelocity": 0.5, "angularVelocity": 1, "joint": 0.025, "contactStep": 3 }
+  },
+  {
+    "name": "full-drop",
+    "kind": "full",
+    "steps": 360,
+    "visualSteps": [0, 60, 120, 200, 360],
+    "commands": [{ "step": 0, "type": "release" }],
+    "tolerances": { "mode": "behavioral", "comPosition": 2.5, "comVelocity": 2.5, "joint": 0.14, "contactStep": 25, "contactCount": 8, "settleLinear": 0.25, "settleAngular": 1, "settleStep": 30, "poseGroundY": 0.7, "poseVertical": 0.7, "exitRadius": 7.7, "exitStep": 20 }
+  },
+  {
+    "name": "full-toss-seed-1",
+    "kind": "full",
+    "seed": 1,
+    "steps": 360,
+    "commands": [{ "step": 0, "type": "apply-impulse", "body": "upperChest", "linear": [0.41, 1.2, -0.18], "angular": [0.32, -0.11, 0.47] }],
+    "tolerances": { "mode": "behavioral", "comPosition": 2, "comVelocity": 2.5, "joint": 0.14, "contactStep": 25, "contactCount": 8, "settleLinear": 0.25, "settleAngular": 1, "settleStep": 70, "poseGroundY": 0.7, "poseVertical": 0.7, "exitRadius": 7.7, "exitStep": 20 }
+  },
+  {
+    "name": "full-horizontal-hand-drag",
+    "kind": "full",
+    "steps": 120,
+    "visualSteps": [0, 45, 90, 120],
+    "commands": [{ "step": 0, "type": "cursor-start", "body": "leftHand", "worldPoint": [-1.8137, 5.6014, 0.12965] }],
+    "cursorTrajectory": { "from": [-1.8137, 5.6014, 0.12965], "to": [-3.1, 5.7, 0.12965], "startStep": 0, "endStep": 90 },
+    "tolerances": { "mode": "behavioral", "comPosition": 0.7, "comVelocity": 2.5, "joint": 0.14, "contactStep": 15, "contactCount": 8, "settleLinear": 0.25, "settleAngular": 1, "settleStep": 30, "poseGroundY": 0.7, "poseVertical": 0.7, "exitRadius": 7.7, "exitStep": 20 }
+  },
+  {
+    "name": "full-arena-exit",
+    "kind": "full",
+    "steps": 240,
+    "commands": [{ "step": 0, "type": "cursor-start", "body": "leftHand", "worldPoint": [-1.8137, 5.6014, 0.12965] }],
+    "cursorTrajectory": { "from": [-1.8137, 5.6014, 0.12965], "to": [-8.8, 5.7, 0.12965], "startStep": 0, "endStep": 180 },
+    "tolerances": { "mode": "behavioral", "comPosition": 1.5, "comVelocity": 3, "joint": 0.16, "contactStep": 25, "contactCount": 8, "settleLinear": 0.25, "settleAngular": 1, "settleStep": 30, "poseGroundY": 0.7, "poseVertical": 0.7, "exitRadius": 7.7, "exitStep": 20 }
+  }
+]

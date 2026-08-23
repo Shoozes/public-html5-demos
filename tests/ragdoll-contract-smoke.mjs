@@ -8,12 +8,16 @@ const mathPath = path.join(root, 'ragdoll-math-lab', 'index.html');
 const mathNotesPath = path.join(root, 'ragdoll-math-lab', 'MATH.md');
 const soldierAsset = path.join(root, 'assets', 'glb', 'Soldier.glb');
 const gitignorePath = path.join(root, '.gitignore');
+const sharedSpecPath = path.join(root, 'shared', 'ragdoll-core', 'spec.mjs');
+const sharedProtocolPath = path.join(root, 'shared', 'ragdoll-parity', 'protocol.mjs');
 
-const [original, math, mathNotes, gitignore] = await Promise.all([
+const [original, math, mathNotes, gitignore, sharedSpec, sharedProtocol] = await Promise.all([
   readFile(originalPath, 'utf8'),
   readFile(mathPath, 'utf8'),
   readFile(mathNotesPath, 'utf8'),
-  readFile(gitignorePath, 'utf8')
+  readFile(gitignorePath, 'utf8'),
+  readFile(sharedSpecPath, 'utf8'),
+  readFile(sharedProtocolPath, 'utf8')
 ]);
 
 const fail = (message) => {
@@ -25,7 +29,7 @@ const requireText = (source, value, label) => {
 };
 
 const getSegmentIds = (source) => {
-  const definitions = source.match(/const segmentDefinitions = \[([\s\S]*?)\n    \];/);
+  const definitions = source.match(/const segmentMetadata = \[([\s\S]*?)\n    \];/);
   if (!definitions) fail('segment definitions were not found');
   return [...definitions[1].matchAll(/id: '([^']+)'/g)].map((match) => match[1]);
 };
@@ -36,11 +40,12 @@ const requireSame = (actual, expected, label) => {
 
 for (const [name, source] of [['Rapier lab', original], ['Math lab', math]]) {
   requireText(source, "const MODEL_URL = '../assets/glb/Soldier.glb';", name);
-  requireText(source, 'const STEP_SECONDS = 1 / 60;', name);
   requireText(source, 'const MAX_STEPS_PER_FRAME = 3;', name);
   requireText(source, 'const STAGE_RADIUS = 7.35;', name);
-  requireText(source, 'const TARGET_HUMAN_HEIGHT_METERS = 1.8;', name);
-  requireText(source, 'const GRAVITY_METERS_PER_SECOND_SQUARED = 9.81;', name);
+  requireText(source, "from '../shared/ragdoll-core/spec.mjs';", name);
+  requireText(source, "from '../shared/ragdoll-parity/protocol.mjs';", name);
+  requireText(source, 'const segmentDefinitions = SHARED_SEGMENTS.map', name);
+  requireText(source, 'Object.entries(SHARED_JOINTS)', name);
   requireText(source, 'id="drop-button"', name);
   requireText(source, 'id="toss-button"', name);
   requireText(source, 'id="reset-button"', name);
@@ -52,6 +57,12 @@ for (const [name, source] of [['Rapier lab', original], ['Math lab', math]]) {
 }
 
 requireSame(getSegmentIds(math).join(','), getSegmentIds(original).join(','), 'simulated segment order');
+for (const value of ['export const STEP_SECONDS = 1 / 60;', 'export const TARGET_HUMAN_HEIGHT_METERS = 1.8;', 'export const GRAVITY_METERS_PER_SECOND_SQUARED = 9.81;', 'export const SEGMENTS', 'export const JOINTS']) {
+  requireText(sharedSpec, value, 'Shared ragdoll specification');
+}
+for (const value of ['export const PARITY_COMMAND_TYPES', 'export function getParityCommandType']) {
+  requireText(sharedProtocol, value, 'Shared parity command protocol');
+}
 requireText(original, "import RAPIER from '@dimforge/rapier3d-compat';", 'Rapier lab');
 if (math.includes('RAPIER') || math.includes('rapier')) {
   fail('Math lab must stay independent from Rapier');
@@ -67,10 +78,12 @@ for (const value of [
   '.setFriction(0.72)',
   '.setRestitution(0)',
   '.setDensity(1.15);',
-  'world.integrationParameters.numAdditionalFrictionIterations = 4;',
   'target.y = Math.max(0.18, target.y);'
 ]) {
   requireText(original, value, 'Rapier physical contract');
+}
+if (original.includes('numAdditionalFrictionIterations =')) {
+  fail('Rapier physical contract must not assign the removed additional-friction-iterations API');
 }
 
 for (const value of [
@@ -95,11 +108,13 @@ for (const value of [
   'const CUSTOM_RESTING_LINEAR_SPEED = .16;',
   'const CUSTOM_RESTING_ANGULAR_SPEED = .5;',
   'const CUSTOM_RESTING_SECONDS_BEFORE_SLEEP = .22;',
+  'const CUSTOM_FULL_SLEEP_SECONDS = .5;',
+  'const CUSTOM_FULL_ROLLING_FRICTION_SCALE = .15;',
   'const CUSTOM_MAX_CONTACT_SETTLE_SECONDS = 1.2;',
   'const CUSTOM_MAX_RESTING_HIPS_Y = .9;',
   'const applyPositionCorrection = (body, correction, maxCorrection = CUSTOM_MAX_POSITION_CORRECTION) => {',
-  'const applyJointPositionCorrection = (body, correction) => {',
-  'const applyJointAnchorCorrection = (body, correction, worldPoint) => {',
+  'const solvePointEffectiveMass = (body, point, target) => solveSharedPointEffectiveMass(',
+  'const solvePairPointEffectiveMass = (parentBody, parentPoint, childBody, childPoint, target) => solveSharedPairPointEffectiveMass(',
   'const solveRigidJoints = (reverse = false) => {',
   'const propagateRigidDragTarget = () => {',
   'const getCollisionSafeRigidDragTarget = () => {',
@@ -111,7 +126,6 @@ for (const value of [
   'const isRigidRestHeightEligible = () => {',
   'solveRigidJoints(pass % 2 === 1);',
   'for (const segment of rigidSegments) solveRigidStageContact(segment);',
-  'const parentInverseMass = rigidDrag?.segment.body === parent.body ? 0 : parent.body.inverseMass;',
   'rigidDrag.segment.body.previousPosition.copy(rigidDrag.segment.body.position);',
   'const CUSTOM_STAGE_CENTER_Y = -.22;',
   'const CUSTOM_STAGE_HALF_HEIGHT = .18;',
@@ -125,11 +139,11 @@ for (const value of [
   'nextTarget.y = Math.max(.18, nextTarget.y);',
   'const runCustomRigidStep = () => {',
   'const applyPoseFromRigidBodies = () => {',
-  'window.__ragdollParity = { snapshot: getRigidParitySnapshot };',
   'capsuleAxis = VERTICAL.clone().applyQuaternion(body.rotation);'
 ]) {
   requireText(math, value, 'Math lab');
 }
+if (!/window\.__ragdollParity\s*=\s*\{[\s\S]*snapshot\s*:/.test(math)) fail('Math lab parity snapshot hook is missing');
 
 for (const staleProjectionPath of [
   'CUSTOM_JOINT_CORRECTION_VELOCITY_BLEND',
@@ -164,10 +178,10 @@ for (const [originalValue, customValue, label] of [
 }
 
 for (const value of [
-  '## Custom articulated solver',
-  '## Parity work',
-  'capsule-to-finite-stage contacts',
-  'sequential Gauss-Seidel'
+  '## Solver boundary',
+  '## Parity and assisted paths',
+  'finite-cylinder',
+  '3x3 single-body and two-body point effective-mass kernels'
 ]) {
   requireText(mathNotes, value, 'Math Lab notes');
 }

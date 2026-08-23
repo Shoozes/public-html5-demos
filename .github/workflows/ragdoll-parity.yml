@@ -1,0 +1,50 @@
+name: Ragdoll parity
+
+on:
+  push:
+    paths:
+      - 'ragdoll-lab/**'
+      - 'ragdoll-math-lab/**'
+      - 'shared/**'
+      - 'tests/**'
+      - 'tools/**'
+      - '.github/workflows/ragdoll-parity.yml'
+  pull_request:
+    paths:
+      - 'ragdoll-lab/**'
+      - 'ragdoll-math-lab/**'
+      - 'shared/**'
+      - 'tests/**'
+      - 'tools/**'
+      - '.github/workflows/ragdoll-parity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 22.14.0
+      - name: Install pinned Playwright
+        run: npm install --no-save --no-package-lock playwright@1.52.0
+      - name: Install Chromium
+        run: npx playwright@1.52.0 install --with-deps chromium
+      - name: Structural and static-server checks
+        run: |
+          node tests/ragdoll-contract-smoke.mjs
+          node tests/ragdoll-lab-smoke.mjs
+          node tests/ragdoll-math-lab-smoke.mjs
+          node tests/ragdoll-parity-server.mjs
+          node tests/ragdoll-trace-parity.mjs --unit
+          node tests/ragdoll-core-contract.mjs
+          node tests/ragdoll-core-typescript-contract.mjs
+      - name: Browser 20-scenario parity harness
+        env:
+          CODEX_NODE_MODULES: ${{ github.workspace }}/node_modules
+        run: node tools/ragdoll-parity/run.mjs --determinism-runs=10
