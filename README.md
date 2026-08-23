@@ -49,6 +49,10 @@ https://shoozes.github.io/public-html5-demos/my-demo/
 
 A mobile- and desktop-friendly Three.js physics playground using the local Soldier GLB asset. Grab and throw the character, orbit the scene, or reset the ragdoll. Its rigid neck/head link, framed limb hinges, selective head collision, and higher solver budget keep the figure proportionate during limb holds. It includes optional music and sound effects, enabled from a tap-to-start splash screen. Share the authoritative GitHub Pages version at [Soldier Ragdoll Lab](https://shoozes.github.io/public-html5-demos/ragdoll-lab/) or the additional [ChatGPT Site](https://ragdoll-physics-demo.shoozes.chatgpt.site). Agents must follow the scoped [ragdoll deployment workflow](ragdoll-lab/DEPLOYMENT.md) when changing or deploying it.
 
+### Soldier Ragdoll Math Lab
+
+A separate Three.js-rendered, custom-physics implementation of the Soldier ragdoll. It maps the same skeleton into explicit capsule-like rigid bodies with sequential joint and finite-stage contact solves, without a Rapier dependency. See [the portable solver math and current limits](ragdoll-math-lab/MATH.md), then open [Soldier Ragdoll Math Lab](https://shoozes.github.io/public-html5-demos/ragdoll-math-lab/).
+
 ### Anthrocybernetics Guided Demo
 
 A mobile-first interactive presentation explaining feedback loops, the five observation lenses, evidence labels, and what actually moves when a cloud agent is ported to a local model.

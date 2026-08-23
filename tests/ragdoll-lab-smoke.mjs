@@ -13,7 +13,7 @@ const requiredAssets = [
   path.join(root, 'assets', 'ogg', 'music', 'backroom-static-track.ogg')
 ];
 
-const html = await readFile(demoPath, 'utf8');
+const html = (await readFile(demoPath, 'utf8')).replace(/\r\n/g, '\n');
 const gallery = await readFile(galleryPath, 'utf8');
 const readme = await readFile(readmePath, 'utf8');
 const requiredMarkup = [
@@ -48,6 +48,10 @@ const requiredPhysicsTuning = [
   "head: { type: 'fixed' },",
   "leftUpperArm: { type: 'hinge', axis: 'z', limits: [-1.2, 1.2] },",
   "leftForearm: { type: 'hinge', axis: 'z', limits: [-1.35, 1.35] },",
+  "leftHand: { type: 'fixed' },",
+  "rightHand: { type: 'fixed' },",
+  "{ id: 'leftHand', bone: 'mixamorig:LeftHand', end: 'mixamorig:LeftHandMiddle4', radius: 0.095, parent: 'leftForearm' },",
+  "{ id: 'rightHand', bone: 'mixamorig:RightHand', end: 'mixamorig:RightHandMiddle4', radius: 0.095, parent: 'rightForearm' },",
   "leftThigh: { type: 'hinge', axis: 'x', limits: [-0.9, 0.9] },",
   'const createRagdollJoint = (child) => {',
   "const isHead = child.id === 'head';",
@@ -114,12 +118,12 @@ for (const value of requiredMobileInputSafety) {
 
 const requiredLowLatencyAudio = [
   '<audio id="yeet-sound" preload="metadata">',
-  'const getYeetAudioContext = () => {',
+  'const getAudioContext = () => {',
   'const warmYeetBuffer = (context) => {',
   'context.decodeAudioData(audioData)',
   'const source = context.createBufferSource();',
   'source.start(now);',
-  'const MUSIC_VOLUME = 0.0765;',
+  'const MUSIC_VOLUME = 0.05;',
   'const YEET_MIN_VOLUME = 0.1;',
   'const YEET_MAX_VOLUME = 0.22;',
   'const YEET_FULL_VOLUME_RELEASE_IMPULSE = 9;',

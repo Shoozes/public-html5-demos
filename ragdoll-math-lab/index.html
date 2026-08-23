@@ -1,0 +1,1127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#091019">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:,">
+  <title>Soldier Ragdoll Math Lab</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; --ink: #f5f8ff; --muted: #b9c4d8; --line: rgba(225,237,255,.18); --panel: rgba(10,18,30,.78); --accent: #ff7b6e; --accent-bright: #ffb19b; --sky: #74c9ff; }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; margin: 0; overflow: hidden; background: #091019; overscroll-behavior: none; }
+    body { min-height: 100dvh; color: var(--ink); touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+    canvas { position: fixed; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; }
+    .loading, .fallback { position: fixed; z-index: 4; inset: 0; display: grid; place-items: center; padding: 22px; background: radial-gradient(circle at 50% 35%, #1c3049, #091019 64%); }
+    .loading[hidden], .fallback[hidden] { display: none; }
+    .loading-card, .fallback-card { width: min(100%, 430px); padding: 25px; border: 1px solid var(--line); border-radius: 22px; background: rgba(7,14,24,.82); box-shadow: 0 28px 90px rgba(0,0,0,.36); text-align: center; }
+    .loader { width: 42px; height: 42px; margin: 0 auto 16px; border: 3px solid rgba(255,255,255,.18); border-top-color: var(--accent-bright); border-radius: 50%; animation: spin 900ms linear infinite; }
+    .loading h2, .fallback h2 { margin: 0; font-size: 1.25rem; letter-spacing: -.035em; }
+    .loading p, .fallback p { margin: 9px 0 0; color: var(--muted); line-height: 1.5; font-size: .87rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .hud { position: fixed; z-index: 2; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left)); pointer-events: none; }
+    .topbar, .bottom { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .bottom { align-items: flex-end; }
+    .brand, .status, .control-dock, .math-card { border: 1px solid var(--line); background: var(--panel); box-shadow: 0 16px 48px rgba(0,0,0,.22); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+    .brand { max-width: min(520px,calc(100vw - 124px)); padding: 14px 16px 15px; border-radius: 18px; }
+    .eyebrow { margin: 0 0 5px; color: var(--accent-bright); font-size: .66rem; font-weight: 850; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(1.3rem,3.3vw,1.9rem); line-height: 1.05; letter-spacing: -.045em; }
+    .brand-copy { margin: 7px 0 0; color: var(--muted); font-size: .82rem; line-height: 1.45; }
+    .status { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 12px; border-radius: 999px; color: var(--muted); font-size: .72rem; font-weight: 760; white-space: nowrap; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--sky); box-shadow: 0 0 0 4px rgba(116,201,255,.12); }
+    .status[data-state="ready"] .status-dot { background: #8ee7b8; box-shadow: 0 0 0 4px rgba(142,231,184,.12); }
+    .status[data-state="active"] .status-dot { background: var(--accent); box-shadow: 0 0 0 4px rgba(255,123,110,.12); }
+    .status[data-state="error"] .status-dot { background: #ff6b70; box-shadow: 0 0 0 4px rgba(255,107,112,.12); }
+    .hint { max-width: 275px; margin: 0 0 4px; color: rgba(235,242,255,.78); font-size: .76rem; font-weight: 650; line-height: 1.5; text-shadow: 0 1px 12px rgba(0,0,0,.7); }
+    .control-dock { display: flex; gap: 8px; padding: 8px; border-radius: 18px; pointer-events: auto; }
+    button { min-height: 45px; padding: 0 15px; border: 1px solid transparent; border-radius: 12px; background: rgba(255,255,255,.07); color: var(--ink); font: inherit; font-size: .79rem; font-weight: 820; cursor: pointer; touch-action: manipulation; transition: transform 130ms ease, background 130ms ease, border-color 130ms ease; }
+    button:hover, button:focus-visible { transform: translateY(-1px); border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.14); outline: none; }
+    button:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+    .primary { border-color: rgba(255,150,131,.78); background: linear-gradient(135deg,#dc5c57,#ff876f); color: #250c13; }
+    .math-card { position: absolute; right: max(16px,env(safe-area-inset-right)); top: 102px; width: min(340px,calc(100vw - 32px)); overflow: hidden; border-radius: 18px; pointer-events: auto; }
+    .math-card[hidden] { display: none; }
+    .math-card summary { padding: 12px 14px; color: var(--accent-bright); font-size: .76rem; font-weight: 850; letter-spacing: .08em; cursor: pointer; text-transform: uppercase; }
+    .math-content { padding: 0 14px 14px; border-top: 1px solid rgba(225,237,255,.1); }
+    .math-content p { margin: 12px 0 0; color: var(--muted); font-size: .73rem; line-height: 1.45; }
+    .formula { margin: 8px 0; padding: 9px; overflow-x: auto; border-radius: 10px; background: rgba(2,8,16,.5); color: #d9e8ff; font: .7rem/1.55 ui-monospace,SFMono-Regular,Consolas,monospace; white-space: pre; }
+    .solver-readout { display: grid; grid-template-columns: 1fr auto; gap: 5px 12px; margin-top: 12px; color: var(--muted); font-size: .7rem; }
+    .solver-readout strong { color: var(--ink); text-align: right; }
+    .toggle { display: flex; gap: 9px; align-items: center; margin-top: 12px; color: var(--muted); font-size: .72rem; cursor: pointer; }
+    .toggle input { accent-color: var(--accent); }
+    @media (max-width: 620px) {
+      .hud { padding: max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); }
+      .brand { padding: 12px 13px; border-radius: 15px; }
+      .brand-copy { display: none; }
+      .status { min-height: 35px; padding: 0 10px; font-size: .68rem; }
+      .bottom { align-items: stretch; flex-direction: column-reverse; gap: 9px; }
+      .hint { max-width: 100%; margin: 0; font-size: .71rem; }
+      .control-dock { width: 100%; padding: 7px; border-radius: 16px; }
+      button { flex: 1; min-height: 48px; padding: 0 8px; font-size: .74rem; }
+      .math-card { right: max(12px,env(safe-area-inset-right)); top: 90px; width: min(340px,calc(100vw - 24px)); }
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition-duration: 0ms !important; animation-duration: 0ms !important; } }
+  </style>
+  <script type="importmap">
+    { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+    } }
+  </script>
+</head>
+<body>
+  <div class="loading" id="loading" aria-live="polite"><div class="loading-card"><div class="loader" aria-hidden="true"></div><h2>Preparing the math lab</h2><p>Loading Soldier and building particles from the skeleton.</p></div></div>
+  <div class="fallback" id="fallback" hidden role="alert"><div class="fallback-card"><h2>The math lab needs WebGL</h2><p id="fallback-copy">Please try a current browser with WebGL and access to the pinned Three.js modules.</p></div></div>
+  <main class="hud" aria-label="Soldier Ragdoll Math Lab controls">
+    <div class="topbar">
+      <section class="brand" aria-labelledby="demo-title"><p class="eyebrow">Physics playground</p><h1 id="demo-title">Soldier Ragdoll Lab</h1><p class="brand-copy">Grab a limb, spin the camera, and let Soldier loose.</p></section>
+      <div class="status" id="status" data-state="ready" aria-live="polite"><span class="status-dot" aria-hidden="true"></span><span id="status-copy">Building solver</span></div>
+    </div>
+    <details class="math-card" id="settings-panel" hidden>
+      <summary>Manual solver diagnostics</summary>
+      <div class="math-content">
+        <p>Each selected bone is a lightweight capsule rigid body. Sequential joint passes solve anchor error and fixed or hinged orientation before finite-stage contact projection.</p>
+        <div class="formula">velocity += gravity * dt
+position += velocity * dt
+orientation += angularVelocity * dt</div>
+        <div class="formula">anchorError = childAnchorWorld - parentAnchorWorld
+parent.position += anchorError * parentWeight
+child.position  -= anchorError * childWeight</div>
+        <p>The lowest endpoint of each rotated capsule is projected above the arena plane. That contact point also supplies a bounded rotational correction.</p>
+        <div class="solver-readout" aria-live="polite"><span>Fixed step</span><strong>16.67 ms</strong><span>Coupled solver passes</span><strong>20</strong><span>Mean anchor error</span><strong id="error-readout">0.0000</strong></div>
+      </div>
+    </details>
+    <div class="bottom">
+      <p class="hint">Pull Soldier farther for a stronger throw. Send Soldier off the arena at speed for a YEET. Drag empty space to orbit. Right-drag or use two fingers to pan. Scroll or pinch to zoom. <kbd>R</kbd> resets.</p>
+      <div class="control-dock" aria-label="Ragdoll actions"><button class="primary" id="drop-button" type="button" disabled>Drop Soldier</button><button id="toss-button" type="button" disabled>Give a toss</button><button id="reset-button" type="button" disabled>Reset</button><button id="settings-button" type="button" aria-expanded="false" aria-controls="settings-panel">Settings</button></div>
+    </div>
+  </main>
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    const MODEL_URL = '../assets/glb/Soldier.glb';
+    const STEP_SECONDS = 1 / 60;
+    const MAX_STEPS_PER_FRAME = 3;
+    const STAGE_RADIUS = 7.35;
+    const TARGET_HUMAN_HEIGHT_METERS = 1.8;
+    const GRAVITY_METERS_PER_SECOND_SQUARED = 9.81;
+    const VERTICAL = new THREE.Vector3(0, 1, 0);
+    const timer = new THREE.Timer();
+    const loading = document.getElementById('loading');
+    const fallback = document.getElementById('fallback');
+    const fallbackCopy = document.getElementById('fallback-copy');
+    const status = document.getElementById('status');
+    const statusCopy = document.getElementById('status-copy');
+    const dropButton = document.getElementById('drop-button');
+    const tossButton = document.getElementById('toss-button');
+    const resetButton = document.getElementById('reset-button');
+    const errorReadout = document.getElementById('error-readout');
+    const settingsButton = document.getElementById('settings-button');
+    const settingsPanel = document.getElementById('settings-panel');
+    const setStatus = (state, copy) => { status.dataset.state = state; statusCopy.textContent = copy; };
+    const showFailure = (message) => { console.error(message); loading.hidden = true; fallbackCopy.textContent = message; fallback.hidden = false; setStatus('error', 'Unavailable'); };
+    const probe = document.createElement('canvas');
+    if (!probe.getContext('webgl2') && !probe.getContext('webgl')) { showFailure('This browser does not support WebGL, which Soldier Ragdoll Math Lab needs to run.'); throw new Error('WebGL unavailable'); }
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    document.body.appendChild(renderer.domElement);
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#091019');
+    scene.fog = new THREE.Fog('#091019', 14, 30);
+    const camera = new THREE.PerspectiveCamera(44, window.innerWidth / window.innerHeight, .05, 80);
+    camera.position.set(7.2, 5.2, 8.7);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 2.15, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = .07;
+    controls.enablePan = true;
+    controls.screenSpacePanning = true;
+    controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
+    controls.minDistance = 4.5;
+    controls.maxDistance = 15;
+    controls.minPolarAngle = .4;
+    controls.maxPolarAngle = Math.PI * .47;
+    controls.update();
+    scene.add(new THREE.HemisphereLight('#a6d4ff', '#162031', 1.75));
+    const key = new THREE.DirectionalLight('#ffe4c2', 3.1);
+    key.position.set(5.5, 9, 5.5);
+    key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.camera.left = -8; key.shadow.camera.right = 8; key.shadow.camera.top = 8; key.shadow.camera.bottom = -8;
+    scene.add(key);
+    const rim = new THREE.PointLight('#7ea7ff', 20, 18, 2);
+    rim.position.set(-5, 4.5, -5);
+    scene.add(rim);
+    const stage = new THREE.Group();
+    scene.add(stage);
+    const floor = new THREE.Mesh(new THREE.CylinderGeometry(7.4, 7.8, .36, 64), new THREE.MeshStandardMaterial({ color: '#19283a', roughness: .78, metalness: .2 }));
+    floor.position.y = -.18; floor.receiveShadow = true; stage.add(floor);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(7.18, .035, 8, 96), new THREE.MeshBasicMaterial({ color: '#4f789f', transparent: true, opacity: .54 }));
+    ring.rotation.x = Math.PI / 2; ring.position.y = .015; stage.add(ring);
+    const grid = new THREE.GridHelper(14, 18, '#456a87', '#28465e');
+    grid.position.y = .012; grid.material.transparent = true; grid.material.opacity = .22; stage.add(grid);
+    const selectionMaterial = new THREE.MeshBasicMaterial({ color: '#74c9ff', transparent: true, opacity: .98, depthTest: false, depthWrite: false });
+    const selection = new THREE.Group();
+    const selectionHalo = new THREE.Mesh(new THREE.TorusGeometry(.19, .024, 8, 28), selectionMaterial);
+    const selectionDot = new THREE.Mesh(new THREE.SphereGeometry(.065, 16, 12), selectionMaterial);
+    selection.add(selectionHalo, selectionDot);
+    selection.renderOrder = 10; selection.visible = false; scene.add(selection);
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const dragPlane = new THREE.Plane();
+    const scratchVector = new THREE.Vector3();
+    const scratchMatrix = new THREE.Matrix4();
+    const scratchInverseMatrix = new THREE.Matrix4();
+
+    const segmentDefinitions = [
+      { id: 'hips', bone: 'mixamorig:Hips', end: 'mixamorig:Spine', radius: .22, parent: null },
+      { id: 'spine', bone: 'mixamorig:Spine', end: 'mixamorig:Spine1', radius: .20, parent: 'hips' },
+      { id: 'chest', bone: 'mixamorig:Spine1', end: 'mixamorig:Spine2', radius: .23, parent: 'spine' },
+      { id: 'upperChest', bone: 'mixamorig:Spine2', end: 'mixamorig:Neck', radius: .25, parent: 'chest' },
+      { id: 'neck', bone: 'mixamorig:Neck', end: 'mixamorig:Head', radius: .14, parent: 'upperChest' },
+      { id: 'head', bone: 'mixamorig:Head', end: 'mixamorig:HeadTop_End', radius: .28, parent: 'neck' },
+      { id: 'leftUpperArm', bone: 'mixamorig:LeftArm', end: 'mixamorig:LeftForeArm', radius: .14, parent: 'upperChest' },
+      { id: 'leftForearm', bone: 'mixamorig:LeftForeArm', end: 'mixamorig:LeftHand', radius: .12, parent: 'leftUpperArm' },
+      { id: 'leftHand', bone: 'mixamorig:LeftHand', end: 'mixamorig:LeftHandMiddle4', radius: .095, parent: 'leftForearm' },
+      { id: 'rightUpperArm', bone: 'mixamorig:RightArm', end: 'mixamorig:RightForeArm', radius: .14, parent: 'upperChest' },
+      { id: 'rightForearm', bone: 'mixamorig:RightForeArm', end: 'mixamorig:RightHand', radius: .12, parent: 'rightUpperArm' },
+      { id: 'rightHand', bone: 'mixamorig:RightHand', end: 'mixamorig:RightHandMiddle4', radius: .095, parent: 'rightForearm' },
+      { id: 'leftThigh', bone: 'mixamorig:LeftUpLeg', end: 'mixamorig:LeftLeg', radius: .18, parent: 'hips' },
+      { id: 'leftShin', bone: 'mixamorig:LeftLeg', end: 'mixamorig:LeftFoot', radius: .15, parent: 'leftThigh' },
+      { id: 'leftFoot', bone: 'mixamorig:LeftFoot', end: 'mixamorig:LeftToeBase', radius: .13, parent: 'leftShin' },
+      { id: 'rightThigh', bone: 'mixamorig:RightUpLeg', end: 'mixamorig:RightLeg', radius: .18, parent: 'hips' },
+      { id: 'rightShin', bone: 'mixamorig:RightLeg', end: 'mixamorig:RightFoot', radius: .15, parent: 'rightThigh' },
+      { id: 'rightFoot', bone: 'mixamorig:RightFoot', end: 'mixamorig:RightToeBase', radius: .13, parent: 'rightShin' }
+    ];
+
+    let character;
+    let characterMesh;
+    let physicsReady = false;
+    let active = false;
+    let accumulator = 0;
+    let restPose = new Map();
+    const normalizeBoneName = (name) => name.replace(/[^a-z0-9]/gi, '').toLowerCase();
+    const updatePointer = (event) => { const bounds = renderer.domElement.getBoundingClientRect(); pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1; pointer.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1; };
+    const getGravityForModelHeight = (modelHeight) => -GRAVITY_METERS_PER_SECOND_SQUARED * (modelHeight / TARGET_HUMAN_HEIGHT_METERS);
+    const resetSkeleton = () => {
+      for (const [bone, pose] of restPose) { bone.position.copy(pose.position); bone.quaternion.copy(pose.quaternion); bone.scale.copy(pose.scale); bone.updateMatrix(); }
+      character.updateMatrixWorld(true);
+    };
+    // Custom rigid-body backend. Three.js is only used for vectors, matrices, and rendering.
+    const CUSTOM_SOLVER_ITERATIONS = 20;
+    const CUSTOM_COLLIDER_RADIUS_SCALE = .84;
+    const CUSTOM_COLLIDER_JOINT_GAP = .018;
+    const CUSTOM_COLLIDER_DENSITY = 1.15;
+    const CUSTOM_POSITION_STIFFNESS = 1;
+    const CUSTOM_ANGULAR_STIFFNESS = .28;
+    const CUSTOM_GROUND_STIFFNESS = .92;
+    const CUSTOM_STAGE_SIDE_STIFFNESS = .92;
+    const CUSTOM_HEAD_CONTACT_STIFFNESS = .85;
+    const CUSTOM_STAGE_FRICTION = .86;
+    const CUSTOM_ANCHOR_TORQUE_SCALE = .006;
+    const CUSTOM_JOINT_VELOCITY_TRANSFER = .12;
+    const CUSTOM_CONTACT_JOINT_VELOCITY_TRANSFER = 0;
+    const CUSTOM_CONTACT_CHAIN_VELOCITY_RETENTION = .15;
+    const CUSTOM_HIGH_HIPS_CONTACT_VELOCITY_RETENTION = .65;
+    const CUSTOM_MAX_POSITION_CORRECTION = .16;
+    const CUSTOM_MAX_ANGULAR_CORRECTION = .22;
+    const CUSTOM_DRAG_STIFFNESS = 1;
+    const CUSTOM_DRAG_MAX_CORRECTION = .32;
+    const CUSTOM_DRAG_SUBSTEP_DISTANCE = .3;
+    const CUSTOM_MAX_DRAG_SUBSTEPS = 12;
+    const CUSTOM_DRAG_SUBSTEP_JOINT_PASSES = 6;
+    const CUSTOM_DRAG_COHERENT_TRANSLATION = .6;
+    const CUSTOM_FLOOR_DRAG_ROTATION_STIFFNESS = .18;
+    const CUSTOM_MAX_LINEAR_SPEED = 28;
+    const CUSTOM_MAX_ANGULAR_SPEED = 18;
+    const CUSTOM_LINEAR_DAMPING = 3.65;
+    const CUSTOM_ANGULAR_DAMPING = 16;
+    const CUSTOM_DRAG_THROW_STRENGTH = 12;
+    const CUSTOM_DRAG_THROW_DEAD_ZONE_PIXELS = 14;
+    const CUSTOM_DRAG_THROW_RESPONSE_PIXELS = 210;
+    const CUSTOM_MIN_LAUNCH_IMPULSE = 3.5;
+    const CUSTOM_LAUNCH_VELOCITY_MULTIPLIER = 2.45;
+    const CUSTOM_MAX_LAUNCH_SPEED = 26;
+    const CUSTOM_MIN_LAUNCH_LIFT = 6;
+    const CUSTOM_LAUNCH_FLIGHT_SECONDS = .95;
+    const CUSTOM_LAUNCH_LINEAR_DAMPING = .12;
+    const CUSTOM_RESTING_LINEAR_SPEED = .16;
+    const CUSTOM_RESTING_ANGULAR_SPEED = .5;
+    const CUSTOM_RESTING_SECONDS_BEFORE_SLEEP = .22;
+    const CUSTOM_MAX_CONTACT_SETTLE_SECONDS = 1.2;
+    const CUSTOM_MIN_RESTING_STAGE_CONTACTS = 2;
+    const CUSTOM_MAX_RESTING_HIPS_Y = .9;
+    const CUSTOM_STAGE_CENTER_Y = -.22;
+    const CUSTOM_STAGE_HALF_HEIGHT = .18;
+    const CUSTOM_GROUND_Y = CUSTOM_STAGE_CENTER_Y + CUSTOM_STAGE_HALF_HEIGHT;
+    const CUSTOM_STAGE_BOTTOM_Y = CUSTOM_STAGE_CENTER_Y - CUSTOM_STAGE_HALF_HEIGHT;
+    const customJointConstraints = {
+      spine: { type: 'fixed' },
+      chest: { type: 'fixed' },
+      upperChest: { type: 'fixed' },
+      neck: { type: 'fixed' },
+      head: { type: 'fixed' },
+      leftUpperArm: { type: 'hinge', axis: 'z', limits: [-1.2, 1.2] },
+      leftForearm: { type: 'hinge', axis: 'z', limits: [-1.35, 1.35] },
+      leftHand: { type: 'fixed' },
+      rightUpperArm: { type: 'hinge', axis: 'z', limits: [-1.2, 1.2] },
+      rightForearm: { type: 'hinge', axis: 'z', limits: [-1.35, 1.35] },
+      rightHand: { type: 'fixed' },
+      leftThigh: { type: 'hinge', axis: 'x', limits: [-.9, .9] },
+      leftShin: { type: 'hinge', axis: 'x', limits: [-1.25, 1.25] },
+      leftFoot: { type: 'hinge', axis: 'x', limits: [-.45, .45] },
+      rightThigh: { type: 'hinge', axis: 'x', limits: [-.9, .9] },
+      rightShin: { type: 'hinge', axis: 'x', limits: [-1.25, 1.25] },
+      rightFoot: { type: 'hinge', axis: 'x', limits: [-.45, .45] }
+    };
+    let rigidSegments = [];
+    let rigidById = new Map();
+    let rigidGravity = -22.58;
+    let rigidDrag = null;
+    let rigidDragStart = null;
+    let rigidDragStartScreen = null;
+    let rigidDragTarget = null;
+    let rigidDragConstraintTarget = null;
+    let rigidLastPointerScreen = null;
+    let rigidLaunchFlightTime = 0;
+    let rigidStageContactCount = 0;
+    let rigidRestSettleTime = 0;
+    let rigidSleeping = false;
+
+    const createRigidBody = (position, rotation, length, radius) => {
+      const halfHeight = Math.max(.01, length * .5 - radius - CUSTOM_COLLIDER_JOINT_GAP);
+      const cylinderLength = halfHeight * 2;
+      const cylinderMass = Math.PI * radius * radius * cylinderLength * CUSTOM_COLLIDER_DENSITY;
+      const capMass = (4 / 3) * Math.PI * radius * radius * radius * CUSTOM_COLLIDER_DENSITY;
+      const mass = Math.max(.0001, cylinderMass + capMass);
+      const inertia = Math.max(.00001, cylinderMass * (3 * radius * radius + cylinderLength * cylinderLength) / 12 + capMass * (.4 * radius * radius + halfHeight * halfHeight));
+      return {
+        position: position.clone(),
+        previousPosition: position.clone(),
+        velocity: new THREE.Vector3(),
+        rotation: rotation.clone(),
+        previousRotation: rotation.clone(),
+        angularVelocity: new THREE.Vector3(),
+        contactingStage: false,
+        inverseMass: 1 / mass,
+        inverseInertia: 1 / inertia,
+        dynamic: false,
+        halfHeight,
+        radius
+      };
+    };
+
+    const rotateRigidBody = (body, angularCorrection) => {
+      if (!Number.isFinite(angularCorrection.x) || !Number.isFinite(angularCorrection.y) || !Number.isFinite(angularCorrection.z)) return;
+      const angle = angularCorrection.length();
+      if (angle < .000001) return;
+      const limitedAngle = Math.min(angle, CUSTOM_MAX_ANGULAR_CORRECTION);
+      const rotation = new THREE.Quaternion().setFromAxisAngle(angularCorrection.multiplyScalar(1 / angle), limitedAngle);
+      body.rotation.premultiply(rotation).normalize();
+    };
+
+    const worldAnchor = (body, localAnchor) => localAnchor.clone().applyQuaternion(body.rotation).add(body.position);
+
+    const localAnchorAtRest = (segment, point) => {
+      return point.clone().sub(segment.restCenter).applyQuaternion(segment.restRotation.clone().invert());
+    };
+
+    const applyPositionCorrection = (body, correction, maxCorrection = CUSTOM_MAX_POSITION_CORRECTION) => {
+      if (!body.dynamic) return;
+      correction.clampLength(0, maxCorrection);
+      body.position.add(correction);
+    };
+
+    const isRigidRestHeightEligible = () => {
+      const hips = rigidById.get('hips');
+      return Boolean(hips && hips.body.position.y <= CUSTOM_MAX_RESTING_HIPS_Y);
+    };
+
+    const getJointVelocityTransfer = () => rigidStageContactCount >= CUSTOM_MIN_RESTING_STAGE_CONTACTS && isRigidRestHeightEligible()
+      ? CUSTOM_CONTACT_JOINT_VELOCITY_TRANSFER
+      : CUSTOM_JOINT_VELOCITY_TRANSFER;
+
+    const applyJointPositionCorrection = (body, correction) => {
+      const positionBefore = body.position.clone();
+      applyPositionCorrection(body, correction);
+      const velocityTransfer = getJointVelocityTransfer();
+      body.previousPosition.addScaledVector(
+        body.position.clone().sub(positionBefore),
+        1 - velocityTransfer
+      );
+    };
+
+    const applyJointAnchorCorrection = (body, correction, worldPoint) => {
+      const positionBefore = body.position.clone();
+      applyAnchorCorrection(body, correction, worldPoint);
+      const velocityTransfer = getJointVelocityTransfer();
+      body.previousPosition.addScaledVector(
+        body.position.clone().sub(positionBefore),
+        1 - velocityTransfer
+      );
+      body.previousRotation.slerp(
+        body.rotation,
+        1 - velocityTransfer
+      );
+    };
+
+    const applyAnchorCorrection = (body, correction, worldPoint, maxCorrection = CUSTOM_MAX_POSITION_CORRECTION) => {
+      if (!body.dynamic) return;
+      correction.clampLength(0, maxCorrection);
+      body.position.add(correction);
+      const arm = worldPoint.clone().sub(body.position);
+      const angular = arm.cross(correction).multiplyScalar(body.inverseInertia * CUSTOM_ANCHOR_TORQUE_SCALE);
+      rotateRigidBody(body, angular);
+    };
+
+    const applyVelocityNeutralContactCorrection = (body, correction, worldPoint) => {
+      const positionBefore = body.position.clone();
+      applyAnchorCorrection(body, correction, worldPoint);
+      body.previousPosition.add(body.position.clone().sub(positionBefore));
+      body.previousRotation.copy(body.rotation);
+    };
+
+    const getCapsuleEndpoints = (body) => {
+      const axis = VERTICAL.clone().applyQuaternion(body.rotation);
+      return [
+        body.position.clone().addScaledVector(axis, body.halfHeight),
+        body.position.clone().addScaledVector(axis, -body.halfHeight)
+      ];
+    };
+
+    const closestPointsOnSegments = (firstStart, firstEnd, secondStart, secondEnd) => {
+      const firstDirection = firstEnd.clone().sub(firstStart);
+      const secondDirection = secondEnd.clone().sub(secondStart);
+      const startOffset = firstStart.clone().sub(secondStart);
+      const firstLengthSquared = firstDirection.lengthSq();
+      const secondLengthSquared = secondDirection.lengthSq();
+      const firstStartProjection = firstDirection.dot(startOffset);
+      const secondStartProjection = secondDirection.dot(startOffset);
+      const epsilon = .000001;
+      let firstT = 0;
+      let secondT = 0;
+      if (firstLengthSquared <= epsilon && secondLengthSquared > epsilon) {
+        secondT = THREE.MathUtils.clamp(secondStartProjection / secondLengthSquared, 0, 1);
+      } else if (secondLengthSquared <= epsilon && firstLengthSquared > epsilon) {
+        firstT = THREE.MathUtils.clamp(-firstStartProjection / firstLengthSquared, 0, 1);
+      } else if (firstLengthSquared > epsilon && secondLengthSquared > epsilon) {
+        const directionDot = firstDirection.dot(secondDirection);
+        const denominator = firstLengthSquared * secondLengthSquared - directionDot * directionDot;
+        if (denominator > epsilon) firstT = THREE.MathUtils.clamp((directionDot * secondStartProjection - firstStartProjection * secondLengthSquared) / denominator, 0, 1);
+        secondT = (directionDot * firstT + secondStartProjection) / secondLengthSquared;
+        if (secondT < 0) {
+          secondT = 0;
+          firstT = THREE.MathUtils.clamp(-firstStartProjection / firstLengthSquared, 0, 1);
+        } else if (secondT > 1) {
+          secondT = 1;
+          firstT = THREE.MathUtils.clamp((directionDot - firstStartProjection) / firstLengthSquared, 0, 1);
+        }
+      }
+      return [
+        firstStart.clone().addScaledVector(firstDirection, firstT),
+        secondStart.clone().addScaledVector(secondDirection, secondT)
+      ];
+    };
+
+    const buildRigidSolver = () => {
+      const bones = new Map();
+      restPose.clear();
+      rigidSegments = [];
+      rigidById = new Map();
+      character.traverse((object) => {
+        if (object.name) bones.set(normalizeBoneName(object.name), object);
+        if (object.isBone) restPose.set(object, { position: object.position.clone(), quaternion: object.quaternion.clone(), scale: object.scale.clone() });
+      });
+      for (const definition of segmentDefinitions) {
+        const bone = bones.get(normalizeBoneName(definition.bone));
+        const endBone = bones.get(normalizeBoneName(definition.end));
+        if (!bone || !endBone) throw new Error('Soldier rig is missing ' + definition.bone + ' or ' + definition.end + '.');
+        const restStart = bone.getWorldPosition(new THREE.Vector3());
+        const restEnd = endBone.getWorldPosition(new THREE.Vector3());
+        const direction = restEnd.clone().sub(restStart);
+        const length = direction.length();
+        if (length < .02) throw new Error('Soldier bone is too short to simulate: ' + definition.id + '.');
+        const restRotation = new THREE.Quaternion().setFromUnitVectors(VERTICAL, direction.normalize());
+        const restCenter = restStart.clone().lerp(restEnd, .5);
+        const radius = definition.radius * CUSTOM_COLLIDER_RADIUS_SCALE;
+        const body = createRigidBody(restCenter, restRotation, length, radius);
+        const segment = {
+          ...definition,
+          bone,
+          body,
+          restStart,
+          restEnd,
+          restCenter,
+          restRotation,
+          restBoneQuaternion: bone.getWorldQuaternion(new THREE.Quaternion()),
+          restBoneScale: bone.getWorldScale(new THREE.Vector3())
+        };
+        rigidSegments.push(segment);
+        rigidById.set(segment.id, segment);
+      }
+      for (const segment of rigidSegments) {
+        if (!segment.parent) continue;
+        const parent = rigidById.get(segment.parent);
+        const constraint = customJointConstraints[segment.id];
+        const hingeAxis = (constraint && constraint.axis === 'z' ? new THREE.Vector3(0, 0, 1) : new THREE.Vector3(1, 0, 0));
+        segment.joint = {
+          parent,
+          type: constraint ? constraint.type : 'spherical',
+          limits: constraint ? constraint.limits : null,
+          parentAnchor: localAnchorAtRest(parent, segment.restStart),
+          childAnchor: localAnchorAtRest(segment, segment.restStart),
+          restRelativeRotation: parent.restRotation.clone().invert().multiply(segment.restRotation),
+          parentHingeAxis: hingeAxis.clone().applyQuaternion(parent.restRotation.clone().invert()),
+          childHingeAxis: hingeAxis.clone().applyQuaternion(segment.restRotation.clone().invert())
+        };
+      }
+    };
+
+    const resetRigidRagdoll = () => {
+      if (!physicsReady) return;
+      rigidDrag = null;
+      rigidDragStart = null;
+      rigidDragStartScreen = null;
+      rigidDragTarget = null;
+      rigidDragConstraintTarget = null;
+      rigidLastPointerScreen = null;
+      selection.visible = false;
+      active = false;
+      rigidLaunchFlightTime = 0;
+      rigidStageContactCount = 0;
+      rigidRestSettleTime = 0;
+      rigidSleeping = false;
+      resetSkeleton();
+      for (const segment of rigidSegments) {
+        const body = segment.body;
+        body.position.copy(segment.restCenter);
+        body.previousPosition.copy(segment.restCenter);
+        body.velocity.set(0, 0, 0);
+        body.rotation.copy(segment.restRotation);
+        body.previousRotation.copy(segment.restRotation);
+        body.angularVelocity.set(0, 0, 0);
+        body.dynamic = false;
+      }
+      applyPoseFromRigidBodies();
+      setStatus('ready', 'Ready to drop');
+      dropButton.textContent = 'Drop Soldier';
+    };
+
+    const releaseRigidRagdoll = () => {
+      if (active) return;
+      active = true;
+      rigidSleeping = false;
+      rigidRestSettleTime = 0;
+      for (const segment of rigidSegments) segment.body.dynamic = true;
+      setStatus('active', 'Physics live');
+      dropButton.textContent = 'Soldier is loose';
+    };
+
+    const launchRigidRagdoll = (velocity) => {
+      rigidLaunchFlightTime = CUSTOM_LAUNCH_FLIGHT_SECONDS;
+      rigidSleeping = false;
+      rigidRestSettleTime = 0;
+      for (const segment of rigidSegments) segment.body.velocity.copy(velocity);
+    };
+
+    const integrateRigidBodies = (dt) => {
+      rigidStageContactCount = 0;
+      for (const segment of rigidSegments) {
+        const body = segment.body;
+        body.contactingStage = false;
+        body.previousPosition.copy(body.position);
+        body.previousRotation.copy(body.rotation);
+        if (!body.dynamic) continue;
+        body.velocity.y += rigidGravity * dt;
+        body.position.addScaledVector(body.velocity, dt);
+        const angularStep = body.angularVelocity.clone().multiplyScalar(dt);
+        rotateRigidBody(body, angularStep);
+      }
+    };
+
+    const solveRigidJoint = (child) => {
+      const joint = child.joint;
+      if (!joint) return;
+      const parent = joint.parent;
+      const expectedChildRotation = parent.body.rotation.clone().multiply(joint.restRelativeRotation);
+      if (joint.type === 'fixed') {
+        const rotationError = expectedChildRotation.clone().multiply(child.body.rotation.clone().invert());
+        if (rotationError.w < 0) rotationError.set(-rotationError.x, -rotationError.y, -rotationError.z, -rotationError.w);
+        const angle = 2 * Math.acos(THREE.MathUtils.clamp(rotationError.w, -1, 1));
+        const sine = Math.sqrt(Math.max(.000001, 1 - rotationError.w * rotationError.w));
+        rotateRigidBody(child.body, new THREE.Vector3(rotationError.x / sine, rotationError.y / sine, rotationError.z / sine).multiplyScalar(angle * CUSTOM_ANGULAR_STIFFNESS));
+      } else if (joint.type === 'hinge') {
+        const parentAxis = joint.parentHingeAxis.clone().applyQuaternion(parent.body.rotation).normalize();
+        const childAxis = joint.childHingeAxis.clone().applyQuaternion(child.body.rotation).normalize();
+        const axisError = childAxis.cross(parentAxis);
+        rotateRigidBody(child.body, axisError.multiplyScalar(CUSTOM_ANGULAR_STIFFNESS));
+        if (joint.limits) {
+          const rotationError = expectedChildRotation.clone().invert().multiply(child.body.rotation);
+          const angle = 2 * Math.atan2(Math.hypot(rotationError.x, rotationError.y, rotationError.z), rotationError.w);
+          const signedAngle = Math.sign(new THREE.Vector3(rotationError.x, rotationError.y, rotationError.z).dot(parentAxis)) * angle;
+          const limitedAngle = THREE.MathUtils.clamp(signedAngle, joint.limits[0], joint.limits[1]);
+          if (Math.abs(signedAngle - limitedAngle) > .0001) {
+            rotateRigidBody(child.body, parentAxis.multiplyScalar((limitedAngle - signedAngle) * .16));
+          }
+        }
+      }
+      child.body.previousRotation.slerp(
+        child.body.rotation,
+        1 - getJointVelocityTransfer()
+      );
+      // Orientation is solved before translation because rotating a capsule
+      // about its center also moves its off-center joint anchor. Joint position
+      // projection stays translational: these joints already have explicit
+      // fixed/hinge orientation constraints, so adding a second torque here
+      // would overshoot and recreate visible anchor gaps.
+      const parentPoint = worldAnchor(parent.body, joint.parentAnchor);
+      const childPoint = worldAnchor(child.body, joint.childAnchor);
+      const error = childPoint.clone().sub(parentPoint).multiplyScalar(CUSTOM_POSITION_STIFFNESS);
+      const parentInverseMass = rigidDrag?.segment.body === parent.body ? 0 : parent.body.inverseMass;
+      const childInverseMass = rigidDrag?.segment.body === child.body ? 0 : child.body.inverseMass;
+      const totalInverseMass = parentInverseMass + childInverseMass;
+      if (totalInverseMass > 0) {
+        const parentCorrection = error.clone().multiplyScalar(parentInverseMass / totalInverseMass);
+        const childCorrection = error.clone().multiplyScalar(-childInverseMass / totalInverseMass);
+        if (joint.type === 'hinge') {
+          applyJointAnchorCorrection(parent.body, parentCorrection, parentPoint);
+          applyJointAnchorCorrection(child.body, childCorrection, childPoint);
+        } else {
+          applyJointPositionCorrection(parent.body, parentCorrection);
+          applyJointPositionCorrection(child.body, childCorrection);
+        }
+
+        // Any anchor torque above rotates its local point. Finish with a pure
+        // translation projection so torque can articulate a hinge without
+        // leaving the joint visibly stretched.
+        const correctedParentPoint = worldAnchor(parent.body, joint.parentAnchor);
+        const correctedChildPoint = worldAnchor(child.body, joint.childAnchor);
+        const residual = correctedChildPoint.clone().sub(correctedParentPoint);
+        applyJointPositionCorrection(parent.body, residual.clone().multiplyScalar(parentInverseMass / totalInverseMass));
+        applyJointPositionCorrection(child.body, residual.multiplyScalar(-childInverseMass / totalInverseMass));
+      }
+    };
+
+    const solveRigidStageContact = (segment) => {
+      const body = segment.body;
+      if (!body.dynamic) return;
+      const capsuleAxis = VERTICAL.clone().applyQuaternion(body.rotation);
+      const firstEnd = body.position.clone().addScaledVector(capsuleAxis, body.halfHeight);
+      const secondEnd = body.position.clone().addScaledVector(capsuleAxis, -body.halfHeight);
+      const contact = firstEnd.y < secondEnd.y ? firstEnd : secondEnd;
+      const contactRadius = Math.hypot(contact.x, contact.z);
+      if (contactRadius <= STAGE_RADIUS) {
+        const penetration = CUSTOM_GROUND_Y + body.radius - contact.y;
+        if (penetration > 0) {
+          if (!body.contactingStage) {
+            body.contactingStage = true;
+            rigidStageContactCount += 1;
+          }
+          const correction = new THREE.Vector3(0, penetration * CUSTOM_GROUND_STIFFNESS, 0);
+          applyVelocityNeutralContactCorrection(body, correction, contact);
+        }
+      }
+
+      const bodyMinY = Math.min(firstEnd.y, secondEnd.y) - body.radius;
+      const bodyMaxY = Math.max(firstEnd.y, secondEnd.y) + body.radius;
+      const centerRadius = Math.hypot(body.position.x, body.position.z);
+      if (rigidLaunchFlightTime > 0 || centerRadius <= .000001 || bodyMinY > CUSTOM_GROUND_Y || bodyMaxY < CUSTOM_STAGE_BOTTOM_Y) return;
+      // The cylinder side only contacts a capsule whose center has crossed the
+      // rim. Its inner surface is centerRadius - radius, so penetration is the
+      // stage radius minus that surface. The previous inverse expression pulled
+      // limbs back into the arena and grew stronger the farther out they moved.
+      if (centerRadius < STAGE_RADIUS) return;
+      const sidePenetration = STAGE_RADIUS + body.radius - centerRadius;
+      if (sidePenetration <= 0) return;
+      if (!body.contactingStage) {
+        body.contactingStage = true;
+        rigidStageContactCount += 1;
+      }
+      const outward = new THREE.Vector3(body.position.x / centerRadius, 0, body.position.z / centerRadius);
+      const sideContact = body.position.clone().addScaledVector(outward, -body.radius);
+      applyVelocityNeutralContactCorrection(body, outward.multiplyScalar(sidePenetration * CUSTOM_STAGE_SIDE_STIFFNESS), sideContact);
+    };
+
+    const solveRigidHeadContacts = () => {
+      const head = rigidById.get('head');
+      if (!head?.body.dynamic) return;
+      const [headStart, headEnd] = getCapsuleEndpoints(head.body);
+      for (const segment of rigidSegments) {
+        if (segment.id === 'head' || segment.id === 'neck' || !segment.body.dynamic) continue;
+        const [segmentStart, segmentEnd] = getCapsuleEndpoints(segment.body);
+        const [headPoint, segmentPoint] = closestPointsOnSegments(headStart, headEnd, segmentStart, segmentEnd);
+        const offset = headPoint.clone().sub(segmentPoint);
+        const distance = offset.length();
+        const penetration = head.body.radius + segment.body.radius - distance;
+        if (penetration <= 0) continue;
+        const normal = distance > .000001
+          ? offset.multiplyScalar(1 / distance)
+          : head.body.position.clone().sub(segment.body.position).normalize();
+        if (normal.lengthSq() <= .000001) normal.set(0, 1, 0);
+        const correction = normal.multiplyScalar(penetration * CUSTOM_HEAD_CONTACT_STIFFNESS);
+        const totalInverseMass = head.body.inverseMass + segment.body.inverseMass;
+        if (totalInverseMass <= 0) continue;
+        applyVelocityNeutralContactCorrection(head.body, correction.clone().multiplyScalar(head.body.inverseMass / totalInverseMass), headPoint);
+        applyVelocityNeutralContactCorrection(segment.body, correction.multiplyScalar(-segment.body.inverseMass / totalInverseMass), segmentPoint);
+      }
+    };
+
+    const solveRigidDrag = () => {
+      if (!rigidDrag) return;
+      const anchor = worldAnchor(rigidDrag.segment.body, rigidDrag.localAnchor);
+      const correction = rigidDragConstraintTarget.clone().sub(anchor).multiplyScalar(CUSTOM_DRAG_STIFFNESS);
+      // The cursor joint is positional. Feeding its projection through the
+      // anchor-torque path applies the same lever-arm torque on every solver
+      // pass; against the floor that becomes the observed runaway rotation.
+      applyPositionCorrection(rigidDrag.segment.body, correction, CUSTOM_DRAG_MAX_CORRECTION);
+      const residual = rigidDragConstraintTarget.clone().sub(worldAnchor(rigidDrag.segment.body, rigidDrag.localAnchor));
+      applyPositionCorrection(rigidDrag.segment.body, residual, CUSTOM_DRAG_MAX_CORRECTION);
+      if (rigidDrag.floorConstrained) {
+        rigidDrag.segment.body.rotation.slerp(
+          rigidDrag.stableRotation,
+          CUSTOM_FLOOR_DRAG_ROTATION_STIFFNESS
+        ).normalize();
+        rigidDrag.segment.body.previousRotation.copy(rigidDrag.segment.body.rotation);
+        rigidDrag.segment.body.angularVelocity.set(0, 0, 0);
+      }
+      rigidDrag.segment.body.previousPosition.copy(rigidDrag.segment.body.position);
+      if (!rigidDrag.floorConstrained) rigidDrag.segment.body.previousRotation.copy(rigidDrag.segment.body.rotation);
+    };
+
+    const solveRigidJoints = (reverse = false) => {
+      if (!reverse) {
+        for (const segment of rigidSegments) solveRigidJoint(segment);
+        return;
+      }
+      for (let index = rigidSegments.length - 1; index >= 0; index -= 1) {
+        solveRigidJoint(rigidSegments[index]);
+      }
+    };
+
+    const getCollisionSafeRigidDragTarget = () => {
+      const target = rigidDragTarget.clone();
+      const body = rigidDrag.segment.body;
+      if (Math.hypot(target.x, target.z) > STAGE_RADIUS) return target;
+      const localAnchorWorld = rigidDrag.localAnchor.clone().applyQuaternion(body.rotation);
+      const capsuleAxis = VERTICAL.clone().applyQuaternion(body.rotation);
+      const minimumAnchorY = CUSTOM_GROUND_Y
+        + body.radius
+        + Math.abs(capsuleAxis.y) * body.halfHeight
+        + localAnchorWorld.y;
+      target.y = Math.max(target.y, minimumAnchorY);
+      return target;
+    };
+
+    const propagateRigidDragTarget = () => {
+      if (!rigidDrag || !rigidDragTarget || !rigidDragConstraintTarget) return;
+      const collisionSafeTarget = getCollisionSafeRigidDragTarget();
+      rigidDrag.floorConstrained = collisionSafeTarget.y > rigidDragTarget.y + .0001;
+      if (!rigidDrag.floorConstrained) rigidDrag.stableRotation.copy(rigidDrag.segment.body.rotation);
+      const distance = rigidDragConstraintTarget.distanceTo(collisionSafeTarget);
+      if (distance <= .000001) return;
+      const substeps = THREE.MathUtils.clamp(
+        Math.ceil(distance / CUSTOM_DRAG_SUBSTEP_DISTANCE),
+        1,
+        CUSTOM_MAX_DRAG_SUBSTEPS
+      );
+      for (let substep = 0; substep < substeps; substep += 1) {
+        const previousTarget = rigidDragConstraintTarget.clone();
+        rigidDragConstraintTarget.lerp(collisionSafeTarget, 1 / (substeps - substep));
+        const coherentTranslation = rigidDragConstraintTarget.clone()
+          .sub(previousTarget)
+          .multiplyScalar(CUSTOM_DRAG_COHERENT_TRANSLATION);
+        for (const { body } of rigidSegments) {
+          body.position.add(coherentTranslation);
+          body.previousPosition.add(coherentTranslation);
+        }
+        for (let pass = 0; pass < CUSTOM_DRAG_SUBSTEP_JOINT_PASSES; pass += 1) {
+          solveRigidDrag();
+          solveRigidJoints(pass % 2 === 0);
+        }
+      }
+    };
+
+    const constrainRigidBodies = () => {
+      for (let pass = 0; pass < CUSTOM_SOLVER_ITERATIONS; pass += 1) {
+        for (const segment of rigidSegments) solveRigidStageContact(segment);
+        solveRigidHeadContacts();
+        solveRigidDrag();
+        solveRigidJoints(pass % 2 === 1);
+      }
+      // Polish articulation and stage contacts together, ending on collision.
+      // Ending on joints alone allowed the last anchor projection to push feet,
+      // hands, and knees back through the floor until the following frame.
+      for (let pass = 0; pass < 6; pass += 1) {
+        solveRigidDrag();
+        solveRigidJoints(pass % 2 === 0);
+        for (const segment of rigidSegments) solveRigidStageContact(segment);
+      }
+      solveRigidDrag();
+      for (const segment of rigidSegments) solveRigidStageContact(segment);
+    };
+
+    const updateRigidVelocities = (dt) => {
+      for (const segment of rigidSegments) {
+        const body = segment.body;
+        if (!body.dynamic) continue;
+        body.velocity.copy(body.position).sub(body.previousPosition).multiplyScalar(1 / dt);
+        const linearDamping = rigidLaunchFlightTime > 0 ? CUSTOM_LAUNCH_LINEAR_DAMPING : CUSTOM_LINEAR_DAMPING;
+        body.velocity.multiplyScalar(Math.exp(-linearDamping * dt));
+        if (rigidDrag?.segment === segment) body.velocity.multiplyScalar(.55);
+        if (rigidLaunchFlightTime <= 0 && rigidStageContactCount >= CUSTOM_MIN_RESTING_STAGE_CONTACTS) {
+          body.velocity.multiplyScalar(isRigidRestHeightEligible()
+            ? CUSTOM_CONTACT_CHAIN_VELOCITY_RETENTION
+            : CUSTOM_HIGH_HIPS_CONTACT_VELOCITY_RETENTION);
+        }
+        if (body.contactingStage) {
+          if (body.velocity.y < 0) body.velocity.y = 0;
+          body.velocity.x *= CUSTOM_STAGE_FRICTION;
+          body.velocity.z *= CUSTOM_STAGE_FRICTION;
+        }
+        if (body.velocity.length() > CUSTOM_MAX_LINEAR_SPEED) body.velocity.setLength(CUSTOM_MAX_LINEAR_SPEED);
+        const rotationDelta = body.rotation.clone().multiply(body.previousRotation.clone().invert());
+        if (rotationDelta.w < 0) rotationDelta.set(-rotationDelta.x, -rotationDelta.y, -rotationDelta.z, -rotationDelta.w);
+        const angle = 2 * Math.acos(THREE.MathUtils.clamp(rotationDelta.w, -1, 1));
+        const sine = Math.sqrt(Math.max(.000001, 1 - rotationDelta.w * rotationDelta.w));
+        body.angularVelocity.set(rotationDelta.x / sine, rotationDelta.y / sine, rotationDelta.z / sine).multiplyScalar(angle / dt).multiplyScalar(Math.exp(-CUSTOM_ANGULAR_DAMPING * dt));
+        if (body.contactingStage) body.angularVelocity.multiplyScalar(CUSTOM_STAGE_FRICTION);
+        if (body.angularVelocity.length() > CUSTOM_MAX_ANGULAR_SPEED) body.angularVelocity.setLength(CUSTOM_MAX_ANGULAR_SPEED);
+      }
+    };
+
+    const settleRigidRagdollAtRest = (dt) => {
+      const constraintCaughtUp = !rigidDrag || rigidDragConstraintTarget.distanceToSquared(rigidDragTarget) <= .000001;
+      if (!active || rigidDrag || rigidLaunchFlightTime > 0 || rigidStageContactCount < CUSTOM_MIN_RESTING_STAGE_CONTACTS || !constraintCaughtUp) {
+        rigidRestSettleTime = 0;
+        return;
+      }
+      const quiet = rigidSegments.every(({ body }) => (
+        body.velocity.length() <= CUSTOM_RESTING_LINEAR_SPEED
+        && body.angularVelocity.length() <= CUSTOM_RESTING_ANGULAR_SPEED
+      ));
+      rigidRestSettleTime += dt;
+      if ((!quiet || rigidRestSettleTime < CUSTOM_RESTING_SECONDS_BEFORE_SLEEP)
+        && rigidRestSettleTime < CUSTOM_MAX_CONTACT_SETTLE_SECONDS) return;
+      for (const { body } of rigidSegments) {
+        body.velocity.set(0, 0, 0);
+        body.angularVelocity.set(0, 0, 0);
+      }
+      rigidSleeping = true;
+    };
+
+    const runCustomRigidStep = () => {
+      if (rigidSleeping) return;
+      integrateRigidBodies(STEP_SECONDS);
+      propagateRigidDragTarget();
+      constrainRigidBodies();
+      for (const segment of rigidSegments) {
+        const body = segment.body;
+        if (Number.isFinite(body.position.x) && Number.isFinite(body.position.y) && Number.isFinite(body.position.z) && Number.isFinite(body.rotation.x) && Number.isFinite(body.rotation.y) && Number.isFinite(body.rotation.z) && Number.isFinite(body.rotation.w)) continue;
+        body.position.copy(body.previousPosition);
+        body.rotation.copy(body.previousRotation).normalize();
+        body.velocity.set(0, 0, 0);
+        body.angularVelocity.set(0, 0, 0);
+      }
+      updateRigidVelocities(STEP_SECONDS);
+      if (rigidLaunchFlightTime > 0) rigidLaunchFlightTime = Math.max(0, rigidLaunchFlightTime - STEP_SECONDS);
+      settleRigidRagdollAtRest(STEP_SECONDS);
+    };
+
+    const applyPoseFromRigidBodies = () => {
+      for (const segment of rigidSegments) {
+        const delta = segment.body.rotation.clone().multiply(segment.restRotation.clone().invert());
+        const bonePosition = segment.restStart.clone().sub(segment.restCenter).applyQuaternion(delta).add(segment.body.position);
+        const boneQuaternion = delta.multiply(segment.restBoneQuaternion.clone());
+        const parent = segment.bone.parent;
+        parent.updateWorldMatrix(true, false);
+        scratchMatrix.compose(bonePosition, boneQuaternion, segment.restBoneScale);
+        scratchInverseMatrix.copy(parent.matrixWorld).invert();
+        scratchMatrix.premultiply(scratchInverseMatrix);
+        scratchMatrix.decompose(segment.bone.position, segment.bone.quaternion, segment.bone.scale);
+        segment.bone.updateMatrix();
+        segment.bone.updateMatrixWorld(true);
+      }
+    };
+
+    const chooseClosestRigidSegment = (point) => {
+      let closest = null;
+      let distance = Infinity;
+      for (const segment of rigidSegments) {
+        const nextDistance = point.distanceToSquared(segment.body.position);
+        if (nextDistance < distance) {
+          distance = nextDistance;
+          closest = segment;
+        }
+      }
+      return closest;
+    };
+
+    const intersectRayCapsule = (origin, direction, body) => {
+      const inverseRotation = body.rotation.clone().invert();
+      const localOrigin = origin.clone().sub(body.position).applyQuaternion(inverseRotation);
+      const localDirection = direction.clone().applyQuaternion(inverseRotation);
+      let closestTime = Infinity;
+      const accept = (time) => {
+        if (time >= 0 && time < closestTime) closestTime = time;
+      };
+
+      const radialA = localDirection.x * localDirection.x + localDirection.z * localDirection.z;
+      if (radialA > .000001) {
+        const radialB = 2 * (localOrigin.x * localDirection.x + localOrigin.z * localDirection.z);
+        const radialC = localOrigin.x * localOrigin.x + localOrigin.z * localOrigin.z - body.radius * body.radius;
+        const discriminant = radialB * radialB - 4 * radialA * radialC;
+        if (discriminant >= 0) {
+          const root = Math.sqrt(discriminant);
+          for (const time of [(-radialB - root) / (2 * radialA), (-radialB + root) / (2 * radialA)]) {
+            const y = localOrigin.y + localDirection.y * time;
+            if (y >= -body.halfHeight && y <= body.halfHeight) accept(time);
+          }
+        }
+      }
+
+      for (const capY of [-body.halfHeight, body.halfHeight]) {
+        const offset = localOrigin.clone().sub(new THREE.Vector3(0, capY, 0));
+        const projection = offset.dot(localDirection);
+        const discriminant = projection * projection - (offset.lengthSq() - body.radius * body.radius);
+        if (discriminant < 0) continue;
+        const root = Math.sqrt(discriminant);
+        accept(-projection - root);
+        accept(-projection + root);
+      }
+      return Number.isFinite(closestTime) ? closestTime : null;
+    };
+
+    const findRigidPhysicsHit = () => {
+      let hit = null;
+      for (const segment of rigidSegments) {
+        const time = intersectRayCapsule(raycaster.ray.origin, raycaster.ray.direction, segment.body);
+        if (time === null || (hit && time >= hit.time)) continue;
+        hit = { time, segment };
+      }
+      return hit && { point: raycaster.ray.at(hit.time, new THREE.Vector3()), segment: hit.segment };
+    };
+
+    const findRigidSelectionHit = () => {
+      const physicsHit = findRigidPhysicsHit();
+      if (physicsHit) return physicsHit;
+      const visualHit = character ? raycaster.intersectObject(character, true)[0] : null;
+      return visualHit && { point: visualHit.point, segment: chooseClosestRigidSegment(visualHit.point) };
+    };
+
+    const updateRigidHover = () => {
+      if (!character || rigidDrag) return null;
+      raycaster.setFromCamera(pointer, camera);
+      const hit = findRigidSelectionHit();
+      if (!hit) {
+        selection.visible = false;
+        renderer.domElement.style.cursor = 'default';
+        return null;
+      }
+      selection.position.copy(hit.point);
+      selection.quaternion.copy(camera.quaternion);
+      selectionMaterial.color.set('#ffb19b');
+      selection.visible = true;
+      renderer.domElement.style.cursor = 'grab';
+      return hit;
+    };
+
+    const beginRigidDrag = (event) => {
+      if (!physicsReady || rigidDrag) return false;
+      updatePointer(event);
+      const selectionHit = updateRigidHover();
+      if (!selectionHit) return false;
+      releaseRigidRagdoll();
+      const localAnchor = selectionHit.point.clone().sub(selectionHit.segment.body.position).applyQuaternion(selectionHit.segment.body.rotation.clone().invert());
+      rigidDrag = {
+        segment: selectionHit.segment,
+        localAnchor,
+        stableRotation: selectionHit.segment.body.rotation.clone(),
+        floorConstrained: false
+      };
+      rigidDragStart = selectionHit.point.clone();
+      rigidDragStartScreen = new THREE.Vector2(event.clientX, event.clientY);
+      rigidDragTarget = selectionHit.point.clone();
+      rigidDragConstraintTarget = selectionHit.point.clone();
+      rigidLastPointerScreen = rigidDragStartScreen.clone();
+      rigidSleeping = false;
+      rigidRestSettleTime = 0;
+      dragPlane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(scratchVector), rigidDragTarget);
+      controls.enabled = false;
+      renderer.domElement.style.cursor = 'grabbing';
+      renderer.domElement.setPointerCapture(event.pointerId);
+      setStatus('active', 'Dragging ' + selectionHit.segment.id.replace(/([A-Z])/g, ' $1').toLowerCase());
+      return true;
+    };
+
+    const moveRigidDrag = (event) => {
+      updatePointer(event);
+      if (!rigidDrag) {
+        updateRigidHover();
+        return;
+      }
+      raycaster.setFromCamera(pointer, camera);
+      const point = raycaster.ray.intersectPlane(dragPlane, scratchVector);
+      if (!point) return;
+      const nextTarget = point.clone();
+      nextTarget.y = Math.max(.18, nextTarget.y);
+      if (rigidDragTarget.distanceToSquared(nextTarget) > .000001) {
+        rigidSleeping = false;
+        rigidRestSettleTime = 0;
+      }
+      rigidDragTarget.copy(nextTarget);
+      rigidLastPointerScreen.set(event.clientX, event.clientY);
+      selection.position.copy(rigidDragTarget);
+      selection.visible = true;
+    };
+
+    const releaseRigidDrag = (throwOnRelease = false) => {
+      if (!rigidDrag) return;
+      const body = rigidDrag.segment.body;
+      if (throwOnRelease && rigidDragStart && rigidDragStartScreen && rigidLastPointerScreen) {
+        const direction = rigidDragTarget.clone().sub(rigidDragStart);
+        const pullDistance = rigidDragStartScreen.distanceTo(rigidLastPointerScreen);
+        const chargedDistance = Math.max(0, pullDistance - CUSTOM_DRAG_THROW_DEAD_ZONE_PIXELS);
+        const strength = CUSTOM_DRAG_THROW_STRENGTH * (1 - Math.exp(-chargedDistance / CUSTOM_DRAG_THROW_RESPONSE_PIXELS));
+        if (direction.lengthSq() > .0004 && strength > .04) {
+          const impulse = direction.normalize().multiplyScalar(strength);
+          body.velocity.addScaledVector(impulse, body.inverseMass);
+          if (strength >= CUSTOM_MIN_LAUNCH_IMPULSE) {
+            const launchVelocity = impulse.multiplyScalar(CUSTOM_LAUNCH_VELOCITY_MULTIPLIER);
+            if (launchVelocity.length() > CUSTOM_MAX_LAUNCH_SPEED) launchVelocity.setLength(CUSTOM_MAX_LAUNCH_SPEED);
+            launchVelocity.y = Math.max(launchVelocity.y, CUSTOM_MIN_LAUNCH_LIFT);
+            launchRigidRagdoll(launchVelocity);
+          }
+        }
+      }
+      rigidDrag = null;
+      rigidDragStart = null;
+      rigidDragStartScreen = null;
+      rigidDragTarget = null;
+      rigidDragConstraintTarget = null;
+      rigidLastPointerScreen = null;
+      selection.visible = false;
+      controls.enabled = true;
+      renderer.domElement.style.cursor = 'default';
+      setStatus(active ? 'active' : 'ready', active ? 'Physics live' : 'Ready to drop');
+    };
+
+    const giveRigidToss = () => {
+      if (!physicsReady) return;
+      releaseRigidRagdoll();
+      const target = rigidById.get('upperChest') || rigidById.get('hips');
+      target.body.velocity.add(new THREE.Vector3((Math.random() - .5) * 1.4, 2.4, (Math.random() - .5) * 1.1));
+      target.body.angularVelocity.add(new THREE.Vector3((Math.random() - .5) * 1.2, (Math.random() - .5) * 1.2, (Math.random() - .5) * 1.2));
+      setStatus('active', 'Gentle toss');
+    };
+
+    const getRigidJointError = () => {
+      let total = 0;
+      let count = 0;
+      for (const segment of rigidSegments) {
+        if (!segment.joint) continue;
+        const parentPoint = worldAnchor(segment.joint.parent.body, segment.joint.parentAnchor);
+        const childPoint = worldAnchor(segment.body, segment.joint.childAnchor);
+        total += parentPoint.distanceTo(childPoint);
+        count += 1;
+      }
+      return count ? total / count : 0;
+    };
+
+    const getRigidParitySnapshot = () => ({
+      active,
+      sleeping: rigidSleeping,
+      stageContactCount: rigidStageContactCount,
+      dragged: rigidDrag?.segment.id || null,
+      dragError: rigidDrag ? worldAnchor(rigidDrag.segment.body, rigidDrag.localAnchor).distanceTo(rigidDragTarget) : 0,
+      constraintDragError: rigidDrag ? worldAnchor(rigidDrag.segment.body, rigidDrag.localAnchor).distanceTo(rigidDragConstraintTarget) : 0,
+      segments: Object.fromEntries(rigidSegments.map((segment) => [segment.id, {
+        position: segment.body.position.toArray(),
+        velocity: segment.body.velocity.toArray(),
+        angularVelocity: segment.body.angularVelocity.toArray()
+      }])),
+      joints: Object.fromEntries(rigidSegments.filter((segment) => segment.joint).map((segment) => {
+        const parentPoint = worldAnchor(segment.joint.parent.body, segment.joint.parentAnchor);
+        const childPoint = worldAnchor(segment.body, segment.joint.childAnchor);
+        return [segment.id, parentPoint.distanceTo(childPoint)];
+      }))
+    });
+    if (new URLSearchParams(location.search).has('parity')) {
+      window.__ragdollParity = { snapshot: getRigidParitySnapshot };
+    }
+
+    const init = async () => {
+      try {
+        const gltf = await new GLTFLoader().loadAsync(MODEL_URL);
+        character = gltf.scene; character.name = 'Soldier';
+        character.traverse((object) => {
+          if (!object.isMesh) return;
+          for (const material of (Array.isArray(object.material) ? object.material : [object.material])) {
+            material.transparent = false; material.opacity = 1; material.alphaTest = 0; material.alphaMap = null; material.depthWrite = true; material.depthTest = true; material.side = THREE.DoubleSide; material.needsUpdate = true;
+          }
+          object.castShadow = true; object.receiveShadow = true; object.frustumCulled = false; characterMesh ||= object;
+        });
+        if (!characterMesh) throw new Error('Soldier GLB loaded without a visible mesh.');
+        scene.add(character); character.updateMatrixWorld(true);
+        const rawHeight = new THREE.Box3().setFromObject(character).getSize(new THREE.Vector3()).y;
+        if (!Number.isFinite(rawHeight) || rawHeight <= 0) throw new Error('Soldier GLB has an invalid size.');
+        character.scale.setScalar(4.15 / rawHeight); character.updateMatrixWorld(true);
+        const bounds = new THREE.Box3().setFromObject(character);
+        character.position.y += 2.25 - bounds.min.y; character.updateMatrixWorld(true);
+        const modelHeight = new THREE.Box3().setFromObject(character).getSize(new THREE.Vector3()).y;
+        rigidGravity = getGravityForModelHeight(modelHeight);
+        buildRigidSolver(); physicsReady = true; dropButton.disabled = false; tossButton.disabled = false; resetButton.disabled = false; resetRigidRagdoll(); loading.hidden = true;
+      } catch (error) {
+        showFailure(error instanceof Error ? error.message : 'Soldier could not be prepared.');
+      }
+    };
+    dropButton.addEventListener('click', releaseRigidRagdoll);
+    tossButton.addEventListener('click', giveRigidToss);
+    resetButton.addEventListener('click', resetRigidRagdoll);
+    settingsButton.addEventListener('click', () => {
+      const opening = settingsPanel.hidden;
+      settingsPanel.hidden = !opening;
+      settingsButton.setAttribute('aria-expanded', String(opening));
+    });
+    window.addEventListener('keydown', (event) => {
+      if (event.key.toLowerCase() === 'r') resetRigidRagdoll();
+      if (event.code === 'Space' && physicsReady) { event.preventDefault(); giveRigidToss(); }
+    });
+    renderer.domElement.addEventListener('pointerdown', (event) => { if (beginRigidDrag(event)) { event.preventDefault(); event.stopPropagation(); } }, true);
+    renderer.domElement.addEventListener('pointermove', moveRigidDrag);
+    window.addEventListener('pointerup', (event) => {
+      if (!rigidDrag) return;
+      moveRigidDrag(event);
+      releaseRigidDrag(true);
+    }, true);
+    window.addEventListener('pointercancel', () => releaseRigidDrag(), true);
+    renderer.domElement.addEventListener('lostpointercapture', () => releaseRigidDrag());
+    renderer.domElement.addEventListener('pointerleave', () => { if (!rigidDrag) selection.visible = false; });
+    renderer.domElement.addEventListener('contextmenu', (event) => event.preventDefault());
+    window.addEventListener('blur', () => releaseRigidDrag());
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+    const tick = () => {
+      timer.update(); accumulator += Math.min(timer.getDelta(), .08);
+      let steps = 0;
+      while (physicsReady && active && accumulator >= STEP_SECONDS && steps < MAX_STEPS_PER_FRAME) { runCustomRigidStep(); accumulator -= STEP_SECONDS; steps += 1; }
+      if (steps === MAX_STEPS_PER_FRAME) accumulator = 0;
+      if (physicsReady) {
+        applyPoseFromRigidBodies();
+        errorReadout.textContent = getRigidJointError().toFixed(4);
+        const hips = rigidById.get('hips');
+        if (active && hips && hips.body.position.y < -8) resetRigidRagdoll();
+      }
+      controls.update(); renderer.render(scene, camera);
+    };
+    renderer.setAnimationLoop(tick);
+    init();
+  </script>
+</body>
+</html>
