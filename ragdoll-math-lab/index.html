@@ -88,7 +88,7 @@ orientation += angularVelocity * dt</div>
 parent.position += anchorError * parentWeight
 child.position  -= anchorError * childWeight</div>
         <p>The lowest endpoint of each rotated capsule is projected above the arena plane. That contact point also supplies a bounded rotational correction.</p>
-        <div class="solver-readout" aria-live="polite"><span>Fixed step</span><strong>16.67 ms</strong><span>Coupled solver passes</span><strong>20</strong><span>Mean anchor error</span><strong id="error-readout">0.0000</strong></div>
+        <div class="solver-readout" aria-live="polite"><span>Fixed step</span><strong>16.67 ms</strong><span>Interactive solver passes</span><strong>24</strong><span>Mean anchor error</span><strong id="error-readout">0.0000</strong></div>
       </div>
     </details>
     <div class="bottom">
@@ -181,6 +181,12 @@ child.position  -= anchorError * childWeight</div>
     const scratchVector = new THREE.Vector3();
     const scratchMatrix = new THREE.Matrix4();
     const scratchInverseMatrix = new THREE.Matrix4();
+    const interactiveAngularStep = new THREE.Vector3();
+    const interactiveDragPreviousTarget = new THREE.Vector3();
+    const interactiveDragTargetDelta = new THREE.Vector3();
+    const interactiveDragAnchor = new THREE.Vector3();
+    const interactiveDragPointVelocity = new THREE.Vector3();
+    const interactiveDragTargetVelocity = new THREE.Vector3();
 
     const segmentMetadata = [
       { id: 'hips', bone: 'mixamorig:Hips', end: 'mixamorig:Spine', radius: .22, parent: null },
@@ -225,6 +231,7 @@ child.position  -= anchorError * childWeight</div>
     };
     // Custom rigid-body backend. Three.js is only used for vectors, matrices, and rendering.
     const CUSTOM_SOLVER_ITERATIONS = 20;
+    const CUSTOM_INTERACTIVE_SOLVER_ITERATIONS = 24;
     const CUSTOM_COLLIDER_RADIUS_SCALE = .84;
     const CUSTOM_COLLIDER_JOINT_GAP = .018;
     const CUSTOM_COLLIDER_DENSITY = 1.15;
@@ -243,13 +250,15 @@ child.position  -= anchorError * childWeight</div>
     const CUSTOM_HIGH_HIPS_CONTACT_VELOCITY_RETENTION = .65;
     const CUSTOM_MAX_POSITION_CORRECTION = .16;
     const CUSTOM_MAX_ANGULAR_CORRECTION = .22;
-    const CUSTOM_DRAG_STIFFNESS = 1;
-    const CUSTOM_DRAG_MAX_CORRECTION = .32;
-    const CUSTOM_DRAG_SUBSTEP_DISTANCE = .3;
-    const CUSTOM_MAX_DRAG_SUBSTEPS = 12;
-    const CUSTOM_DRAG_SUBSTEP_JOINT_PASSES = 6;
-    const CUSTOM_DRAG_COHERENT_TRANSLATION = .6;
-    const CUSTOM_FLOOR_DRAG_ROTATION_STIFFNESS = .18;
+    const CUSTOM_DRAG_TARGET_HALF_LIFE_SECONDS = .022;
+    const CUSTOM_DRAG_TARGET_MAX_SPEED = 32;
+    const CUSTOM_DRAG_TARGET_DEAD_ZONE = .008;
+    const CUSTOM_DRAG_SPRING_STIFFNESS = 420;
+    const CUSTOM_DRAG_SPRING_DAMPING = 42;
+    const CUSTOM_HELD_LINEAR_DAMPING = 6.5;
+    const CUSTOM_HELD_ANGULAR_DAMPING = 28;
+    const CUSTOM_HELD_MAX_ANGULAR_SPEED = 3.5;
+    const CUSTOM_INTERACTIVE_MAX_ANGULAR_SPEED = 5.5;
     const CUSTOM_MAX_LINEAR_SPEED = 28;
     const CUSTOM_MAX_ANGULAR_SPEED = 18;
     const CUSTOM_LINEAR_DAMPING = 3.65;
@@ -271,13 +280,16 @@ child.position  -= anchorError * childWeight</div>
     const CUSTOM_FULL_SLEEP_MIN_STAGE_CONTACTS = 6;
     const CUSTOM_FULL_SLEEP_SECONDS = .5;
     const CUSTOM_FULL_ROLLING_FRICTION_SCALE = .15;
-    const CUSTOM_MAX_CONTACT_SETTLE_SECONDS = 1.2;
     const CUSTOM_MIN_RESTING_STAGE_CONTACTS = 2;
     const CUSTOM_MAX_RESTING_HIPS_Y = .9;
     const CUSTOM_STAGE_CENTER_Y = -.22;
     const CUSTOM_STAGE_HALF_HEIGHT = .18;
     const CUSTOM_GROUND_Y = CUSTOM_STAGE_CENTER_Y + CUSTOM_STAGE_HALF_HEIGHT;
     const CUSTOM_STAGE_BOTTOM_Y = CUSTOM_STAGE_CENTER_Y - CUSTOM_STAGE_HALF_HEIGHT;
+    const CUSTOM_HEAD_SELF_COLLISION_BLOCKERS = new Set(['chest', 'upperChest']);
+    const CUSTOM_HEAD_SELF_COLLISION_RESTORE_QUIET_STEPS = 8;
+    const CUSTOM_HEAD_SELF_COLLISION_RESTORE_LINEAR_SPEED = 1.5;
+    const CUSTOM_HEAD_SELF_COLLISION_RESTORE_ANGULAR_SPEED = 3.5;
     const jointAxisBySegment = {
       leftUpperArm: 'z', leftForearm: 'z', rightUpperArm: 'z', rightForearm: 'z',
       leftThigh: 'x', leftShin: 'x', leftFoot: 'x', rightThigh: 'x', rightShin: 'x', rightFoot: 'x'
@@ -302,6 +314,32 @@ child.position  -= anchorError * childWeight</div>
     let rigidSleeping = false;
     let rigidSleepPending = false;
     let parityStepIndex = 0;
+    let interactiveHeadSelfCollisionEnabled = true;
+    let interactiveHeadSelfCollisionQuietSteps = 0;
+
+    const setInteractiveHeadSelfCollisionEnabled = (enabled) => {
+      if (parityMode) return;
+      interactiveHeadSelfCollisionEnabled = enabled;
+      interactiveHeadSelfCollisionQuietSteps = 0;
+    };
+
+    const updateInteractiveHeadSelfCollisionPolicy = () => {
+      if (parityMode || interactiveHeadSelfCollisionEnabled || rigidDrag) return;
+      const head = rigidById.get('head')?.body;
+      if (!head) return;
+      const relativelyQuiet = [...CUSTOM_HEAD_SELF_COLLISION_BLOCKERS].every((id) => {
+        const blocker = rigidById.get(id)?.body;
+        return !blocker
+          || (blocker.velocity.distanceTo(head.velocity) <= CUSTOM_HEAD_SELF_COLLISION_RESTORE_LINEAR_SPEED
+            && blocker.angularVelocity.distanceTo(head.angularVelocity) <= CUSTOM_HEAD_SELF_COLLISION_RESTORE_ANGULAR_SPEED);
+      });
+      interactiveHeadSelfCollisionQuietSteps = relativelyQuiet
+        ? interactiveHeadSelfCollisionQuietSteps + 1
+        : 0;
+      if (interactiveHeadSelfCollisionQuietSteps >= CUSTOM_HEAD_SELF_COLLISION_RESTORE_QUIET_STEPS) {
+        setInteractiveHeadSelfCollisionEnabled(true);
+      }
+    };
 
     const createRigidBody = (position, rotation, length, radius) => {
       const halfHeight = Math.max(.01, length * .5 - radius - CUSTOM_COLLIDER_JOINT_GAP);
@@ -342,7 +380,8 @@ child.position  -= anchorError * childWeight</div>
       body.rotation.premultiply(rotation).normalize();
     };
 
-    const worldAnchor = (body, localAnchor) => localAnchor.clone().applyQuaternion(body.rotation).add(body.position);
+    const worldAnchorInto = (target, body, localAnchor) => target.copy(localAnchor).applyQuaternion(body.rotation).add(body.position);
+    const worldAnchor = (body, localAnchor) => worldAnchorInto(new THREE.Vector3(), body, localAnchor);
 
     const localAnchorAtRest = (segment, point) => {
       return point.clone().sub(segment.restCenter).applyQuaternion(segment.restRotation.clone().invert());
@@ -452,8 +491,12 @@ child.position  -= anchorError * childWeight</div>
           restEnd,
           restCenter,
           restRotation,
+          restRotationInverse: restRotation.clone().invert(),
           restBoneQuaternion: bone.getWorldQuaternion(new THREE.Quaternion()),
-          restBoneScale: bone.getWorldScale(new THREE.Vector3())
+          restBoneScale: bone.getWorldScale(new THREE.Vector3()),
+          poseDelta: new THREE.Quaternion(),
+          posePosition: new THREE.Vector3(),
+          poseQuaternion: new THREE.Quaternion()
         };
         rigidSegments.push(segment);
         rigidById.set(segment.id, segment);
@@ -492,6 +535,7 @@ child.position  -= anchorError * childWeight</div>
       rigidRestSettleTime = 0;
       rigidSleeping = false;
       rigidSleepPending = false;
+      setInteractiveHeadSelfCollisionEnabled(true);
       resetSkeleton();
       for (const segment of rigidSegments) {
         const body = segment.body;
@@ -652,6 +696,28 @@ child.position  -= anchorError * childWeight</div>
           body.integratedAngularVelocity.copy(body.angularVelocity);
           rotateRigidBody(body, body.angularVelocity.clone().multiplyScalar(dt));
         }
+        body.integratedRotation.copy(body.rotation);
+      }
+    };
+
+    const integrateInteractiveRigidBodies = (dt) => {
+      rigidStageContactCount = 0;
+      rigidPairContacts.length = 0;
+      for (const segment of rigidSegments) {
+        const body = segment.body;
+        body.wasContactingStage = body.contactingStage;
+        body.previousStageContact = null;
+        body.nextStageContact = null;
+        body.contactingStage = false;
+        body.stageContact = null;
+        body.previousPosition.copy(body.position);
+        body.previousRotation.copy(body.rotation);
+        if (!body.dynamic) continue;
+        body.velocity.y += rigidGravity * dt;
+        body.position.addScaledVector(body.velocity, dt);
+        body.integratedVelocity.copy(body.velocity);
+        body.integratedAngularVelocity.copy(body.angularVelocity);
+        rotateRigidBody(body, interactiveAngularStep.copy(body.angularVelocity).multiplyScalar(dt));
         body.integratedRotation.copy(body.rotation);
       }
     };
@@ -1135,10 +1201,13 @@ child.position  -= anchorError * childWeight</div>
 
     const solveRigidHeadContacts = () => {
       const head = rigidById.get('head');
-      if (!head?.body.dynamic) return;
+      if (!head?.body.dynamic || (!parityMode && !interactiveHeadSelfCollisionEnabled)) return;
       const [headStart, headEnd] = getCapsuleEndpoints(head.body);
       for (const segment of rigidSegments) {
-        if (segment.id === 'head' || segment.id === 'neck' || !segment.body.dynamic) continue;
+        const collisionBlocked = parityMode
+          ? segment.id === 'head' || segment.id === 'neck'
+          : !CUSTOM_HEAD_SELF_COLLISION_BLOCKERS.has(segment.id);
+        if (collisionBlocked || !segment.body.dynamic) continue;
         const [segmentStart, segmentEnd] = getCapsuleEndpoints(segment.body);
         const [headPoint, segmentPoint] = closestPointsOnSegments(headStart, headEnd, segmentStart, segmentEnd);
         const offset = headPoint.clone().sub(segmentPoint);
@@ -1202,24 +1271,34 @@ child.position  -= anchorError * childWeight</div>
         rotateRigidBody(body, arm.cross(positionImpulse).applyMatrix3(body.worldInverseInertia));
         return;
       }
-      const anchor = worldAnchor(rigidDrag.segment.body, rigidDrag.localAnchor);
-      const correction = rigidDragConstraintTarget.clone().sub(anchor).multiplyScalar(CUSTOM_DRAG_STIFFNESS);
-      // The cursor joint is positional. Feeding its projection through the
-      // anchor-torque path applies the same lever-arm torque on every solver
-      // pass; against the floor that becomes the observed runaway rotation.
-      applyPositionCorrection(rigidDrag.segment.body, correction, CUSTOM_DRAG_MAX_CORRECTION);
-      const residual = rigidDragConstraintTarget.clone().sub(worldAnchor(rigidDrag.segment.body, rigidDrag.localAnchor));
-      applyPositionCorrection(rigidDrag.segment.body, residual, CUSTOM_DRAG_MAX_CORRECTION);
-      if (rigidDrag.floorConstrained && !parityMode) {
-        rigidDrag.segment.body.rotation.slerp(
-          rigidDrag.stableRotation,
-          CUSTOM_FLOOR_DRAG_ROTATION_STIFFNESS
-        ).normalize();
-        rigidDrag.segment.body.previousRotation.copy(rigidDrag.segment.body.rotation);
-        rigidDrag.segment.body.angularVelocity.set(0, 0, 0);
+    };
+
+    const updateInteractiveDragTarget = () => {
+      if (parityMode || !rigidDrag || !rigidDragTarget || !rigidDragConstraintTarget) return;
+      interactiveDragPreviousTarget.copy(rigidDragConstraintTarget);
+      interactiveDragTargetDelta.copy(rigidDragTarget).sub(rigidDragConstraintTarget);
+      const targetDistance = interactiveDragTargetDelta.length();
+      if (targetDistance > CUSTOM_DRAG_TARGET_DEAD_ZONE) {
+        const smoothing = 1 - Math.pow(.5, STEP_SECONDS / CUSTOM_DRAG_TARGET_HALF_LIFE_SECONDS);
+        const stepDistance = Math.min(targetDistance * smoothing, CUSTOM_DRAG_TARGET_MAX_SPEED * STEP_SECONDS);
+        rigidDragConstraintTarget.addScaledVector(interactiveDragTargetDelta, stepDistance / targetDistance);
       }
-      rigidDrag.segment.body.previousPosition.copy(rigidDrag.segment.body.position);
-      if (!rigidDrag.floorConstrained || parityMode) rigidDrag.segment.body.previousRotation.copy(rigidDrag.segment.body.rotation);
+      rigidDrag.cursorVelocity.copy(rigidDragConstraintTarget).sub(interactiveDragPreviousTarget).multiplyScalar(1 / STEP_SECONDS);
+      selection.position.copy(rigidDragConstraintTarget);
+    };
+
+    const applyInteractiveDragSpring = () => {
+      if (parityMode || !rigidDrag) return;
+      const body = rigidDrag.segment.body;
+      const anchor = worldAnchorInto(interactiveDragAnchor, body, rigidDrag.localAnchor);
+      const arm = interactiveDragTargetDelta.copy(anchor).sub(body.position);
+      interactiveDragPointVelocity.copy(body.angularVelocity).cross(arm).add(body.velocity);
+      const springRate = CUSTOM_DRAG_SPRING_STIFFNESS
+        / (CUSTOM_DRAG_SPRING_DAMPING + STEP_SECONDS * CUSTOM_DRAG_SPRING_STIFFNESS);
+      interactiveDragTargetVelocity.copy(rigidDragConstraintTarget).sub(anchor).multiplyScalar(springRate)
+        .add(rigidDrag.cursorVelocity).sub(interactiveDragPointVelocity);
+      const impulse = solvePointEffectiveMass(body, anchor, interactiveDragTargetVelocity);
+      applyJointPointImpulse(body, impulse, anchor);
     };
 
     const finalizeParityDragVelocity = () => {
@@ -1278,67 +1357,24 @@ child.position  -= anchorError * childWeight</div>
       }
     };
 
-    const getCollisionSafeRigidDragTarget = () => {
-      const target = rigidDragTarget.clone();
-      const body = rigidDrag.segment.body;
-      if (Math.hypot(target.x, target.z) > STAGE_RADIUS) return target;
-      const localAnchorWorld = rigidDrag.localAnchor.clone().applyQuaternion(body.rotation);
-      const capsuleAxis = VERTICAL.clone().applyQuaternion(body.rotation);
-      const minimumAnchorY = CUSTOM_GROUND_Y
-        + body.radius
-        + Math.abs(capsuleAxis.y) * body.halfHeight
-        + localAnchorWorld.y;
-      target.y = Math.max(target.y, minimumAnchorY);
-      return target;
-    };
-
-    const propagateRigidDragTarget = () => {
-      if (parityMode || !rigidDrag || !rigidDragTarget || !rigidDragConstraintTarget) return;
-      const collisionSafeTarget = getCollisionSafeRigidDragTarget();
-      rigidDrag.floorConstrained = collisionSafeTarget.y > rigidDragTarget.y + .0001;
-      if (!rigidDrag.floorConstrained) rigidDrag.stableRotation.copy(rigidDrag.segment.body.rotation);
-      const distance = rigidDragConstraintTarget.distanceTo(collisionSafeTarget);
-      if (distance <= .000001) return;
-      const substeps = THREE.MathUtils.clamp(
-        Math.ceil(distance / CUSTOM_DRAG_SUBSTEP_DISTANCE),
-        1,
-        CUSTOM_MAX_DRAG_SUBSTEPS
-      );
-      for (let substep = 0; substep < substeps; substep += 1) {
-        const previousTarget = rigidDragConstraintTarget.clone();
-        rigidDragConstraintTarget.lerp(collisionSafeTarget, 1 / (substeps - substep));
-        const coherentTranslation = rigidDragConstraintTarget.clone()
-          .sub(previousTarget)
-          .multiplyScalar(CUSTOM_DRAG_COHERENT_TRANSLATION);
-        for (const { body } of rigidSegments) {
-          body.position.add(coherentTranslation);
-          body.previousPosition.add(coherentTranslation);
-        }
-        for (let pass = 0; pass < CUSTOM_DRAG_SUBSTEP_JOINT_PASSES; pass += 1) {
-          solveRigidDrag();
-          solveRigidJoints(pass % 2 === 0);
-        }
-      }
-    };
-
     const constrainRigidBodies = () => {
-      for (let pass = 0; pass < CUSTOM_SOLVER_ITERATIONS; pass += 1) {
-        for (const segment of rigidSegments) solveRigidStageContact(segment);
+      if (parityMode) {
+        for (let pass = 0; pass < CUSTOM_SOLVER_ITERATIONS; pass += 1) {
+          for (const segment of rigidSegments) solveRigidStageContact(segment);
+          solveRigidHeadContacts();
+          solveRigidDrag();
+          solveRigidJoints(pass % 2 === 1);
+        }
+        return;
+      }
+      // The interactive lane uses one consistent coupled order and always
+      // ends each pass on contact, avoiding a separate polish phase that
+      // repeated work and temporarily pushed solved joints through the stage.
+      for (let pass = 0; pass < CUSTOM_INTERACTIVE_SOLVER_ITERATIONS; pass += 1) {
         solveRigidHeadContacts();
-        solveRigidDrag();
         solveRigidJoints(pass % 2 === 1);
-      }
-      if (parityMode) return;
-      // Polish articulation and stage contacts together, ending on collision.
-      // Ending on joints alone allowed the last anchor projection to push feet,
-      // hands, and knees back through the floor until the following frame.
-      for (let pass = 0; pass < 6; pass += 1) {
-        solveRigidDrag();
-        solveRigidJoints(pass % 2 === 0);
         for (const segment of rigidSegments) solveRigidStageContact(segment);
       }
-      solveRigidDrag();
-      for (const segment of rigidSegments) solveRigidStageContact(segment);
     };
 
     const updateRigidVelocities = (dt) => {
@@ -1381,6 +1417,39 @@ child.position  -= anchorError * childWeight</div>
       }
     };
 
+    const updateInteractiveRigidVelocities = (dt) => {
+      for (const segment of rigidSegments) {
+        const body = segment.body;
+        if (!body.dynamic) continue;
+        body.velocity.copy(body.position).sub(body.previousPosition).multiplyScalar(1 / dt);
+        const linearDamping = rigidLaunchFlightTime > 0
+          ? CUSTOM_LAUNCH_LINEAR_DAMPING
+          : (rigidDrag && rigidDrag.segment !== segment ? CUSTOM_HELD_LINEAR_DAMPING : CUSTOM_LINEAR_DAMPING);
+        body.velocity.multiplyScalar(dampingFactor(dt, linearDamping));
+        if (rigidLaunchFlightTime <= 0 && rigidStageContactCount >= CUSTOM_MIN_RESTING_STAGE_CONTACTS) {
+          body.velocity.multiplyScalar(isRigidRestHeightEligible()
+            ? CUSTOM_CONTACT_CHAIN_VELOCITY_RETENTION
+            : CUSTOM_HIGH_HIPS_CONTACT_VELOCITY_RETENTION);
+        }
+        if (body.contactingStage) {
+          if (body.velocity.y < 0) body.velocity.y = 0;
+          body.velocity.x *= CUSTOM_STAGE_FRICTION;
+          body.velocity.z *= CUSTOM_STAGE_FRICTION;
+        }
+        if (body.velocity.length() > CUSTOM_MAX_LINEAR_SPEED) body.velocity.setLength(CUSTOM_MAX_LINEAR_SPEED);
+        const rotationDelta = body.rotation.clone().multiply(body.previousRotation.clone().invert());
+        if (rotationDelta.w < 0) rotationDelta.set(-rotationDelta.x, -rotationDelta.y, -rotationDelta.z, -rotationDelta.w);
+        const angle = 2 * Math.acos(THREE.MathUtils.clamp(rotationDelta.w, -1, 1));
+        const sine = Math.sqrt(Math.max(.000001, 1 - rotationDelta.w * rotationDelta.w));
+        body.angularVelocity.set(rotationDelta.x / sine, rotationDelta.y / sine, rotationDelta.z / sine).multiplyScalar(angle / dt);
+        const angularDamping = rigidDrag ? CUSTOM_HELD_ANGULAR_DAMPING : CUSTOM_ANGULAR_DAMPING;
+        body.angularVelocity.multiplyScalar(dampingFactor(dt, angularDamping));
+        if (body.contactingStage) body.angularVelocity.multiplyScalar(CUSTOM_STAGE_FRICTION);
+        const angularSpeedLimit = rigidDrag ? CUSTOM_HELD_MAX_ANGULAR_SPEED : CUSTOM_INTERACTIVE_MAX_ANGULAR_SPEED;
+        if (body.angularVelocity.length() > angularSpeedLimit) body.angularVelocity.setLength(angularSpeedLimit);
+      }
+    };
+
     const settleRigidRagdollAtRest = (dt) => {
       if (parityMode) {
         const activeBodies = rigidSegments.filter(scenarioActive).map((segment) => segment.body);
@@ -1412,8 +1481,7 @@ child.position  -= anchorError * childWeight</div>
         && body.angularVelocity.length() <= CUSTOM_RESTING_ANGULAR_SPEED
       ));
       rigidRestSettleTime += dt;
-      if ((!quiet || rigidRestSettleTime < CUSTOM_RESTING_SECONDS_BEFORE_SLEEP)
-        && (parityMode || rigidRestSettleTime < CUSTOM_MAX_CONTACT_SETTLE_SECONDS)) return;
+      if (!quiet || rigidRestSettleTime < CUSTOM_RESTING_SECONDS_BEFORE_SLEEP) return;
       for (const { body } of rigidSegments) {
         body.velocity.set(0, 0, 0);
         body.angularVelocity.set(0, 0, 0);
@@ -1435,9 +1503,12 @@ child.position  -= anchorError * childWeight</div>
       if (parityMode && rigidDrag) {
         rigidDrag.cursorVelocity.copy(rigidDragTarget).sub(rigidDrag.cursorPosition).multiplyScalar(1 / STEP_SECONDS);
         rigidDragConstraintTarget.copy(rigidDragTarget);
+      } else if (rigidDrag) {
+        updateInteractiveDragTarget();
+        applyInteractiveDragSpring();
       }
-      integrateRigidBodies(STEP_SECONDS);
-      propagateRigidDragTarget();
+      if (parityMode) integrateRigidBodies(STEP_SECONDS);
+      else integrateInteractiveRigidBodies(STEP_SECONDS);
       constrainRigidBodies();
       for (const segment of rigidSegments) {
         const body = segment.body;
@@ -1447,7 +1518,9 @@ child.position  -= anchorError * childWeight</div>
         body.velocity.set(0, 0, 0);
         body.angularVelocity.set(0, 0, 0);
       }
-      updateRigidVelocities(STEP_SECONDS);
+      if (parityMode) updateRigidVelocities(STEP_SECONDS);
+      else updateInteractiveRigidVelocities(STEP_SECONDS);
+      if (!parityMode) updateInteractiveHeadSelfCollisionPolicy();
       finalizeParityDragVelocity();
       if (parityMode && rigidDrag) rigidDrag.cursorPosition.copy(rigidDragTarget);
       if (rigidLaunchFlightTime > 0) rigidLaunchFlightTime = Math.max(0, rigidLaunchFlightTime - STEP_SECONDS);
@@ -1456,9 +1529,10 @@ child.position  -= anchorError * childWeight</div>
 
     const applyPoseFromRigidBodies = () => {
       for (const segment of rigidSegments) {
-        const delta = segment.body.rotation.clone().multiply(segment.restRotation.clone().invert());
-        const bonePosition = segment.restStart.clone().sub(segment.restCenter).applyQuaternion(delta).add(segment.body.position);
-        const boneQuaternion = delta.multiply(segment.restBoneQuaternion.clone());
+        const delta = segment.poseDelta.copy(segment.body.rotation).multiply(segment.restRotationInverse);
+        const bonePosition = segment.posePosition.copy(segment.restStart).sub(segment.restCenter)
+          .applyQuaternion(delta).add(segment.body.position);
+        const boneQuaternion = segment.poseQuaternion.copy(delta).multiply(segment.restBoneQuaternion);
         const parent = segment.bone.parent;
         parent.updateWorldMatrix(true, false);
         scratchMatrix.compose(bonePosition, boneQuaternion, segment.restBoneScale);
@@ -1562,8 +1636,7 @@ child.position  -= anchorError * childWeight</div>
       rigidDrag = {
         segment: selectionHit.segment,
         localAnchor,
-        stableRotation: selectionHit.segment.body.rotation.clone(),
-        floorConstrained: false
+        cursorVelocity: new THREE.Vector3()
       };
       rigidDragStart = selectionHit.point.clone();
       rigidDragStartScreen = new THREE.Vector2(event.clientX, event.clientY);
@@ -1572,6 +1645,7 @@ child.position  -= anchorError * childWeight</div>
       rigidLastPointerScreen = rigidDragStartScreen.clone();
       rigidSleeping = false;
       rigidRestSettleTime = 0;
+      setInteractiveHeadSelfCollisionEnabled(false);
       dragPlane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(scratchVector), rigidDragTarget);
       controls.enabled = false;
       renderer.domElement.style.cursor = 'grabbing';
@@ -1597,7 +1671,7 @@ child.position  -= anchorError * childWeight</div>
       }
       rigidDragTarget.copy(nextTarget);
       rigidLastPointerScreen.set(event.clientX, event.clientY);
-      selection.position.copy(rigidDragTarget);
+      selection.position.copy(rigidDragConstraintTarget);
       selection.visible = true;
     };
 

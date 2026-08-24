@@ -18,11 +18,12 @@ The complete local gate is:
 node tools/ragdoll-parity/run.mjs --determinism-runs=10
 ```
 
-Current evidence: the local 2026-08-23 gate passes all 20 scenarios (16 strict
-micro scenarios and four bounded behavioral full scenarios) across ten
-repetitions each. Every scenario has one unique authority trace hash across its
-ten runs, and every strict or bounded behavioral comparison passes. Retained
-evidence: `output/parity/2026-08-23T10-06-34.605Z/`.
+Current evidence: the local 2026-08-23 gate, rerun after the interactive parity
+and allocation-reduction pass, passes all 20 scenarios (16 strict micro
+scenarios and four bounded behavioral full scenarios) across ten repetitions
+each. Every scenario has one unique authority trace hash across its ten runs,
+and every strict or bounded behavioral comparison passes. Retained evidence:
+`output/parity/2026-08-24T02-36-59.893Z/`.
 
 The synchronized visual run in
 `output/parity/2026-08-23T09-16-11.135Z/` passes full-drop and

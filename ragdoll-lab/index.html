@@ -552,10 +552,25 @@
     const BODY_COLLISION_GROUP = 1 << 0;
     const HEAD_COLLISION_GROUP = 1 << 1;
     const STAGE_COLLISION_GROUP = 1 << 2;
-    // Keep limb self-collision quiet while the head still blocks against the torso.
+    const TORSO_COLLISION_GROUP = 1 << 3;
+    // Parity keeps the existing authority collision contract. Interactive mode
+    // narrows head blocking to the chest and upper chest so a shaken hand
+    // cannot repeatedly drive the head into every limb collider.
     const BODY_COLLISION_GROUPS = ((BODY_COLLISION_GROUP << 16) | HEAD_COLLISION_GROUP | STAGE_COLLISION_GROUP) >>> 0;
     const HEAD_COLLISION_GROUPS = ((HEAD_COLLISION_GROUP << 16) | BODY_COLLISION_GROUP | STAGE_COLLISION_GROUP) >>> 0;
-    const STAGE_COLLISION_GROUPS = ((STAGE_COLLISION_GROUP << 16) | BODY_COLLISION_GROUP | HEAD_COLLISION_GROUP) >>> 0;
+    const INTERACTIVE_BODY_COLLISION_GROUPS = ((BODY_COLLISION_GROUP << 16) | STAGE_COLLISION_GROUP) >>> 0;
+    const INTERACTIVE_TORSO_COLLISION_GROUPS = ((TORSO_COLLISION_GROUP << 16) | HEAD_COLLISION_GROUP | STAGE_COLLISION_GROUP) >>> 0;
+    const INTERACTIVE_HEAD_COLLISION_GROUPS = ((HEAD_COLLISION_GROUP << 16) | TORSO_COLLISION_GROUP | STAGE_COLLISION_GROUP) >>> 0;
+    const INTERACTIVE_DRAGGED_HEAD_COLLISION_GROUPS = ((HEAD_COLLISION_GROUP << 16) | STAGE_COLLISION_GROUP) >>> 0;
+    const STAGE_COLLISION_GROUPS = ((STAGE_COLLISION_GROUP << 16) | BODY_COLLISION_GROUP | HEAD_COLLISION_GROUP | TORSO_COLLISION_GROUP) >>> 0;
+    const HEAD_SELF_COLLISION_BLOCKERS = new Set(['chest', 'upperChest']);
+    const getRagdollCollisionGroups = (id) => {
+      if (parityMode) return id === 'head' ? HEAD_COLLISION_GROUPS : BODY_COLLISION_GROUPS;
+      if (id === 'head') return INTERACTIVE_HEAD_COLLISION_GROUPS;
+      return HEAD_SELF_COLLISION_BLOCKERS.has(id)
+        ? INTERACTIVE_TORSO_COLLISION_GROUPS
+        : INTERACTIVE_BODY_COLLISION_GROUPS;
+    };
 
     const physicsSettings = {
       stiffJoints: true,
@@ -601,6 +616,17 @@
     const RESTING_LINEAR_SPEED = 0.16;
     const RESTING_ANGULAR_SPEED = 0.5;
     const RESTING_SECONDS_BEFORE_SLEEP = 0.22;
+    const HEAD_SELF_COLLISION_RESTORE_QUIET_STEPS = 8;
+    const HEAD_SELF_COLLISION_RESTORE_LINEAR_SPEED = 1.5;
+    const HEAD_SELF_COLLISION_RESTORE_ANGULAR_SPEED = 3.5;
+    const DRAG_TARGET_HALF_LIFE_SECONDS = 0.022;
+    const DRAG_TARGET_MAX_SPEED = 32;
+    const DRAG_TARGET_DEAD_ZONE = 0.008;
+    const DRAG_SPRING_STIFFNESS = 420;
+    const DRAG_SPRING_DAMPING = 42;
+    const HELD_RAGDOLL_LINEAR_DAMPING = 6.5;
+    const HELD_RAGDOLL_ANGULAR_DAMPING = 28;
+    const HELD_RAGDOLL_MAX_ANGULAR_SPEED = 3.5;
 
     let world;
     let character;
@@ -622,13 +648,73 @@
     let dragStartPosition = null;
     let lastPointerScreen = null;
     let dragStartScreen = null;
+    let rawDragTarget = null;
+    let filteredDragTarget = null;
     let parityDefaultGravity = null;
     let groundCollider = null;
+    let interactiveHeadSelfCollisionEnabled = true;
+    let interactiveHeadSelfCollisionQuietSteps = 0;
+
+    const setInteractiveHeadSelfCollisionEnabled = (enabled) => {
+      if (parityMode) return;
+      if (interactiveHeadSelfCollisionEnabled === enabled) {
+        if (!enabled) interactiveHeadSelfCollisionQuietSteps = 0;
+        return;
+      }
+      const headCollider = bodyById.get('head')?.collider;
+      if (!headCollider) return;
+      headCollider.setCollisionGroups(enabled
+        ? INTERACTIVE_HEAD_COLLISION_GROUPS
+        : INTERACTIVE_DRAGGED_HEAD_COLLISION_GROUPS);
+      interactiveHeadSelfCollisionEnabled = enabled;
+      interactiveHeadSelfCollisionQuietSteps = 0;
+    };
+
+    const updateInteractiveHeadSelfCollisionPolicy = () => {
+      if (parityMode || interactiveHeadSelfCollisionEnabled || dragged) return;
+      const head = bodyById.get('head')?.body;
+      if (!head) return;
+      const headLinear = head.linvel();
+      const headAngular = head.angvel();
+      const relativelyQuiet = [...HEAD_SELF_COLLISION_BLOCKERS].every((id) => {
+        const blocker = bodyById.get(id)?.body;
+        if (!blocker) return true;
+        const linear = blocker.linvel();
+        const angular = blocker.angvel();
+        return Math.hypot(linear.x - headLinear.x, linear.y - headLinear.y, linear.z - headLinear.z)
+            <= HEAD_SELF_COLLISION_RESTORE_LINEAR_SPEED
+          && Math.hypot(angular.x - headAngular.x, angular.y - headAngular.y, angular.z - headAngular.z)
+            <= HEAD_SELF_COLLISION_RESTORE_ANGULAR_SPEED;
+      });
+      interactiveHeadSelfCollisionQuietSteps = relativelyQuiet
+        ? interactiveHeadSelfCollisionQuietSteps + 1
+        : 0;
+      if (interactiveHeadSelfCollisionQuietSteps >= HEAD_SELF_COLLISION_RESTORE_QUIET_STEPS) {
+        setInteractiveHeadSelfCollisionEnabled(true);
+      }
+    };
 
     const updatePointer = (event) => {
       const bounds = renderer.domElement.getBoundingClientRect();
       pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
       pointer.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1;
+    };
+
+    const updateInteractiveDragTarget = () => {
+      if (parityMode || !cursorBody || !rawDragTarget || !filteredDragTarget) return;
+      const targetDelta = rawDragTarget.clone().sub(filteredDragTarget);
+      const targetDistance = targetDelta.length();
+      if (targetDistance > DRAG_TARGET_DEAD_ZONE) {
+        const smoothing = 1 - Math.pow(0.5, STEP_SECONDS / DRAG_TARGET_HALF_LIFE_SECONDS);
+        const stepDistance = Math.min(targetDistance * smoothing, DRAG_TARGET_MAX_SPEED * STEP_SECONDS);
+        filteredDragTarget.addScaledVector(targetDelta, stepDistance / targetDistance);
+      }
+      cursorBody.setNextKinematicTranslation({
+        x: filteredDragTarget.x,
+        y: filteredDragTarget.y,
+        z: filteredDragTarget.z
+      });
+      selectionMarker.position.copy(filteredDragTarget);
     };
 
     const getDragThrowStrength = (pullDistancePixels) => {
@@ -736,6 +822,16 @@
       }
     };
 
+    const applyHeldRagdollTuning = () => {
+      if (parityMode || !dragged) return;
+      const profile = getMotionProfile();
+      for (const segment of ragdollBodies) {
+        segment.body.setLinearDamping(segment === dragged ? profile.linearDamping : HELD_RAGDOLL_LINEAR_DAMPING);
+        segment.body.setAngularDamping(HELD_RAGDOLL_ANGULAR_DAMPING);
+        if (segment.body.setMaxAngvel) segment.body.setMaxAngvel(HELD_RAGDOLL_MAX_ANGULAR_SPEED, true);
+      }
+    };
+
     const getJointWorldFrame = (constraint) => {
       if (constraint.axis === 'z') {
         return new THREE.Quaternion().setFromUnitVectors(JOINT_FRAME_X, JOINT_FRAME_Z);
@@ -835,8 +931,9 @@
         }
         const angularVelocity = segment.body.angvel();
         const angularSpeed = Math.hypot(angularVelocity.x, angularVelocity.y, angularVelocity.z);
-        if (angularSpeed > MAX_ANGULAR_SPEED) {
-          const scale = MAX_ANGULAR_SPEED / angularSpeed;
+        const angularSpeedLimit = !parityMode && dragged ? HELD_RAGDOLL_MAX_ANGULAR_SPEED : MAX_ANGULAR_SPEED;
+        if (angularSpeed > angularSpeedLimit) {
+          const scale = angularSpeedLimit / angularSpeed;
           segment.body.setAngvel({ x: angularVelocity.x * scale, y: angularVelocity.y * scale, z: angularVelocity.z * scale }, true);
         }
       }
@@ -893,6 +990,7 @@
     const resetRagdoll = () => {
       if (!physicsReady) return;
       releaseDrag();
+      setInteractiveHeadSelfCollisionEnabled(true);
       yeetPlayed = false;
       active = false;
       settleGuardTime = 0;
@@ -961,13 +1059,24 @@
       const cursorDesc = RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(hitPoint.x, hitPoint.y, hitPoint.z);
       cursorBody = world.createRigidBody(cursorDesc);
       const localAnchor = worldPointToCurrentBodyLocal(selected, hitPoint);
-      dragJoint = world.createImpulseJoint(RAPIER.JointData.spherical({ x: 0, y: 0, z: 0 }, { x: localAnchor.x, y: localAnchor.y, z: localAnchor.z }), cursorBody, selected.body, true);
+      const dragJointData = RAPIER.JointData.spring(
+        0,
+        DRAG_SPRING_STIFFNESS,
+        DRAG_SPRING_DAMPING,
+        { x: 0, y: 0, z: 0 },
+        { x: localAnchor.x, y: localAnchor.y, z: localAnchor.z }
+      );
+      dragJoint = world.createImpulseJoint(dragJointData, cursorBody, selected.body, true);
       if (dragJoint.setContactsEnabled) dragJoint.setContactsEnabled(false);
       dragged = selected;
+      applyHeldRagdollTuning();
+      setInteractiveHeadSelfCollisionEnabled(false);
       lastPointerPosition = hitPoint.clone();
       dragStartPosition = hitPoint.clone();
       lastPointerScreen = new THREE.Vector2(event.clientX, event.clientY);
       dragStartScreen = lastPointerScreen.clone();
+      rawDragTarget = hitPoint.clone();
+      filteredDragTarget = hitPoint.clone();
       selectionMarker.position.copy(hitPoint);
       selectionMaterial.color.set('#ffb19b');
       selectionMarker.visible = true;
@@ -990,8 +1099,7 @@
       if (!point) return;
       const target = point.clone();
       target.y = Math.max(0.18, target.y);
-      cursorBody.setNextKinematicTranslation({ x: target.x, y: target.y, z: target.z });
-      selectionMarker.position.copy(target);
+      rawDragTarget.copy(target);
       lastPointerPosition = target;
       lastPointerScreen.set(event.clientX, event.clientY);
     };
@@ -1027,6 +1135,9 @@
       dragStartPosition = null;
       lastPointerScreen = null;
       dragStartScreen = null;
+      rawDragTarget = null;
+      filteredDragTarget = null;
+      if (!parityMode && launchFlightTime === 0) applyPhysicsTuning();
       controls.enabled = true;
       renderer.domElement.style.cursor = 'default';
       if (!playedYeet) setStatus(active ? 'active' : 'ready', active ? 'Physics live' : 'Ready to drop');
@@ -1068,7 +1179,7 @@
         const collider = RAPIER.ColliderDesc.capsule(halfHeight, colliderRadius)
           .setFriction(0.72)
           .setRestitution(0)
-          .setCollisionGroups(definition.id === 'head' ? HEAD_COLLISION_GROUPS : BODY_COLLISION_GROUPS)
+          .setCollisionGroups(getRagdollCollisionGroups(definition.id))
           .setDensity(1.15);
         const bodyCollider = world.createCollider(collider, body);
         const boneQuaternion = bone.getWorldQuaternion(new THREE.Quaternion());
@@ -1507,8 +1618,10 @@
     const advancePhysics = () => {
       if (!physicsReady) return;
       world.timestep = STEP_SECONDS;
+      updateInteractiveDragTarget();
       world.step();
       capRagdollVelocity();
+      updateInteractiveHeadSelfCollisionPolicy();
       settleGuardTime = Math.max(0, settleGuardTime - STEP_SECONDS);
       if (launchFlightTime > 0) {
         launchFlightTime = Math.max(0, launchFlightTime - STEP_SECONDS);

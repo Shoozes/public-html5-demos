@@ -25,8 +25,23 @@ same named skeleton specification and fixed-step parity protocol.
 It replays serializable commands at 60 Hz, solves the cursor as a mass-infinite
 kinematic point constraint, and records bodies, joints, contacts, sleep, and
 configuration in the shared trace schema. The ordinary interactive page keeps
-its assisted UI path separately for responsive presentation behavior; assisted
-preconditioning is not used as parity evidence.
+its presentation path separately; interactive behavior is not used as parity
+evidence.
+
+The interactive path advances a filtered three-dimensional cursor target once
+per fixed step, then drives the selected local anchor through a damped compliant
+point attachment. While held, nonselected bodies receive additional linear
+damping and the articulated chain receives a lower angular-speed cap. Head
+self-contact is limited to the chest and upper chest, disabled during a hold,
+and restored only after relative motion is quiet. Its 24 consistently ordered
+solver passes end on stage contact instead of adding a variable drag-substep or
+post-solve polish workload.
+
+The interactive integrator and velocity update are separate from the preserved
+parity implementations. Per-body render scratch objects, drag scratch vectors,
+and reusable contact arrays avoid recurrent allocation in the main simulation
+and pose-mapping loops. Resting requires measured linear and angular quiet; the
+page no longer force-sleeps a moving chain after a fixed contact timeout.
 
 There are 20 registered scenarios: 16 strict micro scenarios for impulses,
 damping, inertia, contacts, joints, limits, overlap, and cursor steps; and four
@@ -66,10 +81,11 @@ Run the browser harness with pinned Playwright dependencies using:
 node tools/ragdoll-parity/run.mjs --determinism-runs=10
 ```
 
-The 20-scenario gate passed ten local repetitions per scenario on 2026-08-23.
+The 20-scenario gate passed ten local repetitions per scenario on 2026-08-23
+after the interactive parity and allocation-reduction pass.
 All 200 authority traces were deterministic within their scenario, and every
 strict or bounded behavioral comparison passed. The retained run is
-`output/parity/2026-08-23T10-06-34.605Z/`.
+`output/parity/2026-08-24T02-36-59.893Z/`.
 
 The unobscured visual run at
 `output/parity/2026-08-23T09-16-11.135Z/` captured synchronized full-drop and
