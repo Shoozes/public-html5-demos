@@ -58,3 +58,7 @@ A separate Three.js-rendered, custom-physics implementation of the Soldier ragdo
 A mobile-first interactive presentation explaining feedback loops, the five observation lenses, evidence labels, and what actually moves when a cloud agent is ported to a local model.
 
 Open it at `anthrocybernetics/index.html` or through the public gallery.
+
+## Research notes
+
+- [Prompt Archaeology: HAIO Space Shooter, Round 1](docs/haio-prompt-discovery/README.md) compares three model-generated implementations, connects visible failures to source-level causes, and records the next ECS-lite, WebGPU, TSL, and hostile-space hypothesis.
