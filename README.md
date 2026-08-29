@@ -62,3 +62,4 @@ Open it at `anthrocybernetics/index.html` or through the public gallery.
 ## Research notes
 
 - [Prompt Archaeology: HAIO Space Shooter, Round 1](docs/haio-prompt-discovery/README.md) compares three model-generated implementations, connects visible failures to source-level causes, and records the next ECS-lite, WebGPU, TSL, and hostile-space hypothesis.
+- [Prompt Archaeology, Round 2: The Prompt Became the Harness](docs/haio-prompt-discovery/round-2/README.md) records three failed one-shot builds and separates incomplete output, fatal API integration, and broken visual calibration from the instructions each model actually followed.
