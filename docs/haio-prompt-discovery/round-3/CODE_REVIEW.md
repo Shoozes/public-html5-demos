@@ -65,7 +65,7 @@ This is a useful category of failure:
 
 ### Shader state leaked into CPU simulation
 
-The AI drift code reads `time.value`, where `time` is a TSL shader node imported for material graphs. Shader nodes are not the simulation clock. Mixing that object into CPU trigonometry can produce invalid movement state rather than a reliable elapsed-time value.
+The AI drift code reads `time.value`, where `time` is the TSL rendering-time uniform, instead of the authoritative game clock. That value may be numeric, but it makes AI motion depend on renderer-maintained shader state rather than simulation time. This is a boundary and determinism problem, not a valid reason to share rendering nodes with CPU systems.
 
 The prompt strongly emphasized TSL, and the implementation let that rendering concept escape its boundary.
 
