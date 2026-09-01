@@ -45,7 +45,10 @@ https://shoozes.github.io/public-html5-demos/my-demo/
 
 ## Workflow experiments
 
-- [Round 4: Pass-Down Workflow Experiment](round-4/REPORT.md) compares isolated Luna, Terra, and Sol hostile-space HAIO submissions, records the browser/tool evidence and hard-gate results, and establishes the fixed-mockup visual-critic contract for the next controlled round. The verified operator reference remains playable at `round-4/submission/index.html`; its mockups and harness are development evidence, not runtime dependencies.
+- [Round 4: Pass-Down Workflow Experiment](round-4/REPORT.md) compares isolated Luna, Terra, and Sol hostile-space HAIO submissions. It now records the controlled-tool gap: screenshots were captured, but image generation, GenEye, semantic visual review, and a candid repair contract were not prescribed. The verified operator reference remains playable at `round-4/submission/index.html`.
+- [Round 5: Visual Oracle and Critic Loop](round-5/PLAN.md) freezes a brighter image-generated reference pair, project-local visual-critic skill, common visual-interpreter lane, Playwright harness, tool ledger, blind self-critique, external critique, and bounded before/after repair loop.
+- [Round 5 brighter mockup brief](round-5/MOCKUP_V2_BRIEF.md) preserves dark space while raising interactive-object readability, silhouette separation, and mobile composition.
+- [Round 6: Goal Mode Pair Test](round-6/PLAN.md) reuses the successful Round 5 instrument and compares ordinary High-reasoning runs against `/goal` without changing the game, references, skills, harness, or rubric.
 
 ## Current demos
 
