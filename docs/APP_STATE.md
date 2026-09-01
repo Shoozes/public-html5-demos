@@ -28,8 +28,8 @@ The gallery and demos use relative paths and pinned CDN dependencies. Soldier me
 
 - Prompt-discovery Rounds 1–3 are historical research under `docs/haio-prompt-discovery/`.
 - Round 4 is complete as the uncontrolled-tools/no-fixed-oracle baseline. Its canonical operator artifact passes static and twelve-group browser verification.
-- Round 5A is complete. The corrected package content commit is `591530a153eac58d4dfdfed05162cd65a7b9cc78`; all reruns used dispatch commit `1aa2761d8d091c687f91d83bcd02a1efd8b67a59`. The independent operator holdout passed Luna and Sol across 13 functional evidence groups, hard-gated Terra for renaming the frozen pickup diagnostic, and reproduced Terra's remaining gameplay through a labeled compatibility probe. Blind full-size/thumbnail/grayscale review scored Luna 22/30, Terra 19/30, and Sol 26/30; only Sol passed the complete operator contract. The archived artifacts, screenshots, structured verdicts, and analysis are in `round-5/results/` and `round-5/REPORT.md`.
-- Round 6 has a durable `GOAL.md` and paired protocol, but dispatch is gated on the owner Round 5 qualitative addendum and a decision about freezing the operator evaluator and component-level references.
+- Round 5A is complete. The corrected package content commit is `591530a153eac58d4dfdfed05162cd65a7b9cc78`; all reruns used dispatch commit `1aa2761d8d091c687f91d83bcd02a1efd8b67a59`. The independent operator holdout passed Luna and Sol across 13 functional evidence groups, hard-gated Terra for renaming the frozen pickup diagnostic, and reproduced Terra's remaining gameplay through a labeled compatibility probe. Blind full-size/thumbnail/grayscale review scored Luna 22/30, Terra 19/30, and Sol 26/30; only Sol passed the complete operator contract. The owner playtest then confirmed a Luna lateral rendered-heading inversion, stationary Terra and Sol hostiles, a decorative Terra radar, and inconsistent Sol magnet eligibility between pre-placed and spawned loot. The archived artifacts, screenshots, structured verdicts, owner addendum, and analysis are in `round-5/results/` and `round-5/REPORT.md`.
+- Round 6 has a durable `GOAL.md` and paired protocol, but dispatch is gated on adding and freezing temporal/systemic assertions for visible heading, hostile movement, live radar semantics, and loot-class parity. Component-level visual references remain an independent package decision.
 
 ## Current verification contract
 
@@ -69,7 +69,7 @@ The hosted workflow is not local proof. Local command results are the verificati
 - The Round 5 images are generator-native sizes close to, but not identical with, their comparison viewports. The reference-review harness normalizes them; source dimensions and checksums remain frozen.
 - Anthrocybernetics analysis is an educational heuristic, not a scientific inference engine. Its 2D fallback is intentional when Three.js fails or misses the startup deadline.
 - The custom ragdoll solver targets observable parity for the registered scenarios, not a general replacement for Rapier.
-- Round 5's first dispatch is excluded because of a shared checksum-harness defect; the report uses only the corrected common-baseline reruns. Owner qualitative notes are intentionally pending as a separate perspective. Round 6 remains gated on that addendum and protocol acceptance.
+- Round 5's first dispatch is excluded because of a shared checksum-harness defect; the report uses only the corrected common-baseline reruns. Owner qualitative notes are retained as a separate post-hoc perspective and do not revise the frozen scores. Round 6 remains gated on evaluator hardening and protocol acceptance.
 
 ## Knowledge ownership
 

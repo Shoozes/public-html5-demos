@@ -101,7 +101,7 @@
       ]
     },
     "workflow__visual_oracle_round5": {
-      "description": "Completed Round 5A visual-oracle comparison: frozen references and contracts, archived model artifacts, independent functional holdout, blind visual verdicts, scores, and next-protocol findings.",
+      "description": "Completed Round 5A visual-oracle comparison: frozen references and contracts, archived model artifacts, independent functional holdout, blind visual verdicts, owner playtest diagnosis, scores, and next-protocol findings.",
       "paths": [
         ".agents/skills/haio-visual-critic/SKILL.md",
         "round-4/PASSDOWN.md",

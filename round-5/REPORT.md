@@ -157,6 +157,28 @@ The defensible observation is narrower:
 
 These results are consistent with model capacity affecting detail and self-audit depth, but they do not prove that model size alone caused the difference.
 
+## Owner playtest addendum
+
+The owner played the three frozen archives after the automated holdout and independent first-frame review. These observations are a separate post-hoc perspective: they qualify what the benchmark measured, but do not rewrite its scores or mutate the submissions.
+
+| Arm | Owner observation | Reproducible cause | Interpretation |
+| --- | --- | --- | --- |
+| Luna | The ship reads correctly while moving up or down, but appears to travel backward when moving left or right. | Confirmed rendered-heading defect. The ship mesh points along local `-Z`; movement records `facing = atan2(x, -z)`, then assigns that value directly to `render.rotation.y`. The lateral visual rotation needs the opposite sign. Up/down conceal the error because zero and half-turn headings are sign-symmetric. | The holdout proved world displacement and the reported logical heading, not agreement between velocity and the visible nose. The owner's observation finds a real presentation/controls defect outside the original assertion. |
+| Terra | The presentation looks better in motion than Luna's, but enemies do not move and the minimap appears to be a dummy. | Both are confirmed. `updateCombat` changes aggression, cooldown, aim, and projectile state but never changes hostile position. The radar consists of five fixed HTML marks at hard-coded percentages and has no simulation update path. | The visual preference differs from the operator's fixed-frame score, but is not contradictory: direct play weights motion, brightness, and feel differently. The stationary hostiles and decorative radar are functional-semantic omissions. |
+| Sol | Controls and minimap are good and the visual match is strongest, including an isometric-like flavor. The loot magnet works inconsistently, and enemies do not move. | The dynamic canvas radar is simulation-backed. The oblique `OrthographicCamera` and offset camera position deliberately encode the isometric-like composition. Hostiles aim and fire without changing position. Four pre-placed shards use `freeUntil: 99999`, while kill drops unlock after 0.48 seconds and the diagnostic pickup after 0.18 seconds; visually identical pickups therefore have different collection rules. | The owner agrees with the operator's visual lead and explains why Sol resembles the mockup most closely. The magnet is deterministic but behaviorally inconsistent, and the combatants are stationary gun platforms rather than moving ships. |
+
+### What the addendum reveals
+
+The original holdout was strong on lifecycle and deterministic interaction, but incomplete as a play-feel instrument:
+
+1. Cardinal movement checked position and logical `facing`, not the rendered ship's forward vector.
+2. Aggression checked target acquisition, firing, and weapon-heading independence, not hostile displacement, patrol, pursuit, or retreat.
+3. Salvage checked a diagnostic-created pickup, not parity between pre-placed, combat-dropped, and diagnostic loot.
+4. The rubric required readable radar presentation but did not require contacts to derive from live simulation state.
+5. Fixed first-frame visual criticism can rank composition and hierarchy, but cannot detect kinetic oddness or decorative systems that imply unavailable behavior.
+
+This changes the next protocol, not the closed result. Round 6 should add a short temporal/systemic lane that proves rendered-heading alignment, hostile locomotion, simulation-backed radar contacts, and loot-class parity through ordinary play-state objects. Diagnostic hooks remain useful for setup, but cannot be the only object class exercised.
+
 ## Experiment lessons
 
 1. Keep the generated mockup upstream and identical. Per-arm image generation would introduce a new uncontrolled variable.
@@ -165,13 +187,14 @@ These results are consistent with model capacity affecting detail and self-audit
 4. Score builder and operator verdicts separately. Self-critique is a capability under test, not the scoring authority.
 5. Component-level reference sheets could target the remaining shared weakness—ship, station, wreck, and beacon detail—without replacing the one-file game deliverable.
 6. Keep the final output contract explicit: one playable `submission/index.html`; Markdown and screenshots are evidence, not alternative products.
+7. Add temporal play-feel assertions. Logical state, a polished first frame, and a diagnostic success can coexist with backward-facing motion, stationary enemies, decorative radar, or inconsistent user-visible pickups.
 
 ## Next decision
 
-Round 5's automated and operator evidence is closed. Owner qualitative notes for Luna, Terra, and Sol should be added as a separate labeled perspective rather than rewriting the holdout findings. Round 6 remains gated until that addendum is recorded and the operator decides whether the next package should freeze this evaluator and add component-level visual references.
+Round 5's automated, operator, and owner-playtest evidence is closed. Round 6 remains gated on updating and freezing the evaluator with the temporal/systemic checks identified above, then deciding whether to add component-level visual references. The next dispatch should not begin until that revised package passes against known positive and negative fixtures.
 
 ## Conclusion
 
 Round 5 validates the missing visual-oracle hypothesis. Explicit mockups, image inspection, candid verdict language, and bounded repairs changed the behavior of every model arm. The experiment no longer merely asks whether a game loads; it records whether the builder can see and repair what looks wrong.
 
-Sol is the only arm that passed the complete operator contract. Luna is functionally complete but visually below threshold. Terra is playable under a compatibility probe but hard-gated by diagnostic-contract and evidence drift. The result is ready for owner qualitative input without reopening or mutating the measured evidence.
+Sol is the only arm that passed the complete operator contract. Luna is functionally complete but visually below threshold. Terra is playable under a compatibility probe but hard-gated by diagnostic-contract and evidence drift. The owner playtest preserves that result while showing that the next contract must also measure visible heading, enemy locomotion, radar semantics, and parity across user-visible loot.

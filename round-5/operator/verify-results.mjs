@@ -78,7 +78,13 @@ const [report, visualReview] = await Promise.all([
   read('round-5/results/operator/VISUAL_REVIEW.md').then(bytes => bytes.toString('utf8'))
 ]);
 check(report.includes('| Sol | Pass | 98 | **26** | 20 | Passed all thresholds |'), 'report operator outcome table drifted');
-check(report.includes('Owner qualitative notes'), 'report does not preserve the owner-addendum boundary');
+const ownerAddendum = report.match(/## Owner playtest addendum([\s\S]*?)## Experiment lessons/)?.[1] || '';
+check(ownerAddendum.includes('separate post-hoc perspective'), 'report does not preserve the owner-addendum boundary');
+check(ownerAddendum.includes('lateral visual rotation needs the opposite sign'), 'Luna owner finding is missing');
+check(ownerAddendum.includes('five fixed HTML marks'), 'Terra radar finding is missing');
+check(ownerAddendum.includes('never changes hostile position'), 'Terra hostile-motion finding is missing');
+check(ownerAddendum.includes('Four pre-placed shards use `freeUntil: 99999`'), 'Sol pickup-parity finding is missing');
+check(ownerAddendum.includes('Hostiles aim and fire without changing position'), 'Sol hostile-motion finding is missing');
 const lunaReview = visualReview.match(/## Luna([\s\S]*?)## Terra/)?.[1] || '';
 const terraReview = visualReview.match(/## Terra([\s\S]*?)## Sol/)?.[1] || '';
 const solReview = visualReview.match(/## Sol([\s\S]*)$/)?.[1] || '';
