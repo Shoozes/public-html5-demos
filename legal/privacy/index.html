@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The-Agent Privacy Policy</title>
+  <meta name="description" content="The-Agent Privacy Policy for The-Agent Discord application." />
+  <link rel="canonical" href="https://shoozes.github.io/public-html5-demos/legal/privacy/" />
+  <style>
+:root { color-scheme: light dark; --fg: #1a1a1a; --muted: #555; --bg: #fafafa; --card: #fff; --border: #ddd; }
+@media (prefers-color-scheme: dark) {
+  :root { --fg: #eee; --muted: #aaa; --bg: #121212; --card: #1b1b1b; --border: #333; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.55; }
+main { max-width: 42rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+header { margin-bottom: 1.5rem; }
+h1 { font-size: 1.6rem; margin: 0 0 0.35rem; }
+.meta { color: var(--muted); font-size: 0.95rem; }
+article { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.35rem; }
+h2 { font-size: 1.15rem; margin-top: 1.6rem; }
+table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+th, td { border: 1px solid var(--border); padding: 0.45rem 0.5rem; vertical-align: top; text-align: left; }
+nav a { color: inherit; }
+footer { margin-top: 1.5rem; color: var(--muted); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>The-Agent Privacy Policy</h1>
+      <p class="meta">Effective date: 2026-09-01 · Operator: Shoozes</p>
+      <nav class="meta"><a href="../tos/">Terms of Service</a> · <a href="https://shoozes.github.io/public-html5-demos/">Demo gallery</a></nav>
+    </header>
+    <article>
+<p><strong>Effective date:</strong> 2026-09-01   <strong>Operator:</strong> Shoozes (Justin Case Caceres)   <strong>Contact:</strong> GitHub <a href="https://github.com/Shoozes">@Shoozes</a> issues on <a href="https://github.com/Shoozes/public-html5-demos">public-html5-demos</a>, or the Discord server owner who invited the bot.</p>
+<p>This notice describes the intended first-release behavior of <strong>The-Agent</strong>, a private-team, local-first Discord bot. It is a public summary for Discord’s application profile and for people who interact with the bot. It is <strong>not</strong> permission to enable cloud workers before the operator’s privacy gates pass.</p>
+<h2>What this bot is</h2>
+<p>The-Agent is experimental software for a private Discord team. It is invited to servers by an operator. It is not a consumer SaaS product and does not sell personal data.</p>
+<h2>What may be processed</h2>
+<p>When the bot is invited and authorized by operator policy, it may process:</p>
+<table>
+<tr><th>Class</th><th>Examples</th><th>Purpose</th></tr>
+<tr><td>Discord source and queue</td><td>Message content, author/channel/guild/thread IDs, reply references, principal, attempts, errors</td><td>Intake and work routing</td></tr>
+<tr><td>Sessions</td><td>Conversation turns, message/subject IDs, summaries, timestamps</td><td>Continuity in an authorized channel/thread</td></tr>
+<tr><td>Voice evaluation rows (if enabled)</td><td>Draft/final text and quality/privacy flags</td><td>Private voice evaluation</td></tr>
+<tr><td>Live corpus</td><td>Curated project notes, shallow preferences, evidence indexes</td><td>Operator-authorized memory for a project</td></tr>
+<tr><td>Logs / activity</td><td>Operational events, errors, model/process health</td><td>Operator diagnostics</td></tr>
+<tr><td>Screenshots (only on explicit request)</td><td>Pixels and capture metadata</td><td>Visual request handling</td></tr>
+<tr><td>Approvals / audit</td><td>Principal, scopes, action, outcome, evidence IDs</td><td>Security and high-impact controls</td></tr>
+<tr><td>Backups</td><td>Encrypted private stores and manifests</td><td>Recovery</td></tr>
+</table>
+<p>The bot does <strong>not</strong> run hidden screenshot capture, build a deep personal dossier, or keep cross-channel memory by default.</p>
+<h2>Local vs cloud processing</h2>
+<ul>
+<li><strong>Default:</strong> local-first processing on the operator’s host.</li>
+<li><strong>Cloud workers:</strong> off by default. Cloud processing happens only if the operator explicitly allowlists a channel (and, where required, separate DM/thread opt-ins).</li>
+<li>Sensitive classifications and screenshots remain local-only unless separately reviewed by the operator.</li>
+</ul>
+<h2>Retention (intended maxima)</h2>
+<table>
+<tr><th>Store</th><th>Intended maximum</th></tr>
+<tr><td>Terminal queue payloads</td><td>7 days</td></tr>
+<tr><td>Sessions</td><td>30 days</td></tr>
+<tr><td>Voice evaluation rows</td><td>30 days</td></tr>
+<tr><td>Operational logs</td><td>14 days</td></tr>
+<tr><td>Screenshots</td><td>24 hours</td></tr>
+<tr><td>Approvals / audit</td><td>90 days</td></tr>
+<tr><td>Backups</td><td>30 days</td></tr>
+</table>
+<p>Active work may be retained until it finishes. Project evidence follows project retention rather than an implicit permanent lifetime.</p>
+<h2>Access, export, and deletion</h2>
+<ul>
+<li>Runtime state, tokens, exports, and backups are <strong>private</strong> and are not published in this public repository.</li>
+<li>Ask the Discord server owner / operator for privacy status, export, or deletion (<code>/privacy</code>, export, or <code>/forget</code> style controls where enabled).</li>
+<li>Owner-confirmed subject deletion removes matching structured records and clears derived indexes and eligible backups where those controls are implemented.</li>
+</ul>
+<h2>Children</h2>
+<p>The-Agent is not directed at children under 13. Do not use it to collect personal information from children.</p>
+<h2>Changes</h2>
+<p>The operator may update this policy. Material changes will be reflected on this page with a new effective date.</p>
+<h2>Related</h2>
+<ul>
+<li><a href="https://shoozes.github.io/public-html5-demos/legal/tos/">Terms of Service</a></li>
+<li>Discord’s own <a href="https://discord.com/privacy">Privacy Policy</a> and <a href="https://discord.com/terms">Terms</a> also apply when you use Discord.</li>
+</ul>
+    </article>
+    <footer>
+      Public legal pages for Discord Developer Portal. No tracking scripts on this page.
+    </footer>
+  </main>
+</body>
+</html>
