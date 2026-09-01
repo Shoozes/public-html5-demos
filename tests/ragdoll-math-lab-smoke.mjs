@@ -20,14 +20,19 @@ for (const value of [
   'solvePairPointEffectiveMass as solveSharedPairPointEffectiveMass',
   "const MODEL_URL = '../assets/glb/Soldier.glb';",
   'const MAX_STEPS_PER_FRAME = 3;',
+  "const manualStepMode = searchParams.get('manual') === '1';",
   'const segmentDefinitions = SHARED_SEGMENTS.map',
   'const customJointConstraints = Object.fromEntries(Object.entries(SHARED_JOINTS)',
   'const getGravityForModelHeight = (modelHeight) => -GRAVITY_METERS_PER_SECOND_SQUARED * (modelHeight / TARGET_HUMAN_HEIGHT_METERS);',
   'const CUSTOM_SOLVER_ITERATIONS = 20;',
-  'const CUSTOM_INTERACTIVE_SOLVER_ITERATIONS = 24;',
+  'const CUSTOM_INTERACTIVE_SOLVER_ITERATIONS = 27;',
+  'const CUSTOM_INTERACTIVE_ANGULAR_STIFFNESS = .5;',
+  'const CUSTOM_INTERACTIVE_MOVING_ANCHOR_STIFFNESS = .9999;',
   'const CUSTOM_COLLIDER_DENSITY = 1.15;',
   'const CUSTOM_JOINT_VELOCITY_TRANSFER = .12;',
   'const CUSTOM_CONTACT_JOINT_VELOCITY_TRANSFER = 0;',
+  'const CUSTOM_PARITY_ANCHOR_TORQUE_SCALE = .006;',
+  'const CUSTOM_CONTACT_ANGULAR_RESPONSE = .12;',
   'const CUSTOM_CONTACT_CHAIN_VELOCITY_RETENTION = .15;',
   'const CUSTOM_HIGH_HIPS_CONTACT_VELOCITY_RETENTION = .65;',
   'const CUSTOM_DRAG_TARGET_HALF_LIFE_SECONDS = .022;',
@@ -39,6 +44,13 @@ for (const value of [
   'const CUSTOM_HELD_ANGULAR_DAMPING = 28;',
   'const CUSTOM_HELD_MAX_ANGULAR_SPEED = 3.5;',
   'const CUSTOM_RESTING_SECONDS_BEFORE_SLEEP = .22;',
+  'const CUSTOM_REST_CAPTURE_MIN_STAGE_CONTACTS = 8;',
+  'const CUSTOM_REST_CAPTURE_LINEAR_SPEED = 1.1;',
+  'const CUSTOM_REST_CAPTURE_SUPPORT_SECONDS = .5;',
+  'const CUSTOM_REST_SUPPORT_LOSS_DECAY = 2;',
+  'const CUSTOM_REST_MAX_SLEEP_JOINT_ERROR = .02;',
+  'const CUSTOM_REST_ANCHOR_SWEEPS_PER_STEP = 2;',
+  'const CUSTOM_REST_ANCHOR_MAX_CORRECTION = .016;',
   'const CUSTOM_FULL_SLEEP_SECONDS = .5;',
   'const CUSTOM_FULL_ROLLING_FRICTION_SCALE = .15;',
   'const CUSTOM_MAX_RESTING_HIPS_Y = .9;',
@@ -48,12 +60,15 @@ for (const value of [
   'const solveRigidStageContact = (segment) => {',
   'const applyVelocityNeutralContactCorrection = (body, correction, worldPoint) => {',
   'const applyPositionCorrection = (body, correction, maxCorrection = CUSTOM_MAX_POSITION_CORRECTION) => {',
+  'const getJointVelocityTransfer = () => parityMode && rigidStageContactCount',
   'const worldAnchorInto = (target, body, localAnchor) =>',
   'const solvePointEffectiveMass = (body, point, target) => solveSharedPointEffectiveMass(',
   'const solvePairPointEffectiveMass = (parentBody, parentPoint, childBody, childPoint, target) => solveSharedPairPointEffectiveMass(',
   'const closestPointsOnSegments = (firstStart, firstEnd, secondStart, secondEnd) => {',
   'const solveRigidHeadContacts = () => {',
   'const solveRigidJoints = (reverse = false) => {',
+  'const closeInteractiveJointAnchor = (segment) => {',
+  'const closeInteractiveJointAnchors = (reverse = false) => {',
   'const updateInteractiveDragTarget = () => {',
   'const applyInteractiveDragSpring = () => {',
   'const updateInteractiveRigidVelocities = (dt) => {',
@@ -65,6 +80,9 @@ for (const value of [
   "window.addEventListener('pointerup', (event) => {",
   "renderer.domElement.addEventListener('lostpointercapture', () => releaseRigidDrag());",
   'const settleRigidRagdollAtRest = (dt) => {',
+  'const getInteractiveRestMaxJointError = () => {',
+  'const closeInteractiveRestJointAnchors = (maxCorrection) => {',
+  'const impulse = solvePointEffectiveMass(body, worldPoint, correction);',
   'const isRigidRestHeightEligible = () => {',
   'solveRigidJoints(pass % 2 === 1);',
   'for (const segment of rigidSegments) solveRigidStageContact(segment);',
@@ -96,7 +114,7 @@ for (const value of [
 ]) {
   if (!html.includes(value)) throw new Error('Missing manual-solver behavior: ' + value);
 }
-if (!html.includes('<span>Interactive solver passes</span><strong>24</strong>')) {
+if (!html.includes('<span>Interactive solver passes</span><strong>27</strong>')) {
   throw new Error('Math Lab diagnostics do not report the interactive solver budget.');
 }
 
@@ -130,6 +148,9 @@ if (html.includes('applyAnchorCorrection(rigidDrag.segment.body, correction')) {
 }
 if (html.includes('CUSTOM_RELEASE_LEAN') || html.includes('releaseRigidRagdoll(true)')) {
   throw new Error('Ragdoll Math Lab Drop must not inject a custom release rotation.');
+}
+if (/const releaseRigidRagdoll = \(\) => \{\s*if \(active\) return;/.test(html)) {
+  throw new Error('Ragdoll Math Lab must wake a sleeping active island before applying a new disturbance.');
 }
 if (html.includes('centerRadius + body.radius - STAGE_RADIUS') || html.includes('multiplyScalar(-sidePenetration')) {
   throw new Error('Ragdoll Math Lab must not restore the inward-growing stage rim correction.');

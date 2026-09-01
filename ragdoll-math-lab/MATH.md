@@ -5,6 +5,9 @@ Soldier ragdoll. Three.js supplies rendering, asset loading, and vector/
 quaternion adapters; the portable JavaScript/TypeScript core owns the physics
 contracts. Rapier is not a runtime dependency of this page.
 
+For the reusable process behind this implementation, read
+[Clone Behavior, Not Constants](../docs/parity/CLONE_BEHAVIOR_NOT_CONSTANTS.md).
+
 ## Solver boundary
 
 The shared core owns the narrow, reusable numerical pieces required by both
@@ -30,18 +33,71 @@ evidence.
 
 The interactive path advances a filtered three-dimensional cursor target once
 per fixed step, then drives the selected local anchor through a damped compliant
-point attachment. While held, nonselected bodies receive additional linear
-damping and the articulated chain receives a lower angular-speed cap. Head
-self-contact is limited to the chest and upper chest, disabled during a hold,
-and restored only after relative motion is quiet. Its 24 consistently ordered
-solver passes end on stage contact instead of adding a variable drag-substep or
-post-solve polish workload.
+point attachment. Twenty alternating velocity passes propagate that attachment
+through the articulated island before integration, so moving a selected foot or
+hand accelerates the connected body instead of only the selected capsule. A
+frame-normalized positional grab row then runs before the joint rows in each of
+the 27 coupled projection passes. Joint anchors therefore finish closed rather
+than yielding after the selected body follows the cursor. Each pass still ends
+on stage contact, keeping a held body bounded against the arena. While held,
+nonselected bodies receive additional linear damping and the articulated chain
+receives a lower angular-speed cap. Head self-contact is limited to the chest
+and upper chest, disabled during a hold, and restored only after relative motion
+is quiet. Interactive stage support acts only on bodies that actually contact
+the arena; it does not apply the parity lane's whole-island velocity retention
+or disable grounded joint-velocity transfer. Interactive sleep requires one
+continuous quiet interval, so a transient low-velocity frame cannot freeze a
+partially supported torso above the floor. After projection, the interactive
+velocity rebuild preserves the joint solver's linear and angular constraint
+deltas. Fixed sections therefore remain cohesive and hinge motion converges
+instead of being regenerated on every frame after an impact. Interactive fixed
+frames, hinge axes, and limit violations use stronger angular projection than
+the preserved parity lane, reaching their intended rigidity during the impact
+rather than gradually over the following frames.
+
+While dragging, a velocity-neutral translational anchor projection follows each
+normal articulated solve while the cursor target is moving. Stationary holds
+remain with the regular contact-coupled joint solve. This removes visible limb
+stretch without converting the correction into throw velocity or making
+sustained floor contact chatter.
+
+Once at least eight bodies continuously support a low-hips pose for half a
+second and the whole chain is moving slowly, the interactive lane attenuates
+the remaining linear and angular correction velocities to zero before applying
+its existing continuous quiet-window sleep rule. A supported sleeping island
+retains this evidence across a small wake-up, with brief contact loss decaying
+the evidence instead of erasing it; ordinary drops still start from zero. This
+broad-support gate removes visible floor creep without capturing a partly
+landed, upright, launched, or held pose. The deterministic parity lane does not
+use this rest capture.
+
+Interactive stage and head penetration retain direct bounded translation and
+use point effective mass to derive a 12-percent angular response about the
+contact arm. This lets a floor correction rotate a capsule toward the contact
+without the full lever-arm response destabilizing the articulated chain. Sleep
+remains blocked while any articulation seam exceeds two centimeters, so no
+terminal pose projection is needed and the frozen pose is already cohesive
+before its velocities are zeroed. Once correction velocity is zero, two
+mass-balanced 1.6-centimeter-capped anchor sweeps close the remaining error
+gradually instead of snapping the pose at the sleep boundary.
 
 The interactive integrator and velocity update are separate from the preserved
 parity implementations. Per-body render scratch objects, drag scratch vectors,
 and reusable contact arrays avoid recurrent allocation in the main simulation
 and pose-mapping loops. Resting requires measured linear and angular quiet; the
 page no longer force-sleeps a moving chain after a fixed contact timeout.
+
+`?manual=1` pauses automatic stepping while retaining the assisted interaction
+policies. `tests/ragdoll-interactive-browser.mjs` uses that mode to exercise
+both pages deterministically and checks finite state, quaternion normalization,
+bounded joint stretch, broad floor support, quiet sleep, post-landing drift,
+post-sleep impulse wake/recovery, foot-pull response, sustained floorward
+holds, drag-release recovery, and reset restoration. It also compares the Math
+results with an assisted Rapier oracle envelope for support timing, resting
+shape, contact count, joint closure, drag travel, and floor-hold motion. The
+settling cases sample every fixed frame, retain the pre-sleep joint error and
+largest one-frame pose delta, and reject any Math sleep transition above two
+centimeters.
 
 There are 20 registered scenarios: 16 strict micro scenarios for impulses,
 damping, inertia, contacts, joints, limits, overlap, and cursor steps; and four

@@ -246,7 +246,9 @@
     const STAGE_RADIUS = 7.35;
     const YEET_EXIT_RADIUS = STAGE_RADIUS + 0.35;
     const RAGDOLL_SOLVER_ITERATIONS = 20;
-    const parityMode = new URLSearchParams(location.search).get('parity') === '1';
+    const searchParams = new URLSearchParams(location.search);
+    const parityMode = searchParams.get('parity') === '1';
+    const manualStepMode = searchParams.get('manual') === '1';
     let parityStep = 0;
     let parityScenario = 'default';
     let paritySeed = 'explicit';
@@ -382,7 +384,7 @@
         introSplash.classList.remove('is-leaving');
       }, 220);
     };
-    if (parityMode) {
+    if (parityMode || manualStepMode) {
       introStarted = true;
       introSplash.hidden = true;
       introSplash.style.display = 'none';
@@ -1043,22 +1045,13 @@
       { x: (Math.random() - 0.5) * 1.2, y: (Math.random() - 0.5) * 1.2, z: (Math.random() - 0.5) * 1.2 }
     );
 
-    const beginDrag = (event) => {
-      if (!physicsReady || dragged) return false;
-      if (!parityMode) { unlockAudio(); startMusic(); }
-      updatePointer(event);
-      const hit = updateSelectionCursor();
-      if (!hit?.segment) return false;
-
+    const startInteractivePhysicsDrag = (selected, hitPoint, suppliedLocalAnchor = null) => {
       releaseRagdoll();
       yeetPlayed = false;
-      const hitPoint = hit.point;
-      const selected = hit.segment;
       restSettleTime = 0;
-
       const cursorDesc = RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(hitPoint.x, hitPoint.y, hitPoint.z);
       cursorBody = world.createRigidBody(cursorDesc);
-      const localAnchor = worldPointToCurrentBodyLocal(selected, hitPoint);
+      const localAnchor = suppliedLocalAnchor || worldPointToCurrentBodyLocal(selected, hitPoint);
       const dragJointData = RAPIER.JointData.spring(
         0,
         DRAG_SPRING_STIFFNESS,
@@ -1073,10 +1066,24 @@
       setInteractiveHeadSelfCollisionEnabled(false);
       lastPointerPosition = hitPoint.clone();
       dragStartPosition = hitPoint.clone();
-      lastPointerScreen = new THREE.Vector2(event.clientX, event.clientY);
-      dragStartScreen = lastPointerScreen.clone();
+      lastPointerScreen = null;
+      dragStartScreen = null;
       rawDragTarget = hitPoint.clone();
       filteredDragTarget = hitPoint.clone();
+      setStatus('active', 'Dragging ' + selected.id.replace(/([A-Z])/g, ' $1').toLowerCase());
+    };
+
+    const beginDrag = (event) => {
+      if (!physicsReady || dragged) return false;
+      if (!parityMode) { unlockAudio(); startMusic(); }
+      updatePointer(event);
+      const hit = updateSelectionCursor();
+      if (!hit?.segment) return false;
+
+      const hitPoint = hit.point;
+      startInteractivePhysicsDrag(hit.segment, hitPoint);
+      lastPointerScreen = new THREE.Vector2(event.clientX, event.clientY);
+      dragStartScreen = lastPointerScreen.clone();
       selectionMarker.position.copy(hitPoint);
       selectionMaterial.color.set('#ffb19b');
       selectionMarker.visible = true;
@@ -1084,7 +1091,6 @@
       controls.enabled = false;
       renderer.domElement.style.cursor = 'grabbing';
       renderer.domElement.setPointerCapture(event.pointerId);
-      setStatus('active', 'Dragging ' + selected.id.replace(/([A-Z])/g, ' $1').toLowerCase());
       return true;
     };
 
@@ -1590,6 +1596,17 @@
         const segment = parityBody(command.body);
         if (!segment) throw new Error(`Unknown parity body: ${command.body}`);
         const point = command.worldPoint || [segment.restCenter.x, segment.restCenter.y, segment.restCenter.z];
+        if (manualStepMode) {
+          const worldPoint = new THREE.Vector3(point[0], point[1], point[2]);
+          const rawLocalAnchor = command.localAnchor;
+          const localAnchor = rawLocalAnchor
+            ? (Array.isArray(rawLocalAnchor)
+              ? new THREE.Vector3(...rawLocalAnchor)
+              : new THREE.Vector3(rawLocalAnchor.x, rawLocalAnchor.y, rawLocalAnchor.z))
+            : null;
+          startInteractivePhysicsDrag(segment, worldPoint, localAnchor);
+          return paritySnapshot();
+        }
         releaseRagdoll();
         cursorBody = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(point[0], point[1], point[2]));
         const rawLocal = command.localAnchor; const local = rawLocal ? (Array.isArray(rawLocal) ? { x: rawLocal[0], y: rawLocal[1], z: rawLocal[2] } : rawLocal) : worldPointToCurrentBodyLocal(segment, new THREE.Vector3(point[0], point[1], point[2]));
@@ -1601,6 +1618,11 @@
       if (type === 'cursor-target') {
         if (!cursorBody) throw new Error('Parity cursor is not active');
         const point = command.worldPoint || command.target; if (!point) throw new Error('cursor-target requires worldPoint');
+        if (manualStepMode) {
+          rawDragTarget.set(point[0], point[1], point[2]);
+          lastPointerPosition.copy(rawDragTarget);
+          return paritySnapshot();
+        }
         cursorBody.setNextKinematicTranslation({ x: point[0], y: point[1], z: point[2] });
         return paritySnapshot();
       }
@@ -1633,7 +1655,7 @@
 
     const tick = () => {
       timer.update();
-      if (parityMode) {
+      if (parityMode || manualStepMode) {
         applyPoseFromPhysics();
         controls.update();
         renderer.render(scene, camera);

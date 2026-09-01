@@ -2,12 +2,16 @@
 
 This ledger records the failure modes that can make the custom ragdoll look plausible while diverging from the Rapier authority. The runtime trace harness is the verification authority. Source-string checks cover only the construction contract.
 
+For the end-to-end method that produced this ledger and harness, read
+[Clone Behavior, Not Constants](CLONE_BEHAVIOR_NOT_CONSTANTS.md).
+
 ## Focused guard commands
 
 ```text
 node tests/ragdoll-contract-smoke.mjs
 node tests/ragdoll-parity-server.mjs
 node tests/ragdoll-trace-parity.mjs --unit
+node tests/ragdoll-interactive-browser.mjs
 node tools/ragdoll-parity/run.mjs --scenario full-toss-seed-1
 ```
 
@@ -18,12 +22,12 @@ The complete local gate is:
 node tools/ragdoll-parity/run.mjs --determinism-runs=10
 ```
 
-Current evidence: the local 2026-08-23 gate, rerun after the interactive parity
-and allocation-reduction pass, passes all 20 scenarios (16 strict micro
+Current evidence: the local 2026-09-01 gate, rerun after the assisted interaction,
+rest-capture, and temporal correction pass, passes all 20 scenarios (16 strict micro
 scenarios and four bounded behavioral full scenarios) across ten repetitions
 each. Every scenario has one unique authority trace hash across its ten runs,
 and every strict or bounded behavioral comparison passes. Retained evidence:
-`output/parity/2026-08-24T02-36-59.893Z/`.
+`output/parity/2026-09-01T04-18-24.692Z/`.
 
 The synchronized visual run in
 `output/parity/2026-08-23T09-16-11.135Z/` passes full-drop and

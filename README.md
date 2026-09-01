@@ -43,6 +43,10 @@ https://shoozes.github.io/public-html5-demos/my-demo/
 - Avoids absolute repository-root paths so project-page URLs keep working.
 - Uses a clear title, description, and primary action.
 
+## Workflow experiments
+
+- [Round 4: Pass-Down Workflow Experiment](round-4/REPORT.md) compares isolated Luna, Terra, and Sol hostile-space HAIO submissions, records the browser/tool evidence and hard-gate results, and establishes the fixed-mockup visual-critic contract for the next controlled round. The verified operator reference remains playable at `round-4/submission/index.html`; its mockups and harness are development evidence, not runtime dependencies.
+
 ## Current demos
 
 ### Soldier Ragdoll Lab
@@ -51,7 +55,7 @@ A mobile- and desktop-friendly Three.js physics playground using the local Soldi
 
 ### Soldier Ragdoll Math Lab
 
-A separate Three.js-rendered, custom-physics implementation of the Soldier ragdoll. Its portable JavaScript/TypeScript core owns mass and inertia, impulses, damping, and point effective-mass kernels; Three.js remains the rendering and adapter layer, with no Rapier runtime dependency. See [the portable solver math and current limits](ragdoll-math-lab/MATH.md) and [the parity pitfalls ledger](docs/parity/PITFALLS.md), then open [Soldier Ragdoll Math Lab](https://shoozes.github.io/public-html5-demos/ragdoll-math-lab/). The pinned Playwright dependency is development-only and used by the local parity harness.
+A separate Three.js-rendered, custom-physics implementation of the Soldier ragdoll. Its portable JavaScript/TypeScript core owns mass and inertia, impulses, damping, and point effective-mass kernels; Three.js remains the rendering and adapter layer, with no Rapier runtime dependency. Start with [Clone Behavior, Not Constants](docs/parity/CLONE_BEHAVIOR_NOT_CONSTANTS.md) for the reusable oracle-driven cloning tutorial, then see [the portable solver math and current limits](ragdoll-math-lab/MATH.md) and [the parity pitfalls ledger](docs/parity/PITFALLS.md). Open [Soldier Ragdoll Math Lab](https://shoozes.github.io/public-html5-demos/ragdoll-math-lab/). The pinned Playwright dependency is development-only and used by the local parity harness.
 
 ### Anthrocybernetics Guided Demo
 
