@@ -101,7 +101,7 @@
       ]
     },
     "workflow__visual_oracle_round5": {
-      "description": "Frozen Round 5A visual oracle, historical behavior and 3D reference boundaries, scene/component outline, critic contract, scoring, budgets, and package verification.",
+      "description": "Completed Round 5A visual-oracle comparison: frozen references and contracts, archived model artifacts, independent functional holdout, blind visual verdicts, scores, and next-protocol findings.",
       "paths": [
         ".agents/skills/haio-visual-critic/SKILL.md",
         "round-4/PASSDOWN.md",
@@ -110,9 +110,19 @@
         "round-5/*.json",
         "round-5/harness/*.mjs",
         "round-5/mockups/*.md",
+        "round-5/operator/*.mjs",
+        "round-5/results/operator/VISUAL_REVIEW.md",
+        "round-5/results/operator/*/evaluation.json",
         "tools/browser-harness.mjs",
         "tools/browser-runtime.mjs",
         "tools/ragdoll-parity/static-server.mjs"
+      ]
+    },
+    "workflow__visual_oracle_round5_artifacts": {
+      "description": "Opt-in archived Luna, Terra, and Sol Round 5 games plus their model-owned decisions, evidence, tool ledgers, visual contracts, and self-reviews.",
+      "paths": [
+        "round-5/results/*/submission/index.html",
+        "round-5/results/*/submission/*.md"
       ]
     },
     "workflow__goal_round6": {

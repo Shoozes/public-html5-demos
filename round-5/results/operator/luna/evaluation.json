@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "label": "luna",
+  "armRoot": "C:\\Users\\jc816\\.codex\\worktrees\\6348\\public-html5-demos",
+  "dispatchCommit": "1aa2761d8d091c687f91d83bcd02a1efd8b67a59",
+  "startedAt": "2026-09-01T10:16:00.451Z",
+  "completedAt": "2026-09-01T10:16:12.212Z",
+  "artifact": {
+    "path": "C:\\Users\\jc816\\.codex\\worktrees\\6348\\public-html5-demos\\submission\\index.html",
+    "bytes": 37681,
+    "lines": 86,
+    "sha256": "8ee26f7dc384becd44dab749646e1296ac5c074a7eeb7931d376b8ff0b244f57"
+  },
+  "results": [
+    {
+      "status": "pass",
+      "message": "canonical artifact, module parse, static constraints, and required evidence files"
+    },
+    {
+      "status": "pass",
+      "message": "standardized 1440x900 and 390x844 first frames with initial invariants"
+    },
+    {
+      "status": "pass",
+      "message": "parse, bootstrap, first mobile frame, and initial invariants"
+    },
+    {
+      "status": "pass",
+      "message": "no-input opening safety"
+    },
+    {
+      "status": "pass",
+      "message": "four cardinal movement and facing directions"
+    },
+    {
+      "status": "pass",
+      "message": "aggro, sticky automatic targeting, automatic fire, and independent weapon aim"
+    },
+    {
+      "status": "pass",
+      "message": "manual disengagement suppression"
+    },
+    {
+      "status": "pass",
+      "message": "hostile destruction, target cleanup, staged drops, and render cleanup"
+    },
+    {
+      "status": "pass",
+      "message": "magnetic attraction, automatic collection, single credit update, and pickup cleanup"
+    },
+    {
+      "status": "pass",
+      "message": "station selection and contextual interaction"
+    },
+    {
+      "status": "pass",
+      "message": "blur input recovery"
+    },
+    {
+      "status": "pass",
+      "message": "restart teardown/reconstruction and post-restart invariant check"
+    },
+    {
+      "status": "pass",
+      "message": "console, rejected-promise, and network inspection"
+    }
+  ],
+  "failures": [],
+  "runtimeErrors": [],
+  "networkErrors": [],
+  "screenshots": {
+    "desktop": "C:\\DevStuff\\public-html5-demos\\round-5\\results\\operator\\luna\\screenshots\\first-frame-desktop.png",
+    "portrait": "C:\\DevStuff\\public-html5-demos\\round-5\\results\\operator\\luna\\screenshots\\first-frame-portrait.png"
+  },
+  "passed": true
+}

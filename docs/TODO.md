@@ -4,37 +4,29 @@ Updated: 2026-09-01
 
 There are no unresolved repository-integrity defects from the current pass. The remaining work is a gated experiment queue, not incomplete runtime logic.
 
-## P1 — Run Round 5A
+## P1 — Add owner Round 5 qualitative commentary
 
-Status: In progress. The first three arms stopped at a shared platform-sensitive checksum gate without creating submissions; the corrected baseline passed in a fresh CRLF worktree and is being re-dispatched cleanly.
+What: Record the owner's per-arm observations as a clearly labeled addendum to the completed operator report.
 
-What: Start new isolated Luna, Terra, and Sol tasks against the frozen Round 5A instrument. These are clean reruns, not continuations of the Round 4 tasks.
+Why: The automated holdout and blind visual review are closed, but direct play impressions can identify feel, control, pacing, and aesthetic issues that static first-frame scoring does not capture.
 
-Why: The package is frozen and ready; a valid model comparison now requires all arms to start from the same dispatch commit and tool lane.
+When: Next, before changing or dispatching the Round 6 package.
 
-When: Next. Before any Round 6 arm.
+Where: `round-5/REPORT.md`, the archived games under `round-5/results/<model>/submission/index.html`, and a focused owner-addendum section or companion document if the notes become long.
 
-Where: `round-5/EXPERIMENT.json`, `round-5/PLAN.md`, assigned external worktrees/tasks, and each arm’s `submission/` folder.
+How: Record Luna, Terra, and Sol notes separately; distinguish subjective preference from reproducible defects; link each reproducible claim to a state or capture; preserve the operator scores unchanged; then state which observations change the next protocol.
 
-How:
+Done when: All three owner perspectives are recorded, disagreements with the operator review are explicit, and accepted next-round changes have one authoritative owner.
 
-1. Run `node round-5/harness/verify-package.mjs` and retain its passing output.
-2. Record the same final dispatch `HEAD` in every arm’s ledger while retaining the package content commit from `EXPERIMENT.json`.
-3. Start three separate High-reasoning tasks with identical time, repair, browser, and interpreter settings and no access to one another’s artifacts.
-4. Preserve each functional, visual, workflow, intervention, and tool ledger independently.
-5. Compare the three axes without collapsing them prematurely.
-
-Done when: All three arms reach a frozen stop condition and the final Round 5 report distinguishes self-found, critic-found, functional-test, and operator-found defects.
-
-Verification: Package checksum gate, canonical artifact gate, all functional scenarios, visual milestone evidence, and final cross-arm path audit.
+Verification: Report links resolve, archived artifacts retain their recorded SHA-256 values, and no operator evidence or score is silently rewritten.
 
 ## P2 — Run the paired Round 6 goal experiment
 
-What: Run normal and `/goal` arms for Luna, Terra, and Sol using the successful Round 5 package unchanged.
+What: Run normal and `/goal` arms for Luna, Terra, and Sol using one newly accepted frozen package. Reuse Round 5 unchanged unless the owner addendum explicitly authorizes the operator-evaluator or component-reference improvements identified in the report.
 
 Why: This isolates execution mode from model family, visual target, harness, and task wording.
 
-When: Only after Round 5 completes and its instrument is accepted without a shared blocker.
+When: Only after the Round 5 owner addendum is complete and the resulting instrument is accepted without a shared blocker.
 
 Where: `round-6/GOAL.md`, `round-6/PLAN.md`, the frozen Round 5 baseline, and six isolated external worktrees/tasks.
 

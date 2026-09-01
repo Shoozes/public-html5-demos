@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "label": "sol",
+  "armRoot": "C:\\Users\\jc816\\.codex\\worktrees\\4019\\public-html5-demos",
+  "dispatchCommit": "1aa2761d8d091c687f91d83bcd02a1efd8b67a59",
+  "startedAt": "2026-09-01T10:16:38.613Z",
+  "completedAt": "2026-09-01T10:16:48.909Z",
+  "artifact": {
+    "path": "C:\\Users\\jc816\\.codex\\worktrees\\4019\\public-html5-demos\\submission\\index.html",
+    "bytes": 33118,
+    "lines": 122,
+    "sha256": "c3c21041834bf53441184e1d0d916d1936341620665865c404ebf166abf6264a"
+  },
+  "results": [
+    {
+      "status": "pass",
+      "message": "canonical artifact, module parse, static constraints, and required evidence files"
+    },
+    {
+      "status": "pass",
+      "message": "standardized 1440x900 and 390x844 first frames with initial invariants"
+    },
+    {
+      "status": "pass",
+      "message": "parse, bootstrap, first mobile frame, and initial invariants"
+    },
+    {
+      "status": "pass",
+      "message": "no-input opening safety"
+    },
+    {
+      "status": "pass",
+      "message": "four cardinal movement and facing directions"
+    },
+    {
+      "status": "pass",
+      "message": "aggro, sticky automatic targeting, automatic fire, and independent weapon aim"
+    },
+    {
+      "status": "pass",
+      "message": "manual disengagement suppression"
+    },
+    {
+      "status": "pass",
+      "message": "hostile destruction, target cleanup, staged drops, and render cleanup"
+    },
+    {
+      "status": "pass",
+      "message": "magnetic attraction, automatic collection, single credit update, and pickup cleanup"
+    },
+    {
+      "status": "pass",
+      "message": "station selection and contextual interaction"
+    },
+    {
+      "status": "pass",
+      "message": "blur input recovery"
+    },
+    {
+      "status": "pass",
+      "message": "restart teardown/reconstruction and post-restart invariant check"
+    },
+    {
+      "status": "pass",
+      "message": "console, rejected-promise, and network inspection"
+    }
+  ],
+  "failures": [],
+  "runtimeErrors": [],
+  "networkErrors": [],
+  "screenshots": {
+    "desktop": "C:\\DevStuff\\public-html5-demos\\round-5\\results\\operator\\sol\\screenshots\\first-frame-desktop.png",
+    "portrait": "C:\\DevStuff\\public-html5-demos\\round-5\\results\\operator\\sol\\screenshots\\first-frame-portrait.png"
+  },
+  "passed": true
+}

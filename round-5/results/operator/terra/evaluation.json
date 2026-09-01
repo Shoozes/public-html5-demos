@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "label": "terra",
+  "armRoot": "C:\\Users\\jc816\\.codex\\worktrees\\318d\\public-html5-demos",
+  "dispatchCommit": "1aa2761d8d091c687f91d83bcd02a1efd8b67a59",
+  "startedAt": "2026-09-01T10:16:16.596Z",
+  "completedAt": "2026-09-01T10:16:27.830Z",
+  "artifact": {
+    "path": "C:\\Users\\jc816\\.codex\\worktrees\\318d\\public-html5-demos\\submission\\index.html",
+    "bytes": 28437,
+    "lines": 131,
+    "sha256": "21643c0e43b34800a0f1a2d2e105e4287fe02508938a46dabf1cae12598379e2"
+  },
+  "results": [
+    {
+      "status": "pass",
+      "message": "canonical artifact, module parse, static constraints, and required evidence files"
+    },
+    {
+      "status": "pass",
+      "message": "standardized 1440x900 and 390x844 first frames with initial invariants"
+    },
+    {
+      "status": "pass",
+      "message": "parse, bootstrap, first mobile frame, and initial invariants"
+    },
+    {
+      "status": "pass",
+      "message": "no-input opening safety"
+    },
+    {
+      "status": "pass",
+      "message": "four cardinal movement and facing directions"
+    },
+    {
+      "status": "pass",
+      "message": "aggro, sticky automatic targeting, automatic fire, and independent weapon aim"
+    },
+    {
+      "status": "pass",
+      "message": "manual disengagement suppression"
+    },
+    {
+      "status": "pass",
+      "message": "hostile destruction, target cleanup, staged drops, and render cleanup"
+    }
+  ],
+  "failures": [
+    "page.evaluate: TypeError: window.__haio.spawnPickupNearPlayer is not a function\n    at eval (eval at evaluate (:311:30), <anonymous>:1:21)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at C:\\DevStuff\\public-html5-demos\\round-5\\operator\\evaluate-arm.mjs:193:31"
+  ],
+  "runtimeErrors": [],
+  "networkErrors": [],
+  "screenshots": {
+    "desktop": "C:\\DevStuff\\public-html5-demos\\round-5\\results\\operator\\terra\\screenshots\\first-frame-desktop.png",
+    "portrait": "C:\\DevStuff\\public-html5-demos\\round-5\\results\\operator\\terra\\screenshots\\first-frame-portrait.png"
+  },
+  "passed": false
+}

@@ -28,8 +28,8 @@ The gallery and demos use relative paths and pinned CDN dependencies. Soldier me
 
 - Prompt-discovery Rounds 1–3 are historical research under `docs/haio-prompt-discovery/`.
 - Round 4 is complete as the uncontrolled-tools/no-fixed-oracle baseline. Its canonical operator artifact passes static and twelve-group browser verification.
-- Round 5A now has approved desktop/portrait V2 oracles, a common native-image-view lane, a Hostile Space behavioral lineage, a Starblast 3D presentation lineage, explicit non-cloning boundaries, a scene/component outline, visual-critic skill, pass-down, rubric, fixed thresholds/budgets, and package verification. Its first Luna/Terra/Sol dispatch stopped cleanly before implementation because raw text hashes differed in fresh Windows worktrees. The corrected package content commit is `591530a153eac58d4dfdfed05162cd65a7b9cc78`; text hashes are LF-canonical while binary references remain byte-exact, and the isolated rerun is in progress.
-- Round 6 has a durable `GOAL.md` and paired protocol, but execution is gated on a completed, successful Round 5 instrument.
+- Round 5A is complete. The corrected package content commit is `591530a153eac58d4dfdfed05162cd65a7b9cc78`; all reruns used dispatch commit `1aa2761d8d091c687f91d83bcd02a1efd8b67a59`. The independent operator holdout passed Luna and Sol across 13 functional evidence groups, hard-gated Terra for renaming the frozen pickup diagnostic, and reproduced Terra's remaining gameplay through a labeled compatibility probe. Blind full-size/thumbnail/grayscale review scored Luna 22/30, Terra 19/30, and Sol 26/30; only Sol passed the complete operator contract. The archived artifacts, screenshots, structured verdicts, and analysis are in `round-5/results/` and `round-5/REPORT.md`.
+- Round 6 has a durable `GOAL.md` and paired protocol, but dispatch is gated on the owner Round 5 qualitative addendum and a decision about freezing the operator evaluator and component-level references.
 
 ## Current verification contract
 
@@ -41,6 +41,7 @@ node tests/browser-harness.mjs
 node tools/context-bank.mjs --list
 node round-4/harness/verify-haio.mjs
 node round-5/harness/verify-package.mjs
+node round-5/operator/verify-results.mjs
 node tests/ragdoll-contract-smoke.mjs
 node tests/ragdoll-lab-smoke.mjs
 node tests/ragdoll-math-lab-smoke.mjs
@@ -57,6 +58,7 @@ node tests/site-browser.mjs
 node tests/ragdoll-interactive-browser.mjs
 node round-4/harness/run-scenarios.mjs
 node round-5/harness/capture-reference-review.mjs
+node round-5/operator/evaluate-arm.mjs --label=archive-luna --root=round-5/results/luna --output=output/playwright/round-5-operator/luna
 node tools/ragdoll-parity/run.mjs --determinism-runs=10
 ```
 
@@ -67,7 +69,7 @@ The hosted workflow is not local proof. Local command results are the verificati
 - The Round 5 images are generator-native sizes close to, but not identical with, their comparison viewports. The reference-review harness normalizes them; source dimensions and checksums remain frozen.
 - Anthrocybernetics analysis is an educational heuristic, not a scientific inference engine. Its 2D fallback is intentional when Three.js fails or misses the startup deadline.
 - The custom ragdoll solver targets observable parity for the registered scenarios, not a general replacement for Rapier.
-- Round 5 model arms run in independent tasks from one committed frozen baseline. Round 6 remains gated on an accepted Round 5 result.
+- Round 5's first dispatch is excluded because of a shared checksum-harness defect; the report uses only the corrected common-baseline reruns. Owner qualitative notes are intentionally pending as a separate perspective. Round 6 remains gated on that addendum and protocol acceptance.
 
 ## Knowledge ownership
 
