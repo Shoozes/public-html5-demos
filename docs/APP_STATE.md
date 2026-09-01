@@ -28,7 +28,7 @@ The gallery and demos use relative paths and pinned CDN dependencies. Soldier me
 
 - Prompt-discovery Rounds 1–3 are historical research under `docs/haio-prompt-discovery/`.
 - Round 4 is complete as the uncontrolled-tools/no-fixed-oracle baseline. Its canonical operator artifact passes static and twelve-group browser verification.
-- Round 5A setup now has approved desktop/portrait V2 oracles, a common native-image-view lane, a Hostile Space behavioral lineage, a Starblast 3D presentation lineage, explicit non-cloning boundaries, a scene/component outline, visual-critic skill, pass-down, rubric, fixed thresholds/budgets, and package verification. Model runs have not started; the final baseline commit is intentionally unset until this working package is committed.
+- Round 5A setup now has approved desktop/portrait V2 oracles, a common native-image-view lane, a Hostile Space behavioral lineage, a Starblast 3D presentation lineage, explicit non-cloning boundaries, a scene/component outline, visual-critic skill, pass-down, rubric, fixed thresholds/budgets, and package verification. The frozen package content commit is `4eaf26117e67c7be9b63462f3f829c7cf4344918`; model runs have not started.
 - Round 6 has a durable `GOAL.md` and paired protocol, but execution is gated on a completed, successful Round 5 instrument.
 
 ## Current verification contract

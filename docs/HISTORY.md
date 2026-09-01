@@ -7,6 +7,7 @@ This is a compact milestone index. Detailed evidence remains in the linked subsy
 - Reconciled the supplied visual-control-loop recap with the fetched repository state.
 - Approved and froze brighter desktop/portrait Round 5 references after bounded station and scale critique loops.
 - Added the Round 5 pass-down, canonical rubric/thresholds, Hostile Space behavioral lineage, Starblast 3D presentation lineage, non-cloning boundaries, scene and component outline, generation record, reference-review capture, and package verifier.
+- Froze the complete Round 5A package content at commit `4eaf26117e67c7be9b63462f3f829c7cf4344918` and marked its manifest ready for isolated model tasks.
 - Added the Round 6 durable goal contract and aligned its behavior claim with official OpenAI documentation.
 - Consolidated Playwright/browser discovery into `tools/browser-runtime.mjs`.
 - Added repository-wide HTML, Markdown-link, local-asset, CDN-pin, module-parse, duplicate-ID, credential-pattern, gallery, and Anthrocybernetics browser contracts.

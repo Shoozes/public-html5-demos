@@ -4,20 +4,20 @@ Updated: 2026-09-01
 
 There are no unresolved repository-integrity defects from the current pass. The remaining work is a gated experiment queue, not incomplete runtime logic.
 
-## P1 — Freeze and run Round 5A
+## P1 — Run Round 5A
 
-What: Freeze the final package commit, then start new isolated Luna, Terra, and Sol tasks against the approved Round 5A instrument. These are clean reruns, not continuations of the Round 4 tasks.
+What: Start new isolated Luna, Terra, and Sol tasks against the frozen Round 5A instrument. These are clean reruns, not continuations of the Round 4 tasks.
 
-Why: The repository package is ready, but a model comparison is valid only when all arms start from the same immutable commit and tool lane.
+Why: The package is frozen and ready; a valid model comparison now requires all arms to start from the same dispatch commit and tool lane.
 
-When: After the current package changes are committed. Before any Round 6 arm.
+When: Next. Before any Round 6 arm.
 
 Where: `round-5/EXPERIMENT.json`, `round-5/PLAN.md`, assigned external worktrees/tasks, and each arm’s `submission/` folder.
 
 How:
 
-1. Set `baseline.commit` to the commit containing the complete package and change manifest status to `ready`.
-2. Run `node round-5/harness/verify-package.mjs` and retain its passing output.
+1. Run `node round-5/harness/verify-package.mjs` and retain its passing output.
+2. Record the same final dispatch `HEAD` in every arm’s ledger while retaining the package content commit from `EXPERIMENT.json`.
 3. Start three separate High-reasoning tasks with identical time, repair, browser, and interpreter settings and no access to one another’s artifacts.
 4. Preserve each functional, visual, workflow, intervention, and tool ledger independently.
 5. Compare the three axes without collapsing them prematurely.

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "round": "5A",
-  "status": "oracle-approved-awaiting-baseline-commit",
+  "status": "ready",
   "baseline": {
     "sourceCommit": "07845f415c78ebbb109ff6a97401f50b95ea24a4",
-    "commit": null
+    "commit": "4eaf26117e67c7be9b63462f3f829c7cf4344918"
   },
   "visualInterpreter": {
     "lane": "native_image_view",
