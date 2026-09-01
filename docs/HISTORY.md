@@ -2,6 +2,21 @@
 
 This is a compact milestone index. Detailed evidence remains in the linked subsystem or experiment owner.
 
+## 2026-09-01 — Visual experiment archive
+
+- Added the GitHub Pages-ready `rounds/index.html` flight log using the frozen Round 5 desktop/portrait visual-oracle assets and real operator captures.
+- Reduced the public story to image-led Overview, Round 4, Round 5, Round 6, and Docs tabs while keeping reports, rubrics, protocols, lineage, and current state in GitHub-rendered repository documents.
+- Added playable Luna, Terra, and Sol cards, a desktop/portrait comparison switch, keyboard-accessible tabs, hash deep links, root-gallery promotion, and desktop/portrait browser coverage.
+- Completed native-image desktop/mobile QA against the frozen visual references, fixed the portrait card's narrow-screen alignment and height-clamp defect, and retained the passing verdict in `../design-qa.md`.
+
+## 2026-09-01 — Repository integrity pass
+
+- Extended the static contract to parse every tracked JavaScript module and validate relative import targets, while browser coverage now waits for real image decoding and checks the gallery at mobile width.
+- Made Playwright discovery honor explicit overrides, split multi-entry `NODE_PATH`, and fall back to the bundled Codex runtime only when no override was supplied; the negative-path harness still proves bad explicit configuration fails clearly.
+- Added explicit WebP delivery to the shared hardened server, ensured its route test always releases the listener, and deduplicated repeated MIME assertions behind one helper.
+- Added a post-experiment archive verifier that proves Round 5's inputs at its frozen content commit while leaving the original working-tree package preflight immutable; current shared browser/server improvements no longer create false provenance drift.
+- Audited incomplete markers, imports/exports, process ownership, static-server boundaries, context routes, and curtail candidates. No unresolved runtime stub or new issue group remained; historical experiment records and intentional single-file demo boundaries were preserved.
+
 ## 2026-09-01 — Round 5 visual-oracle experiment
 
 - Ran isolated High-reasoning Luna, Terra, and Sol arms from corrected dispatch commit `1aa2761d8d091c687f91d83bcd02a1efd8b67a59` with one fixed generated oracle, native-image lane, visual-critic skill, Playwright/Chrome lane, and common budgets.

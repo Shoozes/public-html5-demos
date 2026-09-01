@@ -30,6 +30,22 @@
         "tools/browser-harness.mjs"
       ]
     },
+    "feature__experiment_gallery": {
+      "description": "GitHub Pages visual entry points for the HAIO experiment series, including the image-led flight log, native-image design proof, tab interactions, responsive checks, and links to authoritative round documents.",
+      "paths": [
+        "index.html",
+        "rounds/index.html",
+        "design-qa.md",
+        "README.md",
+        "docs/APP_STATE.md",
+        "docs/HISTORY.md",
+        "tests/site-contract.mjs",
+        "tests/site-browser.mjs",
+        "tools/browser-harness.mjs",
+        "tools/browser-runtime.mjs",
+        "tools/ragdoll-parity/static-server.mjs"
+      ]
+    },
     "demo__anthrocybernetics": {
       "description": "Implementation and browser proof for the guided Anthrocybernetics presentation, persistence, and portable-map workflow.",
       "paths": [

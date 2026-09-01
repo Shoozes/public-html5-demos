@@ -3,7 +3,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.mjs': 'application/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.glb': 'model/gltf-binary', '.ogg': 'audio/ogg', '.css': 'text/css; charset=utf-8', '.png': 'image/png' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.mjs': 'application/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.glb': 'model/gltf-binary', '.ogg': 'audio/ogg', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.webp': 'image/webp' };
 
 const isInside = (base, candidate) => candidate === base || candidate.startsWith(`${base}${path.sep}`);
 

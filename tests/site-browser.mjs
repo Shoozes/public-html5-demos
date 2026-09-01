@@ -22,6 +22,14 @@ const runtimeErrors = (page) => {
   return errors;
 };
 
+const assertImagesDecoded = async (page) => {
+  await page.locator('img').evaluateAll((images) => Promise.all(images.map((image) => image.decode().catch(() => undefined))));
+  const failures = await page.locator('img').evaluateAll((images) => images
+    .filter((image) => !image.complete || image.naturalWidth === 0 || image.naturalHeight === 0)
+    .map((image) => image.currentSrc || image.getAttribute('src')));
+  assert.deepEqual(failures, [], `images failed to decode: ${failures.join(', ')}`);
+};
+
 try {
   const gallery = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   const galleryErrors = runtimeErrors(gallery);
@@ -29,9 +37,46 @@ try {
   assert.equal(galleryResponse?.status(), 200);
   assert.equal(await gallery.title(), 'Public HTML5 Demos');
   const links = await gallery.locator('.open-demo').evaluateAll((anchors) => anchors.map((anchor) => anchor.getAttribute('href')));
-  assert.deepEqual(links, ['./ragdoll-lab/', './ragdoll-math-lab/', './anthrocybernetics/']);
+  assert.deepEqual(links, ['./rounds/', './ragdoll-lab/', './ragdoll-math-lab/', './anthrocybernetics/']);
+  await assertImagesDecoded(gallery);
   assert.equal(galleryErrors.length, 0, galleryErrors.join(' | '));
   await gallery.close();
+
+  const galleryPortrait = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const galleryPortraitErrors = runtimeErrors(galleryPortrait);
+  await galleryPortrait.goto(`http://127.0.0.1:${address.port}/`, { waitUntil: 'networkidle' });
+  await assertImagesDecoded(galleryPortrait);
+  const galleryOverflow = await galleryPortrait.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  assert.ok(galleryOverflow <= 1, `gallery portrait layout overflows by ${galleryOverflow}px`);
+  assert.equal(galleryPortraitErrors.length, 0, galleryPortraitErrors.join(' | '));
+  await galleryPortrait.close();
+
+  const rounds = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const roundsErrors = runtimeErrors(rounds);
+  const roundsResponse = await rounds.goto(`http://127.0.0.1:${address.port}/rounds/`, { waitUntil: 'networkidle' });
+  assert.equal(roundsResponse?.status(), 200);
+  assert.equal(await rounds.title(), 'HAIO Flight Log | Public HTML5 Demos');
+  await assertImagesDecoded(rounds);
+  await rounds.getByRole('tab', { name: 'Round 5' }).click();
+  assert.equal(await rounds.getByRole('tabpanel', { name: 'Round 5' }).isVisible(), true);
+  assert.equal(await rounds.locator('.model-card').count(), 3);
+  await rounds.getByRole('button', { name: 'Portrait' }).click();
+  assert.equal(await rounds.locator('.model-card[data-view="portrait"]').count(), 3);
+  assert.equal(await rounds.locator('.model-card img').first().getAttribute('src'), '../round-5/results/operator/luna/screenshots/first-frame-portrait.png');
+  await assertImagesDecoded(rounds);
+  await rounds.getByRole('tab', { name: 'Docs' }).click();
+  assert.equal(await rounds.locator('.doc-card').count(), 7);
+  assert.equal(roundsErrors.length, 0, roundsErrors.join(' | '));
+  await rounds.close();
+
+  const roundsPortrait = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const roundsPortraitErrors = runtimeErrors(roundsPortrait);
+  await roundsPortrait.goto(`http://127.0.0.1:${address.port}/rounds/#round-5`, { waitUntil: 'networkidle' });
+  assert.equal(await roundsPortrait.getByRole('tabpanel', { name: 'Round 5' }).isVisible(), true);
+  const roundsOverflow = await roundsPortrait.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  assert.ok(roundsOverflow <= 1, `rounds portrait layout overflows by ${roundsOverflow}px`);
+  assert.equal(roundsPortraitErrors.length, 0, roundsPortraitErrors.join(' | '));
+  await roundsPortrait.close();
 
   const anthro = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   const anthroErrors = runtimeErrors(anthro);
@@ -74,4 +119,4 @@ try {
   await harness.close();
 }
 
-console.log('Site browser contract passed: gallery, Anthrocybernetics workflow, export/import error path, persistence reset, and portrait layout.');
+console.log('Site browser contract passed: gallery, visual experiment tabs, desktop/portrait switching, Anthrocybernetics workflow, export/import error path, persistence reset, and portrait layouts.');

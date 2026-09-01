@@ -110,6 +110,36 @@
       box-shadow: 0 22px 70px rgba(0, 0, 0, 0.24);
     }
 
+    .feature-card {
+      min-height: 440px;
+      display: grid;
+      grid-column: 1 / -1;
+      grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.55fr);
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .feature-visual {
+      min-height: 440px;
+      background: #02070d;
+    }
+
+    .feature-visual picture,
+    .feature-visual img {
+      width: 100%;
+      height: 100%;
+    }
+
+    .feature-visual img { object-fit: cover; }
+
+    .feature-copy {
+      display: flex;
+      flex-direction: column;
+      padding: clamp(24px, 4vw, 38px);
+    }
+
+    .feature-copy h2 { max-width: 9ch; margin-top: 54px; }
+
     .card-top {
       display: flex;
       align-items: center;
@@ -185,6 +215,9 @@
     @media (max-width: 520px) {
       body { padding-inline: 14px; }
       .demo-card { min-height: 280px; border-radius: 20px; }
+      .feature-card { display: flex; min-height: 0; }
+      .feature-visual { min-height: 340px; }
+      .feature-copy h2 { margin-top: 28px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -206,6 +239,23 @@
     </header>
 
     <section class="demo-grid" aria-label="Available demos">
+      <article class="demo-card feature-card">
+        <div class="feature-visual">
+          <picture>
+            <source media="(max-width: 520px)" srcset="./round-5/mockups/portrait-reference-v2.png">
+            <img src="./round-5/mockups/desktop-reference-v2.png" alt="Hostile-space visual oracle with ships, station, salvage, beacon, and radar">
+          </picture>
+        </div>
+        <div class="feature-copy">
+          <div class="card-top">
+            <p class="eyebrow">Agent experiment archive</p>
+            <span class="status">Featured</span>
+          </div>
+          <h2>HAIO Flight Log</h2>
+          <p class="card-copy">Five completed rounds. One next flight. See what changed when the prompt learned to look.</p>
+          <a class="open-demo" href="./rounds/">Open flight log</a>
+        </div>
+      </article>
       <article class="demo-card">
         <div class="card-top">
           <p class="eyebrow">Interactive physics</p>

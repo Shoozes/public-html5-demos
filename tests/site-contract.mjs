@@ -1,4 +1,3 @@
-import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -12,6 +11,7 @@ const tracked = execFileSync('git', ['ls-files', '--cached', '--others', '--excl
 }).trim().split(/\r?\n/).filter(Boolean);
 const htmlFiles = tracked.filter((file) => file.endsWith('.html'));
 const markdownFiles = tracked.filter((file) => file.endsWith('.md'));
+const scriptFiles = tracked.filter((file) => /\.(?:mjs|js)$/.test(file));
 const temporary = await mkdtemp(path.join(tmpdir(), 'public-html-contract-'));
 const failures = [];
 
@@ -47,6 +47,15 @@ function checkPinnedDependencies(owner, source) {
 }
 
 try {
+  for (const file of scriptFiles) {
+    const source = await readFile(path.join(root, file), 'utf8');
+    const parsed = spawnSync(process.execPath, ['--check', path.join(root, file)], { encoding: 'utf8' });
+    check(parsed.status === 0, `${file}: script does not parse: ${(parsed.stderr || parsed.stdout).trim()}`);
+    for (const match of source.matchAll(/\b(?:from\s*|import\s*\(\s*|import\s*)['"](\.[^'"]+)['"]/g)) {
+      await checkLocalTarget(file, match[1]);
+    }
+  }
+
   for (const file of htmlFiles) {
     const source = await readFile(path.join(root, file), 'utf8');
     check(/^\s*<!doctype html>/i.test(source), `${file}: missing HTML doctype`);
@@ -98,4 +107,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Site contract passed: ${htmlFiles.length} HTML files, ${markdownFiles.length} Markdown files, ${tracked.length} repository files checked.`);
+console.log(`Site contract passed: ${htmlFiles.length} HTML files, ${markdownFiles.length} Markdown files, ${scriptFiles.length} JavaScript modules, ${tracked.length} repository files checked.`);

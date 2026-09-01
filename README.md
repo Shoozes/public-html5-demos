@@ -3,6 +3,7 @@
 A public GitHub Pages collection for browser-ready HTML-all-in-one demos, experiments, visual explainers, and prototypes.
 
 - Gallery: https://shoozes.github.io/public-html5-demos/
+- Visual experiment flight log: https://shoozes.github.io/public-html5-demos/rounds/
 - Anthrocybernetics demo: https://shoozes.github.io/public-html5-demos/anthrocybernetics/
 
 ## Repository contract
@@ -44,6 +45,8 @@ https://shoozes.github.io/public-html5-demos/my-demo/
 - Uses a clear title, description, and primary action.
 
 ## Workflow experiments
+
+The image-led [HAIO Flight Log](https://shoozes.github.io/public-html5-demos/rounds/) is the public entry point for the experiment series. It keeps the main story short, exposes Round 5 desktop/portrait comparisons in tabs, and links back to the authoritative repository documents below.
 
 - [Round 4: Pass-Down Workflow Experiment](round-4/REPORT.md) compares isolated Luna, Terra, and Sol hostile-space HAIO submissions. It now records the controlled-tool gap: screenshots were captured, but image generation, GenEye, semantic visual review, and a candid repair contract were not prescribed. The verified operator reference remains playable at `round-4/submission/index.html`.
 - [Round 5: Visual Oracle and Critic Loop](round-5/REPORT.md) completed the controlled Luna/Terra/Sol comparison with an approved brighter image-generated reference pair, project-local visual-critic skill, common visual-interpreter lane, Playwright holdout, tool ledger, blind self-critique, external critique, and bounded before/after repairs. Sol passed the complete operator contract; Luna missed the visual threshold; Terra remained playable but was hard-gated by diagnostic-contract drift.
