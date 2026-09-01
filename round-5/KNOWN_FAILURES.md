@@ -27,6 +27,7 @@ This is the compact context supplied to every Round 5 model. It records observab
 | Decorative diagnostics | Fields exist but never reflect runtime state | Prompt vocabulary copied without connected evidence | Every reported diagnostic is live, tested, and used by invariants |
 | Screenshot without critique | Evidence folder contains images but visual defects remain unnamed | Capture was treated as visual validation | Every milestone receives a structured semantic review and bounded repair |
 | Generic visual language | “Looks coherent” despite obvious imbalance | Prompt asks for polish but not candid perception | Verdict must be `BROKEN`, `ODD`, or `GOOD` with visible deltas |
+| Legacy-reference overfit | Submission copies old panels, button density, artwork, labels, or low-resolution trade dress | Historical inspiration is treated as a pixel-copy target | Preserve world, role, and readability invariants; follow the approved V2 oracle and explicit exclusions |
 
 ## Use
 

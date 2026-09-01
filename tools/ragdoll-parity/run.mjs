@@ -1,12 +1,11 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
+import { openBrowserHarness } from '../browser-harness.mjs';
 import { compareTraces, reportWithContext } from './compare.mjs';
-import { createStaticServer } from './static-server.mjs';
 import { getParityCommandType } from '../../shared/ragdoll-parity/protocol.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -50,25 +49,6 @@ const captureScreenshots = args.includes('--screenshots');
 if (!Number.isInteger(determinismRuns) || determinismRuns < 1 || determinismRuns > 100) {
   throw new Error('--determinism-runs must be an integer from 1 through 100.');
 }
-
-const modules = process.env.CODEX_NODE_MODULES || process.env.NODE_PATH;
-let playwright;
-try {
-  const loaded = await import(modules
-    ? pathToFileURL(path.join(modules, 'playwright', 'index.js')).href
-    : 'playwright');
-  playwright = loaded.default || loaded;
-} catch (error) {
-  console.error(`Playwright unavailable: ${error.message}`);
-  process.exit(2);
-}
-
-const executablePath = process.env.PARITY_BROWSER || (process.platform === 'win32'
-  ? [
-      'C:/Program Files/Google/Chrome/Application/chrome.exe',
-      'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
-    ].find(existsSync)
-  : undefined);
 
 const repositoryRevision = (() => {
   try {
@@ -140,12 +120,8 @@ const markdownReport = (scenario, report) => {
   ].join('\n');
 };
 
-const server = createStaticServer(root);
-const address = await server.listen();
-const browser = await playwright.chromium.launch({
-  headless: !args.includes('--headed'),
-  ...(executablePath ? { executablePath } : {})
-});
+const harness = await openBrowserHarness(root, { browserOptions: { headless: !args.includes('--headed') } });
+const { address, browser } = harness;
 
 const openBackend = async (folder) => {
   const page = await browser.newPage();
@@ -292,8 +268,7 @@ try {
     }
   }
 } finally {
-  await browser.close();
-  await server.close();
+  await harness.close();
 }
 
 await writeFile(path.join(outputRoot, 'run.json'), JSON.stringify({

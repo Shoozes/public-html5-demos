@@ -15,7 +15,7 @@ A `/goal` test against an unstable visual workflow would mix two questions. Roun
 
 ## Official behavior being tested
 
-Goal mode is intended for a durable objective with a clear target and validation loop. It can continue working toward completion across a longer horizon instead of stopping after one ordinary turn. Round 6 is therefore a workflow-mode experiment, not a prompt rewrite.
+[Official OpenAI documentation](https://learn.chatgpt.com/use-cases/follow-goals) describes `/goal` as a durable objective for long-running work with a clear success condition and validation loop. Round 6 is therefore a workflow-mode experiment, not a prompt rewrite. The plan makes no broader availability claim than the official page supports.
 
 ## Paired design
 
@@ -51,11 +51,11 @@ Every arm receives the exact same:
 
 Do not improve the shared package between paired runs. Record a discovered harness defect and repair it only after the entire pair set finishes.
 
-# Task 0: Create the durable goal contract
+# Task 0: Create the durable goal contract — complete
 
 ## What
 
-Write one concise `round-6/GOAL.md` that points to the frozen Round 5 task package.
+Use the concise `round-6/GOAL.md` that points to the frozen Round 5 task package.
 
 ## Why
 
@@ -63,7 +63,7 @@ The `/goal` command should carry one durable objective, while the repository pro
 
 ## When/Where
 
-Before any Round 6 run.
+Prepared before any Round 6 run.
 
 ## How
 
@@ -88,7 +88,7 @@ The normal-task arm receives the same sentence without the `/goal` prefix and wi
 
 ## Done When
 
-Both arms receive semantically identical objectives and all detailed requirements live in the repository.
+`GOAL.md` gives both arms semantically identical objectives and keeps all detailed requirements in the repository.
 
 # Task 1: Protect the experiment boundary
 

@@ -23,4 +23,5 @@ assert.equal(head.status, 200);
 assert.match(head.headers.get('content-type'), /application\/javascript/);
 assert.equal((await fetch(`http://127.0.0.1:${address.port}/index.html`, { method: 'POST' })).status, 405);
 await instance.close();
+await instance.close();
 console.log('Parity static server tests passed.');

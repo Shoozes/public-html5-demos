@@ -27,7 +27,10 @@ check(!/<(?:img|audio|video|source)\b[^>]*\bsrc=["']https?:/i.test(html), 'exter
 check(!/>\s*fire\s*</i.test(html), 'permanent manual fire control detected');
 check(/window\.__haio=/.test(html) && /const invariants=/.test(html), 'diagnostic invariant surface is missing');
 check((html.match(/setAnimationLoop\(/g) || []).length === 2, 'expected one loop registration and one failure shutdown');
-check(report.includes('skills/tools allowed, but usage vague and uncontrolled'), 'report does not classify Round 4 skill/tool usage');
+check(
+  /Classification:\s+skills and tools were allowed and materially used,[\s\S]{0,220}not frozen as experimental controls\./i.test(report),
+  'report does not classify Round 4 skill/tool usage'
+);
 check(report.includes('Luna') && report.includes('Terra') && report.includes('Sol'), 'report omits a model result');
 check(visualContract.includes('Verdict: BROKEN | ODD | GOOD'), 'visual contract lacks the mandatory verdict vocabulary');
 check(visualContract.includes('Blunt read: This looks <broken/odd/good> because...'), 'visual contract lacks the blunt-read checkpoint');

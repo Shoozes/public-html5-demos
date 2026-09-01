@@ -1,38 +1,12 @@
-import { createServer } from 'node:http';
-import { existsSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { openBrowserHarness } from '../../tools/browser-harness.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const evidence = path.join(root, 'submission', 'evidence');
-const moduleRoot = process.env.CODEX_NODE_MODULES || process.env.NODE_PATH;
-let playwright;
-try {
-  const loaded = await import(moduleRoot ? pathToFileURL(path.join(moduleRoot, 'playwright', 'index.js')).href : 'playwright');
-  playwright = loaded.default || loaded;
-} catch (error) {
-  console.error(`Playwright unavailable: ${error.message}`);
-  console.error('Set CODEX_NODE_MODULES to a node_modules directory containing playwright.');
-  process.exit(2);
-}
-
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png' };
-const server = createServer(async (request, response) => {
-  try {
-    const pathname = decodeURIComponent(new URL(request.url, 'http://local').pathname);
-    const relative = pathname === '/' ? 'submission/index.html' : pathname.replace(/^\/+/, '');
-    const target = path.resolve(root, relative);
-    if (!target.startsWith(root + path.sep) || !existsSync(target)) { response.writeHead(404).end('Not found'); return; }
-    const { readFile } = await import('node:fs/promises');
-    response.writeHead(200, { 'content-type': types[path.extname(target)] || 'application/octet-stream', 'cache-control': 'no-store' });
-    response.end(await readFile(target));
-  } catch (error) { response.writeHead(500).end(String(error)); }
-});
-await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-const port = server.address().port;
-const executablePath = process.env.HAIO_BROWSER || ['C:/Program Files/Google/Chrome/Application/chrome.exe','C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(existsSync);
-const browser = await playwright.chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
+const harness = await openBrowserHarness(root);
+const { address, browser } = harness;
 await mkdir(evidence, { recursive: true });
 const failures = [], results = [];
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
@@ -46,7 +20,7 @@ const openGame = async viewport => {
   page.on('console', message => { if (message.type() === 'error') errors.push(`console: ${message.text()}`); });
   page.on('requestfailed', request => requests.push(`${request.url()}: ${request.failure()?.errorText}`));
   page.on('response', response => { if (response.status() >= 400) requests.push(`${response.status()} ${response.url()}`); });
-  const response = await page.goto(`http://127.0.0.1:${port}/submission/index.html`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+  const response = await page.goto(`http://127.0.0.1:${address.port}/submission/index.html`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
   assert(response?.ok(), `artifact HTTP status was ${response?.status()}`);
   try {
     await page.waitForFunction(() => window.__haio?.ready, null, { timeout: 30_000 });
@@ -163,8 +137,7 @@ try {
   failures.push(error instanceof Error ? error.stack || error.message : String(error));
 } finally {
   if (mobile) await mobile.page.close();
-  await browser.close();
-  await new Promise(resolve => server.close(resolve));
+  await harness.close();
 }
 
 if (failures.length) { console.error(`FAIL: ${failures.join('\n')}`); process.exit(1); }

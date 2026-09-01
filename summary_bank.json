@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "defaults": {
+    "groups": [
+      "repo__orientation"
+    ],
+    "tree": true,
+    "max_kb": 256,
+    "skip_dirs": [
+      ".git",
+      ".playwright-cli",
+      ".tools/.secrets",
+      "node_modules",
+      "output"
+    ]
+  },
+  "groups": {
+    "repo__orientation": {
+      "description": "Small default pack for repository purpose, current state, active work, history, and verification routes.",
+      "paths": [
+        "README.md",
+        "docs/APP_STATE.md",
+        "docs/TODO.md",
+        "docs/HISTORY.md",
+        "summary_bank.json",
+        "tools/context-bank.mjs",
+        "tests/site-contract.mjs",
+        "tests/site-browser.mjs",
+        "tests/browser-harness.mjs",
+        "tools/browser-harness.mjs"
+      ]
+    },
+    "demo__anthrocybernetics": {
+      "description": "Implementation and browser proof for the guided Anthrocybernetics presentation, persistence, and portable-map workflow.",
+      "paths": [
+        "anthrocybernetics/index.html",
+        "docs/APP_STATE.md",
+        "tests/site-contract.mjs",
+        "tests/site-browser.mjs",
+        "tools/browser-harness.mjs",
+        "tools/browser-runtime.mjs",
+        "tools/ragdoll-parity/static-server.mjs"
+      ]
+    },
+    "feature__ragdoll_lab": {
+      "description": "Rapier Soldier ragdoll implementation, deployment contract, direct smoke proof, and shared browser/runtime seams.",
+      "paths": [
+        "ragdoll-lab/index.html",
+        "ragdoll-lab/DEPLOYMENT.md",
+        "tests/ragdoll-lab-smoke.mjs",
+        "tests/ragdoll-interactive-browser.mjs",
+        "shared/ragdoll-parity/protocol.mjs",
+        "tools/browser-harness.mjs",
+        "tools/browser-runtime.mjs",
+        "tools/ragdoll-parity/static-server.mjs"
+      ]
+    },
+    "feature__ragdoll_math_lab": {
+      "description": "Custom Soldier physics implementation, portable core contracts, math authority, and focused behavior proof.",
+      "paths": [
+        "ragdoll-math-lab/index.html",
+        "ragdoll-math-lab/MATH.md",
+        "shared/ragdoll-core/**",
+        "tests/ragdoll-math-lab-smoke.mjs",
+        "tests/ragdoll-core-contract.mjs",
+        "tests/ragdoll-core-typescript-contract.mjs",
+        "tests/ragdoll-interactive-browser.mjs",
+        "tools/browser-harness.mjs",
+        "tools/browser-runtime.mjs",
+        "tools/ragdoll-parity/static-server.mjs"
+      ]
+    },
+    "workflow__ragdoll_parity": {
+      "description": "Oracle-driven parity workflow, scenario registry, trace comparison, repeated-failure evidence, and regression commands.",
+      "paths": [
+        "docs/parity/CLONE_BEHAVIOR_NOT_CONSTANTS.md",
+        "docs/parity/PITFALLS.md",
+        "shared/ragdoll-core/**",
+        "shared/ragdoll-parity/**",
+        "tools/browser-harness.mjs",
+        "tools/browser-runtime.mjs",
+        "tools/ragdoll-parity/**",
+        "tests/parity/**",
+        "tests/ragdoll-contract-smoke.mjs",
+        "tests/ragdoll-interactive-browser.mjs",
+        "tests/ragdoll-parity-server.mjs",
+        "tests/ragdoll-trace-parity.mjs"
+      ]
+    },
+    "workflow__haio_rounds_1_4": {
+      "description": "Prompt-discovery evidence through the completed Round 4 pass-down baseline and canonical reference harness.",
+      "paths": [
+        "docs/haio-prompt-discovery/**/*.md",
+        "round-4/*.md",
+        "round-4/harness/*.mjs",
+        "round-4/submission/index.html",
+        "round-4/submission/*.md",
+        "tools/browser-harness.mjs",
+        "tools/browser-runtime.mjs",
+        "tools/ragdoll-parity/static-server.mjs"
+      ]
+    },
+    "workflow__visual_oracle_round5": {
+      "description": "Frozen Round 5A visual oracle, historical behavior and 3D reference boundaries, scene/component outline, critic contract, scoring, budgets, and package verification.",
+      "paths": [
+        ".agents/skills/haio-visual-critic/SKILL.md",
+        "round-4/PASSDOWN.md",
+        "round-4/RUBRIC.md",
+        "round-5/*.md",
+        "round-5/*.json",
+        "round-5/harness/*.mjs",
+        "round-5/mockups/*.md",
+        "tools/browser-harness.mjs",
+        "tools/browser-runtime.mjs",
+        "tools/ragdoll-parity/static-server.mjs"
+      ]
+    },
+    "workflow__goal_round6": {
+      "description": "Paired normal-versus-goal experiment protocol and its frozen Round 5 dependencies.",
+      "paths": [
+        "round-6/*.md",
+        "round-5/PASSDOWN.md",
+        "round-5/RUBRIC.md",
+        "round-5/EXPERIMENT.json"
+      ]
+    }
+  }
+}

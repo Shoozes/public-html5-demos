@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="icon" href="data:,">
   <meta name="theme-color" content="#080b14">
   <meta name="color-scheme" content="dark">
   <title>Anthrocybernetics Guided Presentation</title>
@@ -3203,14 +3204,14 @@ const THREE_VERSION = "0.185.1";
       DOM.nodeDetail.hidden = false;
     }
 
-    function runAnalysis({ announce = true } = {}) {
+    function runAnalysis({ announce = true, persist = true } = {}) {
       try {
         appState.analysis = analyzeText(DOM.input.value);
         appState.activeLens = appState.analysis.topLenses[0] ?? "phase";
         appState.selectedNode = null;
         DOM.nodeDetail.hidden = true;
         renderAnalysis();
-        saveLocalState();
+        if (persist) saveLocalState();
         if (announce) showToast("Situation mapped and saved locally.");
         return true;
       } catch (error) {
@@ -3275,7 +3276,7 @@ const THREE_VERSION = "0.185.1";
 
       DOM.input.value = EXAMPLES.local;
       appState.activeEvidence = "grounded";
-      runAnalysis({ announce: false });
+      runAnalysis({ announce: false, persist: false });
       showToast("The example was reset. Local storage is cleared when the browser allows it.");
     }
 

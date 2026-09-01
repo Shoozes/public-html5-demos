@@ -1,32 +1,12 @@
-import { existsSync } from 'node:fs';
 import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { createStaticServer } from '../tools/ragdoll-parity/static-server.mjs';
+import { fileURLToPath } from 'node:url';
+import { openBrowserHarness } from '../tools/browser-harness.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const modules = process.env.CODEX_NODE_MODULES || process.env.NODE_PATH;
-let playwright;
-try {
-  const loaded = await import(modules
-    ? pathToFileURL(path.join(modules, 'playwright', 'index.js')).href
-    : 'playwright');
-  playwright = loaded.default || loaded;
-} catch (error) {
-  console.error(`Playwright unavailable: ${error.message}`);
-  process.exit(2);
-}
-
-const executablePath = process.env.PARITY_BROWSER || (process.platform === 'win32'
-  ? [
-      'C:/Program Files/Google/Chrome/Application/chrome.exe',
-      'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
-    ].find(existsSync)
-  : undefined);
-const server = createStaticServer(root);
-const address = await server.listen();
-const browser = await playwright.chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
+const harness = await openBrowserHarness(root);
+const { address, browser } = harness;
 const reportMode = process.argv.includes('--report');
 const compactReportMode = process.argv.includes('--report-compact');
 const captureTemporal = process.argv.includes('--capture-temporal');
@@ -462,8 +442,7 @@ try {
   failed = true;
   console.error(error instanceof Error ? error.message : error);
 } finally {
-  await browser.close();
-  await server.close();
+  await harness.close();
 }
 
 if (temporalCaptureDir) console.log(`Temporal screenshots: ${temporalCaptureDir}`);

@@ -4,7 +4,7 @@
 
 The mockups under `round-4/mockups/` remain the provenance record for the first visual-oracle idea. They are useful layout drafts, but they are too dark to freeze as the Round 5 target.
 
-Do not overwrite them. Generate and approve a brighter V2 pair under:
+The brighter V2 pair has been generated, reviewed, approved, and frozen under:
 
 ```text
 round-5/mockups/desktop-reference-v2.png
@@ -12,7 +12,7 @@ round-5/mockups/portrait-reference-v2.png
 round-5/mockups/GENERATION_RECORD.md
 ```
 
-The V2 images are design references only. They must never become runtime textures or bundled assets in the submitted HAIO.
+The V2 images are design references only. They must never become runtime textures or bundled assets in the submitted HAIO. `GENERATION_RECORD.md` is the approval authority; this brief preserves the request that produced them.
 
 ## Visual principle
 
@@ -129,4 +129,4 @@ Place compact hull/credits and target information at the top edges, a small even
 - any rejected drafts and the reason they were rejected;
 - final `APPROVED` declaration.
 
-Round 5 does not begin until both references are approved and frozen.
+Both references are approved and frozen. Model arms remain gated on the baseline commit recorded in `EXPERIMENT.json`.

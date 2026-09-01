@@ -1,5 +1,9 @@
 # Round 5 Plan: Visual Oracle and Critic Loop
 
+## Setup status
+
+The V2 desktop and portrait references are approved and frozen with checksums in `mockups/GENERATION_RECORD.md`. The pass-down, rubric, visual-critic skill, budgets, thresholds, reference-review capture, and package verifier exist. Model runs remain gated until `EXPERIMENT.json` names the commit that contains the complete frozen package.
+
 ## Experiment question
 
 Does a fixed visual oracle, prescribed skill stack, semantic screenshot review, and bounded repair loop improve visual convergence without reducing functional correctness or HAIO format compliance?
@@ -79,16 +83,19 @@ Availability without use must be recorded. This prevents “tools were available
 
 Keep context narrow and legible. Every model receives only:
 
-1. Round 5 pass-down and rubric.
+1. `PASSDOWN.md` and `RUBRIC.md`.
 2. Approved V2 mockups and generation record.
-3. The visual-critic skill.
-4. The read-only browser harness and environment note.
-5. `KNOWN_FAILURES.md`, covering artifact path, black-screen imports, dead-target cleanup, backwards facing, unsafe opening fire, zoom extremes, dark materials, capsule silhouettes, and precision salvage.
-6. The `Clone Behavior, Not Constants` method as optional methodology, not source to copy literally.
+3. `HOSTILE_SPACE_REFERENCE.md`, the historical behavioral lineage and non-cloning boundary.
+4. `STARBLAST_REFERENCE.md`, the low-poly 3D presentation lineage and non-cloning boundary.
+5. `REFERENCE_OUTLINE.md`, the shared scene-layer and procedural component decomposition.
+6. The visual-critic skill.
+7. The read-only browser harness and environment note.
+8. `KNOWN_FAILURES.md`, covering artifact path, black-screen imports, dead-target cleanup, backwards facing, unsafe opening fire, zoom extremes, dark materials, capsule silhouettes, legacy-reference overfit, and precision salvage.
+9. The `Clone Behavior, Not Constants` method as optional methodology, not source to copy literally.
 
 Do not attach the full conversation or every prior implementation. Too much history encourages architecture transcription and dilutes the current goal.
 
-# Task 0: Freeze and approve the visual oracle
+# Task 0: Freeze and approve the visual oracle — complete
 
 ## What
 
@@ -112,7 +119,7 @@ Before any Luna, Terra, or Sol run. Save the approved images under `round-5/mock
 
 ## Done When
 
-The operator records `APPROVED` for both images and no experiment has started.
+`mockups/GENERATION_RECORD.md` records `APPROVED` for both images, their exact prompts and checksums, the rejected portrait draft, and its bounded repair. No model experiment has started.
 
 # Task 1: Preflight the tool stack
 
@@ -136,6 +143,8 @@ Before implementation in each clean worktree.
 - Confirm the selected visual-interpreter lane.
 - If using GenEye, discover capabilities, profile path, and model readiness rather than guessing; require the real profile for semantic evidence.
 - Create `submission/TOOL_LEDGER.md` before coding.
+
+The operator package fixes native image view as the common interpreter lane and records Playwright/browser versions, budgets, thresholds, and frozen-input checksums in `EXPERIMENT.json`. The final preflight action is setting its baseline commit after the package is committed.
 
 ## Done When
 
@@ -167,8 +176,11 @@ Record:
 - background, grid, star, debris, palette, light, material, and glow rules;
 - HUD footprint and control hierarchy;
 - what will be simplified procedurally without breaking the visible invariant.
+- where the shared outline is accurate and where direct image inspection requires a correction.
 
 Each item must cite a visible relationship. “Polished sci-fi” is invalid. “The cyan player occupies about one tenth of viewport height and is isolated by negative space” is valid.
+
+Before materials and effects, run the silhouette-outline checkpoint in `REFERENCE_OUTLINE.md`. Individual component images may be added only by the operator before baseline freeze and must then be supplied identically to every arm.
 
 ## Done When
 
@@ -339,33 +351,7 @@ The artifact passes hard gates, evidence is complete, references were not modifi
 
 ## Scoring
 
-Keep three separate scores.
-
-### Functional score: 100
-
-Reuse the Round 4 rubric. Hard gates remain decisive.
-
-### Visual convergence score: 30
-
-| Area | Points |
-| --- | ---: |
-| Reference analysis specificity | 5 |
-| Desktop composition | 5 |
-| Portrait composition | 5 |
-| Silhouette differentiation | 5 |
-| Lighting, contrast, and depth | 5 |
-| Critique honesty and repair effectiveness | 5 |
-
-### Workflow discipline score: 20
-
-| Area | Points |
-| --- | ---: |
-| Correct tool/skill preflight and ledger | 5 |
-| Milestone order and evidence preservation | 5 |
-| Separation of self and external critique | 5 |
-| Scope, path, and artifact discipline | 5 |
-
-Do not collapse these into one winner number until after the separate axes are discussed.
+`RUBRIC.md` is the single scoring authority. It freezes the hard gates, category weights, 90/100 functional threshold, 24/30 visual threshold, 16/20 workflow threshold, 60-minute wall-time limit, and repair budgets. Do not duplicate or alter those values inside a submission. Keep all three scores separate until after the axes are discussed.
 
 ## Model-capability ledger
 

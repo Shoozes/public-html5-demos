@@ -31,7 +31,13 @@ export function createStaticServer(root, { host = '127.0.0.1', port = 0 } = {}) 
       if (req.method !== 'HEAD') res.end(await fs.readFile(file)); else res.end();
     } catch { res.writeHead(400); res.end('Bad request'); }
   });
-  return { server, listen: () => new Promise((resolve) => server.listen(port, host, () => resolve(server.address()))), close: () => new Promise((resolve, reject) => server.close((e) => e ? reject(e) : resolve())) };
+  return {
+    server,
+    listen: () => new Promise((resolve) => server.listen(port, host, () => resolve(server.address()))),
+    close: () => server.listening
+      ? new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+      : Promise.resolve()
+  };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
