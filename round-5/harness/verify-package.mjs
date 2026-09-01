@@ -10,6 +10,12 @@ const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
 const failures = [];
 const check = (condition, message) => { if (!condition) failures.push(message); };
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const frozenTextExtensions = new Set(manifest.integrity?.textExtensions || []);
+const canonicalFrozenBytes = (relative, bytes) => (
+  frozenTextExtensions.has(path.extname(relative).toLowerCase())
+    ? Buffer.from(bytes.toString('utf8').replaceAll('\r\n', '\n'), 'utf8')
+    : bytes
+);
 const resolveInsideRoot = (relative) => {
   const target = path.resolve(root, relative);
   check(target.startsWith(`${root}${path.sep}`), `path escapes repository root: ${relative}`);
@@ -27,6 +33,12 @@ const resolvesToCommit = (revision) => {
 
 check(manifest.schemaVersion === 1, 'unsupported experiment schema');
 check(manifest.round === '5A', 'manifest is not for Round 5A');
+check(manifest.integrity?.algorithm === 'sha256', 'integrity algorithm drifted');
+check(manifest.integrity?.textEndOfLine === 'lf', 'text checksum line-ending contract drifted');
+check(
+  [...frozenTextExtensions].sort().join(',') === '.md,.mjs',
+  'frozen text extension set drifted'
+);
 check(manifest.visualInterpreter?.lane === 'native_image_view', 'visual interpreter lane is not frozen to native image view');
 check(manifest.budgets?.wallTimeMinutes === 60, 'wall-time budget drifted');
 check(manifest.budgets?.visualRepairsPerCheckpoint === 3, 'per-checkpoint visual repair budget drifted');
@@ -45,7 +57,7 @@ for (const [relative, expectedHash] of Object.entries(manifest.frozenInputs || {
   const target = resolveInsideRoot(relative);
   const bytes = await readFile(target).catch(() => null);
   check(bytes !== null, `missing frozen input: ${relative}`);
-  if (bytes) check(sha256(bytes) === expectedHash, `checksum drift: ${relative}`);
+  if (bytes) check(sha256(canonicalFrozenBytes(relative, bytes)) === expectedHash, `checksum drift: ${relative}`);
 }
 
 for (const [name, expected] of Object.entries(manifest.references || {})) {

@@ -6,6 +6,14 @@
     "sourceCommit": "07845f415c78ebbb109ff6a97401f50b95ea24a4",
     "commit": "4eaf26117e67c7be9b63462f3f829c7cf4344918"
   },
+  "integrity": {
+    "algorithm": "sha256",
+    "textEndOfLine": "lf",
+    "textExtensions": [
+      ".md",
+      ".mjs"
+    ]
+  },
   "visualInterpreter": {
     "lane": "native_image_view",
     "notes": "Use the coding environment's native image-reading path for every arm; do not mix it with GenEye output."
@@ -64,22 +72,22 @@
     }
   },
   "frozenInputs": {
-    ".agents/skills/haio-visual-critic/SKILL.md": "c856ca18e8f7580a7c4b75bb822ca01ce7542e620414c6b5df9a2f750eb106c8",
-    "round-4/PASSDOWN.md": "d8c9efe56c8623b9a2cfc8e4f4551d642ea5f7d6edec2d4f934e7b58219aff96",
-    "round-4/RUBRIC.md": "62e207caa63b0db7939bd246a3b7b5a9d69d62ed8c261e92cb0ebc13010698e6",
-    "round-4/harness/verify-haio.mjs": "0ccfa528857bcc66ef1b341ba101d4a4136015fcdc0fc31b75b6c0201710e824",
-    "round-4/harness/run-scenarios.mjs": "4670e6b10fae4855c239442bc083c61b734d35c880e698c53772c66f610ddf66",
+    ".agents/skills/haio-visual-critic/SKILL.md": "ea21cef6ab8f55da3ed200dc3be1be0583b96f54926de1c09a9f9e2ba3eb6673",
+    "round-4/PASSDOWN.md": "106cf571265db10417103fcf5a4417de95b83bfdb7f17cb8a352337998b3d0c0",
+    "round-4/RUBRIC.md": "611ecf9700c28c4b55e078e9407276ae99c950b60cb1072432641f4d99653408",
+    "round-4/harness/verify-haio.mjs": "c83af1ec48b2676f9bbb6f825258c6b22bb047418a3358d71c88aa7cb7f58ea1",
+    "round-4/harness/run-scenarios.mjs": "434698d8915c6ccd527059d7d7e72994c642ca901a0f374d30a077d7070632d0",
     "round-5/PASSDOWN.md": "5a45d5c7c5b7f330d43250be5c9a556a4cf9a30d3046c638eb70d99b1f5b283a",
     "round-5/RUBRIC.md": "32d430a295fb596b6ef0b4ca1367bfe8ee38428f6132f822ea7720007528b3b7",
-    "round-5/PLAN.md": "1fb53fc3227402259233fde6baddefc2327ad0b45f3a788a43dbdafde0b428a0",
-    "round-5/KNOWN_FAILURES.md": "8087460843b60385f3aa56eaef84f421848146de6db35882c237c6a3b62d8132",
-    "round-5/MOCKUP_V2_BRIEF.md": "f5b9effb0b6136c73d7ad6971db4c35f9b404b7bb7979a305fa89ff00119a2b0",
+    "round-5/PLAN.md": "25668840744079ba7a10b805fb98721d29cbfa06cad188383c6a6854f970e393",
+    "round-5/KNOWN_FAILURES.md": "da71198036e08738a6271234fc98ff33447052a8daeef5005fcf04df09fd6aea",
+    "round-5/MOCKUP_V2_BRIEF.md": "e21e75989ab554cd5cd01093b3dbc29548d1d672a545aba6f096f46789ddf147",
     "round-5/HOSTILE_SPACE_REFERENCE.md": "58bdbf83855dc7c00a6c463530a889e006d22a5276cdf515cb76976c9c8e3f9b",
     "round-5/STARBLAST_REFERENCE.md": "e6b53d5117ce8001f8a657ecda9c9f28823e8a5c091abd1883e5e32222c06ed2",
     "round-5/REFERENCE_OUTLINE.md": "1f9634c913a3136d0e9d2beb3199b70c1fdaccd42f1a2145e524c8c623201e54",
     "round-5/mockups/GENERATION_RECORD.md": "15d5dccb8d74a0ed6798c226fa4e12ea4bc268b57ea612f07168a9cf57aa198d",
     "round-5/harness/capture-reference-review.mjs": "135968c94ba907c9ac6f03d2c8c28c955585aa9b1018ff50620b1dacd3962063",
-    "round-5/harness/verify-package.mjs": "42d9fd81fa0a68bc0aef925ac01d0cbd608996e51020276549391dfc0c56d996",
+    "round-5/harness/verify-package.mjs": "0969a840fb6c55ef35ebc1ac0eeafc2caccec83884210e3fbea1850bdeb748e3",
     "tools/browser-harness.mjs": "c7a7b0f2306636692a720f05e2a70ce982cfac02c702ab44bd37f3c2679605ed",
     "tools/browser-runtime.mjs": "83743a7d5112f5aaa42ac26556d6178d181352baf21ad9f9adf67f96b9e0b95f",
     "tools/ragdoll-parity/static-server.mjs": "52facd7ef3526d8fc835f602d1170162676da296d2170cb4f69d5b77ea58fd47"

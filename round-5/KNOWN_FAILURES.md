@@ -28,6 +28,7 @@ This is the compact context supplied to every Round 5 model. It records observab
 | Screenshot without critique | Evidence folder contains images but visual defects remain unnamed | Capture was treated as visual validation | Every milestone receives a structured semantic review and bounded repair |
 | Generic visual language | “Looks coherent” despite obvious imbalance | Prompt asks for polish but not candid perception | Verdict must be `BROKEN`, `ODD`, or `GOOD` with visible deltas |
 | Legacy-reference overfit | Submission copies old panels, button density, artwork, labels, or low-resolution trade dress | Historical inspiration is treated as a pixel-copy target | Preserve world, role, and readability invariants; follow the approved V2 oracle and explicit exclusions |
+| Platform-sensitive package hash | Main checkout passes while clean Windows worktrees report broad checksum drift | Raw working-tree bytes encode checkout-specific line endings | Canonicalize frozen text to LF before hashing; keep binary references byte-exact |
 
 ## Use
 
