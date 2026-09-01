@@ -6,6 +6,8 @@ There are no unresolved repository-integrity defects from the current pass. The 
 
 ## P1 — Run Round 5A
 
+Status: In progress. The first three arms stopped at a shared platform-sensitive checksum gate without creating submissions; the corrected baseline passed in a fresh CRLF worktree and is being re-dispatched cleanly.
+
 What: Start new isolated Luna, Terra, and Sol tasks against the frozen Round 5A instrument. These are clean reruns, not continuations of the Round 4 tasks.
 
 Why: The package is frozen and ready; a valid model comparison now requires all arms to start from the same dispatch commit and tool lane.

@@ -28,7 +28,7 @@ The gallery and demos use relative paths and pinned CDN dependencies. Soldier me
 
 - Prompt-discovery Rounds 1–3 are historical research under `docs/haio-prompt-discovery/`.
 - Round 4 is complete as the uncontrolled-tools/no-fixed-oracle baseline. Its canonical operator artifact passes static and twelve-group browser verification.
-- Round 5A setup now has approved desktop/portrait V2 oracles, a common native-image-view lane, a Hostile Space behavioral lineage, a Starblast 3D presentation lineage, explicit non-cloning boundaries, a scene/component outline, visual-critic skill, pass-down, rubric, fixed thresholds/budgets, and package verification. The frozen package content commit is `4eaf26117e67c7be9b63462f3f829c7cf4344918`; model runs have not started.
+- Round 5A now has approved desktop/portrait V2 oracles, a common native-image-view lane, a Hostile Space behavioral lineage, a Starblast 3D presentation lineage, explicit non-cloning boundaries, a scene/component outline, visual-critic skill, pass-down, rubric, fixed thresholds/budgets, and package verification. Its first Luna/Terra/Sol dispatch stopped cleanly before implementation because raw text hashes differed in fresh Windows worktrees. The corrected package content commit is `591530a153eac58d4dfdfed05162cd65a7b9cc78`; text hashes are LF-canonical while binary references remain byte-exact, and the isolated rerun is in progress.
 - Round 6 has a durable `GOAL.md` and paired protocol, but execution is gated on a completed, successful Round 5 instrument.
 
 ## Current verification contract
@@ -67,7 +67,7 @@ The hosted workflow is not local proof. Local command results are the verificati
 - The Round 5 images are generator-native sizes close to, but not identical with, their comparison viewports. The reference-review harness normalizes them; source dimensions and checksums remain frozen.
 - Anthrocybernetics analysis is an educational heuristic, not a scientific inference engine. Its 2D fallback is intentional when Three.js fails or misses the startup deadline.
 - The custom ragdoll solver targets observable parity for the registered scenarios, not a general replacement for Rapier.
-- Round 5/6 model comparisons require independent model tasks and a committed frozen baseline; this repository pass does not launch those external experiment arms.
+- Round 5 model arms run in independent tasks from one committed frozen baseline. Round 6 remains gated on an accepted Round 5 result.
 
 ## Knowledge ownership
 
