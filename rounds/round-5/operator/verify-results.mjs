@@ -3,7 +3,7 @@ import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const failures = [];
 const check = (condition, message) => { if (!condition) failures.push(message); };
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -17,7 +17,7 @@ const artifacts = {
 const requiredEvidence = ['DECISIONS.md', 'EVIDENCE.md', 'TOOL_LEDGER.md', 'VISUAL_CONTRACT.md', 'VISUAL_REVIEW.md'];
 
 for (const [model, expected] of Object.entries(artifacts)) {
-  const base = `round-5/results/${model}/submission`;
+  const base = `rounds/round-5/results/${model}/submission`;
   const bytes = await read(`${base}/index.html`).catch(() => null);
   check(bytes !== null, `${model} artifact is missing`);
   if (bytes) {
@@ -38,7 +38,7 @@ const evaluations = {
 };
 
 for (const [label, expected] of Object.entries(evaluations)) {
-  const relative = `round-5/results/operator/${label}/evaluation.json`;
+  const relative = `rounds/round-5/results/operator/${label}/evaluation.json`;
   const evaluation = await read(relative).then(bytes => JSON.parse(bytes)).catch(() => null);
   check(evaluation !== null, `${label} operator evaluation is missing or invalid`);
   if (!evaluation) continue;
@@ -64,7 +64,7 @@ const screenshots = {
 };
 
 for (const [name, expected] of Object.entries(screenshots)) {
-  const relative = `round-5/results/operator/${name.split('/')[0]}/screenshots/${name.split('/')[1]}`;
+  const relative = `rounds/round-5/results/operator/${name.split('/')[0]}/screenshots/${name.split('/')[1]}`;
   const bytes = await read(relative).catch(() => null);
   check(bytes !== null, `operator screenshot is missing: ${name}`);
   if (!bytes) continue;
@@ -74,8 +74,8 @@ for (const [name, expected] of Object.entries(screenshots)) {
 }
 
 const [report, visualReview] = await Promise.all([
-  read('round-5/REPORT.md').then(bytes => bytes.toString('utf8')),
-  read('round-5/results/operator/VISUAL_REVIEW.md').then(bytes => bytes.toString('utf8'))
+  read('rounds/round-5/REPORT.md').then(bytes => bytes.toString('utf8')),
+  read('rounds/round-5/results/operator/VISUAL_REVIEW.md').then(bytes => bytes.toString('utf8'))
 ]);
 check(report.includes('| Sol | Pass | 98 | **26** | 20 | Passed all thresholds |'), 'report operator outcome table drifted');
 const ownerAddendum = report.match(/## Owner playtest addendum([\s\S]*?)## Experiment lessons/)?.[1] || '';

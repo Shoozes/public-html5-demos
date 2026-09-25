@@ -4,9 +4,9 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { openBrowserHarness } from '../../tools/browser-harness.mjs';
+import { openBrowserHarness } from '../../../tools/browser-harness.mjs';
 
-const operatorRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const operatorRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const args = new Map();
 for (const argument of process.argv.slice(2)) {
   const match = argument.match(/^--([^=]+)=(.*)$/);
@@ -16,7 +16,7 @@ for (const argument of process.argv.slice(2)) {
 if (!args.has('root')) throw new Error('required argument missing: --root=<arm repository root>');
 const armRoot = path.resolve(args.get('root') || '');
 const label = args.get('label') || path.basename(path.dirname(armRoot));
-const output = path.resolve(args.get('output') || path.join(operatorRoot, 'round-5', 'results', 'operator', label));
+const output = path.resolve(args.get('output') || path.join(operatorRoot, 'rounds', 'round-5', 'results', 'operator', label));
 const pickupMethod = args.get('pickup-method') || 'spawnPickupNearPlayer';
 if (!['spawnPickupNearPlayer', 'spawnPickupNear'].includes(pickupMethod)) {
   throw new Error(`unsupported pickup diagnostic method: ${pickupMethod}`);

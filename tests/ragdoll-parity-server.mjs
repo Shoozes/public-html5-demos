@@ -15,11 +15,11 @@ const expectType = async (pathname, pattern) => {
 
 try {
   await expectType('/index.html', /text\/html/);
-  await expectType('/ragdoll-lab/', /text\/html/);
+  await expectType('/projects/ragdoll-lab/', /text\/html/);
   const moduleResponse = await expectType('/tests/ragdoll-lab-smoke.mjs', /application\/javascript/);
   assert.equal(moduleResponse.headers.get('x-content-type-options'), 'nosniff');
   await expectType('/assets/glb/Soldier.glb', /model\/gltf/);
-  await expectType('/docs/haio-prompt-discovery/round-3/images/round-3-comparison.webp', /image\/webp/);
+  await expectType('/rounds/round-3/images/round-3-comparison.webp', /image\/webp/);
   assert.ok([403, 404].includes((await get('/%2e%2e/%2e%2e/secret.txt')).status));
   assert.equal((await get('/missing.exe')).status, 404);
   assert.match((await get('/README.md')).headers.get('content-type'), /application\/octet-stream/);

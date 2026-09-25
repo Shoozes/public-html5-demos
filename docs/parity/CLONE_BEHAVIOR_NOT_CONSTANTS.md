@@ -404,8 +404,8 @@ executable is unstable.
 
 | Path | Responsibility |
 | --- | --- |
-| `ragdoll-lab/index.html` | Rapier authority and parity adapter |
-| `ragdoll-math-lab/index.html` | Independent custom solver and assisted adapter |
+| `projects/ragdoll-lab/index.html` | Rapier authority and parity adapter |
+| `projects/ragdoll-math-lab/index.html` | Independent custom solver and assisted adapter |
 | `shared/ragdoll-core/` | Portable mass, inertia, impulse, damping, and effective-mass kernels |
 | `shared/ragdoll-parity/` | Shared command and trace protocol |
 | `tests/parity/scenarios/index.json` | Scenario definitions and tolerances |
@@ -426,7 +426,7 @@ official JavaScript guides:
 - [Joints](https://rapier.rs/docs/user_guides/javascript/joints/)
 
 Within this repository, pair this tutorial with the
-[solver notes](../../ragdoll-math-lab/MATH.md) and the
+[solver notes](../../projects/ragdoll-math-lab/MATH.md) and the
 [parity pitfalls ledger](PITFALLS.md).
 
 ## Conclusion

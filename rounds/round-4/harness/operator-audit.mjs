@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchChromium } from '../../tools/browser-runtime.mjs';
+import { launchChromium } from '../../../tools/browser-runtime.mjs';
 
 const benchmarkRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(benchmarkRoot, 'operator-evidence');

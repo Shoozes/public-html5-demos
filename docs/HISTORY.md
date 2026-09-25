@@ -1,5 +1,17 @@
 # Completed Work
 
+
+## 2026-09-25 — Repository layout and Round 5.5 preparation
+
+Canonical maintained demos moved to `projects/`; Rounds 1–6 now share `rounds/`.
+Gallery, context routes, maintenance harnesses and workflow filters follow the new
+paths. Historical submissions, references, reports and scores remain unchanged;
+legacy playable URLs and the Ragdoll Site source export remain available.
+Round 5.5 documents the GPT-6 Luna/Sol Work cohort and reserved standalone Astra
+arm. Browser preflight blocked dispatch; no candidate results were produced.
+The original frozen package is exportable without Git history or previous outputs.
+
+
 This is a compact milestone index. Detailed evidence remains in the linked subsystem or experiment owner.
 
 ## 2026-09-01 — Visual experiment archive
@@ -20,9 +32,9 @@ This is a compact milestone index. Detailed evidence remains in the linked subsy
 ## 2026-09-01 — Round 5 visual-oracle experiment
 
 - Ran isolated High-reasoning Luna, Terra, and Sol arms from corrected dispatch commit `1aa2761d8d091c687f91d83bcd02a1efd8b67a59` with one fixed generated oracle, native-image lane, visual-critic skill, Playwright/Chrome lane, and common budgets.
-- Preserved all three standalone games and core evidence under `round-5/results/`, added an independent operator evaluator, and repeated the unchanged functional contract plus fixed desktop/portrait captures.
+- Preserved all three standalone games and core evidence under `rounds/round-5/results/`, added an independent operator evaluator, and repeated the unchanged functional contract plus fixed desktop/portrait captures.
 - Operator result: Luna passed all 13 functional groups but scored 22/30 visually; Terra was playable through a labeled compatibility probe but hard-gated by a renamed diagnostic and scored 19/30 visually; Sol passed every gate at 98/100 functional, 26/30 visual, and 20/20 workflow.
-- Completed `round-5/REPORT.md` with self-versus-operator scoring, full-size/thumbnail/grayscale verdicts, skill/tool usage, the excluded shared-preflight incident, model-capacity limitations, and next-protocol lessons.
+- Completed `rounds/round-5/REPORT.md` with self-versus-operator scoring, full-size/thumbnail/grayscale verdicts, skill/tool usage, the excluded shared-preflight incident, model-capacity limitations, and next-protocol lessons.
 - Added the separate owner playtest addendum and traced its observations to the archived implementations: Luna's lateral rendered-heading sign is inverted; Terra and Sol omit hostile locomotion; Terra's radar is fixed decoration; and Sol permanently gates its pre-placed pickups while spawned drops magnetize. Converted these findings into required temporal/systemic coverage for Round 6 without changing Round 5 scores or artifacts.
 
 ## 2026-09-01 — Repository integrity and Round 5 setup

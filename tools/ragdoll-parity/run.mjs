@@ -183,8 +183,8 @@ const executeScenario = async (page, sourceScenario, { screenshotDir = null, scr
 let failed = false;
 try {
   const [authorityPage, clonePage] = await Promise.all([
-    openBackend('ragdoll-lab/'),
-    openBackend('ragdoll-math-lab/')
+    openBackend('projects/ragdoll-lab/'),
+    openBackend('projects/ragdoll-math-lab/')
   ]);
 
   for (const scenario of selected) {
@@ -195,8 +195,8 @@ try {
       // public state between identical repeats, while the reload prevents
       // contact/island activation caches leaking from the prior scenario.
       await Promise.all([
-        reloadBackend(authorityPage, 'ragdoll-lab/'),
-        reloadBackend(clonePage, 'ragdoll-math-lab/')
+        reloadBackend(authorityPage, 'projects/ragdoll-lab/'),
+        reloadBackend(clonePage, 'projects/ragdoll-math-lab/')
       ]);
       const authorityRuns = [];
       for (let repeat = 0; repeat < determinismRuns; repeat += 1) {

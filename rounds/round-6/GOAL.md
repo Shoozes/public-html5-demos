@@ -8,9 +8,9 @@ Deliver the frozen Round 6 hostile-space HTML-all-in-one game at `submission/ind
 
 Use the approved Round 5 package without modification:
 
-- `round-5/PASSDOWN.md`;
-- `round-5/RUBRIC.md`;
-- `round-5/EXPERIMENT.json`;
+- `rounds/round-5/PASSDOWN.md`;
+- `rounds/round-5/RUBRIC.md`;
+- `rounds/round-5/EXPERIMENT.json`;
 - both approved V2 references;
 - the shared harness;
 - `.agents/skills/haio-visual-critic/SKILL.md`.
@@ -18,7 +18,7 @@ Use the approved Round 5 package without modification:
 The normal arm receives this same objective without the `/goal` prefix. The Goal arm starts with:
 
 ```text
-/goal Deliver the frozen Round 6 hostile-space HAIO at submission/index.html. Follow round-6/GOAL.md and the linked Round 5 package, use the prescribed browser and visual-critic loop, repair failures within the fixed budget, and finish only when the hard gates, functional scenarios, visual threshold, and evidence package pass.
+/goal Deliver the frozen Round 6 hostile-space HAIO at submission/index.html. Follow rounds/round-6/GOAL.md and the linked Round 5 package, use the prescribed browser and visual-critic loop, repair failures within the fixed budget, and finish only when the hard gates, functional scenarios, visual threshold, and evidence package pass.
 ```
 
 ## Constraints
@@ -32,7 +32,7 @@ The normal arm receives this same objective without the `/goal` prefix. The Goal
 
 ## Done when
 
-- Every hard gate in `round-5/RUBRIC.md` passes.
+- Every hard gate in `rounds/round-5/RUBRIC.md` passes.
 - Functional score is at least 90/100.
 - Visual convergence is at least 24/30 with no load-bearing `BROKEN` verdict.
 - Workflow discipline is at least 16/20.

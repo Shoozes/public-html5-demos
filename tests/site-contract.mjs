@@ -21,6 +21,10 @@ const check = (condition, message) => {
 const existsAsFile = async (candidate) => (await stat(candidate).catch(() => null))?.isFile() === true;
 const stripTarget = (raw) => decodeURIComponent(raw.trim().replace(/^<|>$/g, '').split(/[?#]/, 1)[0]);
 const isExternal = (target) => /^(?:[a-z]+:|\/\/)/i.test(target);
+const localImports = (source) => [
+  ...source.matchAll(/^\s*(?:import|export)\s+(?:[^;'"`]*?\s+from\s*)?['"](\.[^'"]+)['"]/gm),
+  ...source.matchAll(/\bimport\s*\(\s*['"](\.[^'"]+)['"]/g)
+].map(match => match[1]);
 
 async function checkLocalTarget(owner, rawTarget) {
   const target = stripTarget(rawTarget);
@@ -51,9 +55,7 @@ try {
     const source = await readFile(path.join(root, file), 'utf8');
     const parsed = spawnSync(process.execPath, ['--check', path.join(root, file)], { encoding: 'utf8' });
     check(parsed.status === 0, `${file}: script does not parse: ${(parsed.stderr || parsed.stdout).trim()}`);
-    for (const match of source.matchAll(/\b(?:from\s*|import\s*\(\s*|import\s*)['"](\.[^'"]+)['"]/g)) {
-      await checkLocalTarget(file, match[1]);
-    }
+    for (const target of localImports(source)) await checkLocalTarget(file, target);
   }
 
   for (const file of htmlFiles) {
@@ -69,6 +71,9 @@ try {
     for (const match of source.matchAll(/\b(?:href|src)=["']([^"']+)["']/gi)) {
       await checkLocalTarget(file, match[1]);
     }
+    for (const match of source.matchAll(/\bsrcset=["']([^"']+)["']/gi)) {
+      for (const candidate of match[1].split(',')) await checkLocalTarget(file, candidate.trim().split(/\s+/)[0]);
+    }
     checkPinnedDependencies(file, source);
 
     let moduleIndex = 0;
@@ -77,6 +82,7 @@ try {
       await writeFile(modulePath, match[1], 'utf8');
       const parsed = spawnSync(process.execPath, ['--check', modulePath], { encoding: 'utf8' });
       check(parsed.status === 0, `${file}: inline module ${moduleIndex} does not parse: ${(parsed.stderr || parsed.stdout).trim()}`);
+      for (const target of localImports(match[1])) await checkLocalTarget(file, target);
     }
   }
 

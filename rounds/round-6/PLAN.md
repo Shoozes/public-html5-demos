@@ -1,10 +1,18 @@
 # Round 6 Plan: Goal Mode Pair Test
 
+Roadmap update, 2026-09-25: Round 5.5's GPT-6 refresh comes first. This protocol
+remains undispatched. Preserve the old completed results; select and record exact
+model IDs when freezing this later cohort. Its original Luna/Terra/Sol pair table
+below is a design proposal, not a record of runs or a model substitution policy.
+
 ## Experiment question
 
 Does Codex Goal mode improve long-horizon completion, visual repair, evidence discipline, and tool use when the model receives the same successful Round 5 package?
 
-Round 6 must not introduce a new game, reference, skill, harness, or rubric. The only intended independent variable is execution mode:
+Before dispatch, freeze the temporal/systemic evaluator extension described in
+`docs/TODO.md` against archived negatives and a positive fixture. Preserve the game,
+references and skill. After that common instrument is frozen, no arm may change
+the harness or rubric. The intended independent variable within each pair is execution mode:
 
 - ordinary high-reasoning task;
 - `/goal` with the same model, baseline, context, tools, budget, and completion criteria.
@@ -55,7 +63,7 @@ Do not improve the shared package between paired runs. Record a discovered harne
 
 ## What
 
-Use the concise `round-6/GOAL.md` that points to the frozen Round 5 task package.
+Use the concise `rounds/round-6/GOAL.md` that points to the frozen Round 5 task package.
 
 ## Why
 
@@ -81,7 +89,7 @@ The goal should not repeat the whole pass-down. It should state the artifact, vi
 Suggested command:
 
 ```text
-/goal Deliver the frozen Round 6 hostile-space HAIO at submission/index.html. Follow round-6/GOAL.md and the linked Round 5 pass-down, use the prescribed browser and visual-critic loop, repair failures within the fixed budget, and finish only when the hard gates, functional scenarios, visual threshold, and evidence package pass.
+/goal Deliver the frozen Round 6 hostile-space HAIO at submission/index.html. Follow rounds/round-6/GOAL.md and the linked Round 5 pass-down, use the prescribed browser and visual-critic loop, repair failures within the fixed budget, and finish only when the hard gates, functional scenarios, visual threshold, and evidence package pass.
 ```
 
 The normal-task arm receives the same sentence without the `/goal` prefix and with no extra instructions.

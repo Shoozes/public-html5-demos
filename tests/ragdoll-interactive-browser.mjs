@@ -381,8 +381,8 @@ const runDragCase = async (page, label) => {
 let failed = false;
 const results = {};
 try {
-  for (const folder of ['ragdoll-lab/', 'ragdoll-math-lab/']) {
-    const backend = folder.replaceAll('/', '');
+  for (const folder of ['projects/ragdoll-lab/', 'projects/ragdoll-math-lab/']) {
+    const backend = folder.split('/').filter(Boolean).at(-1);
     const { page, errors } = await openBackend(folder);
     const drop = await runSettlingCase(page, `${backend}-drop`, async () => {
       await page.getByRole('button', { name: 'Drop Soldier' }).click();

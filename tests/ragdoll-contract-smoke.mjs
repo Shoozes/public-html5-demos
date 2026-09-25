@@ -3,9 +3,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const originalPath = path.join(root, 'ragdoll-lab', 'index.html');
-const mathPath = path.join(root, 'ragdoll-math-lab', 'index.html');
-const mathNotesPath = path.join(root, 'ragdoll-math-lab', 'MATH.md');
+const originalPath = path.join(root, 'projects', 'ragdoll-lab', 'index.html');
+const mathPath = path.join(root, 'projects', 'ragdoll-math-lab', 'index.html');
+const mathNotesPath = path.join(root, 'projects', 'ragdoll-math-lab', 'MATH.md');
 const cloningTutorialPath = path.join(root, 'docs', 'parity', 'CLONE_BEHAVIOR_NOT_CONSTANTS.md');
 const soldierAsset = path.join(root, 'assets', 'glb', 'Soldier.glb');
 const gitignorePath = path.join(root, '.gitignore');
@@ -41,12 +41,12 @@ const requireSame = (actual, expected, label) => {
 };
 
 for (const [name, source] of [['Rapier lab', original], ['Math lab', math]]) {
-  requireText(source, "const MODEL_URL = '../assets/glb/Soldier.glb';", name);
+  requireText(source, "const MODEL_URL = '../../assets/glb/Soldier.glb';", name);
   requireText(source, 'const MAX_STEPS_PER_FRAME = 3;', name);
   requireText(source, "const manualStepMode = searchParams.get('manual') === '1';", name);
   requireText(source, 'const STAGE_RADIUS = 7.35;', name);
-  requireText(source, "from '../shared/ragdoll-core/spec.mjs';", name);
-  requireText(source, "from '../shared/ragdoll-parity/protocol.mjs';", name);
+  requireText(source, "from '../../shared/ragdoll-core/spec.mjs';", name);
+  requireText(source, "from '../../shared/ragdoll-parity/protocol.mjs';", name);
   requireText(source, 'const segmentDefinitions = SHARED_SEGMENTS.map', name);
   requireText(source, 'Object.entries(SHARED_JOINTS)', name);
   requireText(source, 'manualStepMode', name);

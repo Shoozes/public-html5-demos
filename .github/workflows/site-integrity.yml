@@ -1,0 +1,31 @@
+name: Site and archive integrity
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integrity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 24.19.0
+      - name: Links, archival bytes, compatibility exports and clean benchmark packets
+        run: |
+          node tests/site-contract.mjs
+          node tests/repository-layout.mjs
+          node tests/round55-package.mjs
+          node tools/context-bank.mjs --list
+          node rounds/round-4/harness/verify-haio.mjs
+          node rounds/round-5/harness/verify-archive.mjs
+          node rounds/round-5/operator/verify-results.mjs

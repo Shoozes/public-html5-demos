@@ -37,7 +37,7 @@ try {
   assert.equal(galleryResponse?.status(), 200);
   assert.equal(await gallery.title(), 'Public HTML5 Demos');
   const links = await gallery.locator('.open-demo').evaluateAll((anchors) => anchors.map((anchor) => anchor.getAttribute('href')));
-  assert.deepEqual(links, ['./rounds/', './ragdoll-lab/', './ragdoll-math-lab/', './anthrocybernetics/']);
+  assert.deepEqual(links, ['./rounds/', './projects/ragdoll-lab/', './projects/ragdoll-math-lab/', './projects/anthrocybernetics/']);
   await assertImagesDecoded(gallery);
   assert.equal(galleryErrors.length, 0, galleryErrors.join(' | '));
   await gallery.close();
@@ -57,13 +57,15 @@ try {
   assert.equal(roundsResponse?.status(), 200);
   assert.equal(await rounds.title(), 'HAIO Flight Log | Public HTML5 Demos');
   await assertImagesDecoded(rounds);
-  await rounds.getByRole('tab', { name: 'Round 5' }).click();
-  assert.equal(await rounds.getByRole('tabpanel', { name: 'Round 5' }).isVisible(), true);
+  await rounds.getByRole('tab', { name: 'Round 5', exact: true }).click();
+  assert.equal(await rounds.getByRole('tabpanel', { name: 'Round 5', exact: true }).isVisible(), true);
   assert.equal(await rounds.locator('.model-card').count(), 3);
   await rounds.getByRole('button', { name: 'Portrait' }).click();
   assert.equal(await rounds.locator('.model-card[data-view="portrait"]').count(), 3);
-  assert.equal(await rounds.locator('.model-card img').first().getAttribute('src'), '../round-5/results/operator/luna/screenshots/first-frame-portrait.png');
+  assert.equal(await rounds.locator('.model-card img').first().getAttribute('src'), './round-5/results/operator/luna/screenshots/first-frame-portrait.png');
   await assertImagesDecoded(rounds);
+  await rounds.getByRole('tab', { name: 'Round 5.5', exact: true }).click();
+  assert.equal(await rounds.getByRole('tabpanel', { name: 'Round 5.5', exact: true }).isVisible(), true);
   await rounds.getByRole('tab', { name: 'Docs' }).click();
   assert.equal(await rounds.locator('.doc-card').count(), 7);
   assert.equal(roundsErrors.length, 0, roundsErrors.join(' | '));
@@ -72,7 +74,7 @@ try {
   const roundsPortrait = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const roundsPortraitErrors = runtimeErrors(roundsPortrait);
   await roundsPortrait.goto(`http://127.0.0.1:${address.port}/rounds/#round-5`, { waitUntil: 'networkidle' });
-  assert.equal(await roundsPortrait.getByRole('tabpanel', { name: 'Round 5' }).isVisible(), true);
+  assert.equal(await roundsPortrait.getByRole('tabpanel', { name: 'Round 5', exact: true }).isVisible(), true);
   const roundsOverflow = await roundsPortrait.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   assert.ok(roundsOverflow <= 1, `rounds portrait layout overflows by ${roundsOverflow}px`);
   assert.equal(roundsPortraitErrors.length, 0, roundsPortraitErrors.join(' | '));
@@ -80,7 +82,7 @@ try {
 
   const anthro = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   const anthroErrors = runtimeErrors(anthro);
-  const anthroResponse = await anthro.goto(`http://127.0.0.1:${address.port}/anthrocybernetics/`, { waitUntil: 'domcontentloaded' });
+  const anthroResponse = await anthro.goto(`http://127.0.0.1:${address.port}/projects/anthrocybernetics/`, { waitUntil: 'domcontentloaded' });
   assert.equal(anthroResponse?.status(), 200);
   await anthro.waitForFunction(() => document.querySelector('#runtime-badge')?.textContent !== 'Loading visual', null, { timeout: 15_000 });
   await anthro.getByRole('button', { name: 'Start' }).click();
@@ -109,7 +111,7 @@ try {
 
   const portrait = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const portraitErrors = runtimeErrors(portrait);
-  await portrait.goto(`http://127.0.0.1:${address.port}/anthrocybernetics/`, { waitUntil: 'domcontentloaded' });
+  await portrait.goto(`http://127.0.0.1:${address.port}/projects/anthrocybernetics/`, { waitUntil: 'domcontentloaded' });
   await portrait.waitForFunction(() => window.__anthroViewportProfile?.orientation === 'portrait');
   const overflow = await portrait.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   assert.ok(overflow <= 1, `portrait layout overflows by ${overflow}px`);

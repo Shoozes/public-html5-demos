@@ -178,7 +178,8 @@
       z-index: 10;
       top: 0;
       display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(0, 1fr);
       gap: 1px;
       margin-top: 26px;
       padding: 1px;
@@ -376,7 +377,7 @@
       .signal { min-height: 76px; padding: 14px 10px; }
       .signal strong { font-size: 1.4rem; }
       .signal span { font-size: 0.58rem; }
-      .experiment-nav { overflow-x: auto; grid-template-columns: repeat(5, minmax(96px, 1fr)); }
+      .experiment-nav { overflow-x: auto; grid-auto-columns: minmax(96px, 1fr); }
       .section-heading { grid-template-columns: 1fr; gap: 12px; }
       .section-heading h2 { font-size: clamp(2.45rem, 13vw, 4rem); }
       .chapter, .chapter.wide { grid-column: 1 / -1; }
@@ -404,14 +405,14 @@
     <main id="content">
       <section class="hero" aria-labelledby="page-title">
         <picture>
-          <source media="(max-width: 660px)" srcset="../round-5/mockups/portrait-reference-v2.png">
-          <img class="hero-media" src="../round-5/mockups/desktop-reference-v2.png" alt="Oblique hostile-space visual oracle with a cyan player ship, red raiders, station, salvage, beacon, and radar">
+          <source media="(max-width: 660px)" srcset="./round-5/mockups/portrait-reference-v2.png">
+          <img class="hero-media" src="./round-5/mockups/desktop-reference-v2.png" alt="Oblique hostile-space visual oracle with a cyan player ship, red raiders, station, salvage, beacon, and radar">
         </picture>
         <div class="hero-shade"></div>
         <div class="hero-copy">
           <p class="eyebrow">Human and AI iteration study</p>
           <h1 id="page-title">Flight log</h1>
-          <p>Five completed rounds. One next flight. Three agents building, seeing, critiquing, and repairing one tiny space game.</p>
+          <p>Five completed rounds. Next: GPT-6 on the same visual contract. Goal mode follows.</p>
         </div>
       </section>
 
@@ -425,6 +426,7 @@
         <button class="tab" id="tab-overview" type="button" role="tab" aria-controls="panel-overview" aria-selected="true" data-tab="overview">Overview</button>
         <button class="tab" id="tab-round-4" type="button" role="tab" aria-controls="panel-round-4" aria-selected="false" tabindex="-1" data-tab="round-4">Round 4</button>
         <button class="tab" id="tab-round-5" type="button" role="tab" aria-controls="panel-round-5" aria-selected="false" tabindex="-1" data-tab="round-5">Round 5</button>
+        <button class="tab" id="tab-round-5-5" type="button" role="tab" aria-controls="panel-round-5-5" aria-selected="false" tabindex="-1" data-tab="round-5-5">Round 5.5</button>
         <button class="tab" id="tab-round-6" type="button" role="tab" aria-controls="panel-round-6" aria-selected="false" tabindex="-1" data-tab="round-6">Round 6</button>
         <button class="tab" id="tab-docs" type="button" role="tab" aria-controls="panel-docs" aria-selected="false" tabindex="-1" data-tab="docs">Docs</button>
       </nav>
@@ -432,24 +434,24 @@
       <section class="tab-panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
         <div class="section-heading">
           <h2>How the prompt learned to see</h2>
-          <p>Start messy. Add a harness. Add a visual oracle. Then test whether goals change the work.</p>
+          <p>Start messy. Add a harness and visual oracle. Test the next models, then the execution mode.</p>
         </div>
         <div class="chapter-grid">
           <article class="chapter wide">
-            <div class="chapter-media"><img src="../docs/haio-prompt-discovery/round-3/images/round-3-comparison.webp" alt="Three Round 3 hostile-space game outputs shown side by side"></div>
+            <div class="chapter-media"><img src="./round-3/images/round-3-comparison.webp" alt="Three Round 3 hostile-space game outputs shown side by side"></div>
             <div class="chapter-copy"><span class="chapter-id">Rounds 01–03</span><h3>Prompt discovery</h3><p>Failures became requirements.</p></div>
           </article>
           <article class="chapter">
-            <div class="chapter-media"><img src="../round-4/mockups/desktop-reference.png" alt="Round 4 hostile-space reference game"></div>
+            <div class="chapter-media"><img src="./round-4/mockups/desktop-reference.png" alt="Round 4 hostile-space reference game"></div>
             <div class="chapter-copy"><span class="chapter-id">Round 04</span><h3>Pass-down</h3><p>Same brief. Uncontrolled tools.</p></div>
           </article>
           <article class="chapter">
-            <div class="chapter-media"><img src="../round-5/mockups/desktop-reference-v2.png" alt="Round 5 brighter hostile-space visual oracle"></div>
+            <div class="chapter-media"><img src="./round-5/mockups/desktop-reference-v2.png" alt="Round 5 brighter hostile-space visual oracle"></div>
             <div class="chapter-copy"><span class="chapter-id">Round 05</span><h3>Visual oracle</h3><p>Mockup, critic, repair.</p></div>
           </article>
           <article class="chapter wide">
-            <div class="chapter-media"><img src="../round-5/results/operator/sol/screenshots/first-frame-desktop.png" alt="Sol's winning Round 5 hostile-space game"></div>
-            <div class="chapter-copy"><span class="chapter-id">Round 06</span><h3>Goal mode</h3><p>Next: same instrument, paired execution modes.</p></div>
+            <div class="chapter-media"><img src="./round-5/results/operator/sol/screenshots/first-frame-desktop.png" alt="Sol's winning Round 5 hostile-space game"></div>
+            <div class="chapter-copy"><span class="chapter-id">Round 05.5 · Next</span><h3>GPT-6 refresh</h3><p>Luna and Sol in Work. Astra in standalone Codex. Preflight pending.</p></div>
           </article>
         </div>
       </section>
@@ -457,12 +459,12 @@
       <section class="tab-panel" id="panel-round-4" role="tabpanel" aria-labelledby="tab-round-4" hidden>
         <div class="section-heading"><h2>The baseline</h2><p>Screenshots existed. Visual judgment did not.</p></div>
         <article class="wide-card">
-          <img src="../round-4/operator-evidence/sol-desktop.png" alt="Sol Round 4 operator screenshot">
+          <img src="./round-4/operator-evidence/sol-desktop.png" alt="Sol Round 4 operator screenshot">
           <div class="wide-copy">
             <span class="status-label">Round 04 / Complete</span>
             <h3>Same game. Different levels of finish.</h3>
             <div class="score-strip"><span class="chip warn">Tools vague</span><span class="chip bad">No fixed oracle</span><span class="chip good">Baseline captured</span></div>
-            <div class="action-row"><a class="action primary" href="../round-4/submission/">Play reference</a><a class="action" href="https://github.com/Shoozes/public-html5-demos/blob/main/round-4/REPORT.md">Read report</a></div>
+            <div class="action-row"><a class="action primary" href="./round-4/submission/">Play reference</a><a class="action" href="https://github.com/Shoozes/public-html5-demos/blob/main/rounds/round-4/REPORT.md">Read report</a></div>
           </div>
         </article>
       </section>
@@ -478,41 +480,53 @@
         </div>
         <div class="model-grid">
           <article class="model-card" data-model="luna" data-view="desktop">
-            <div class="model-shot"><img src="../round-5/results/operator/luna/screenshots/first-frame-desktop.png" data-desktop="../round-5/results/operator/luna/screenshots/first-frame-desktop.png" data-portrait="../round-5/results/operator/luna/screenshots/first-frame-portrait.png" alt="Luna Round 5 desktop operator capture"></div>
-            <div class="model-copy"><div class="model-name"><h3>Luna</h3><span>Visual 22 / 30</span></div><p>Real enemy movement. Reversed lateral ship heading.</p><div class="score-strip"><span class="chip good">Functional</span><span class="chip warn">Odd</span></div><div class="action-row"><a class="action primary" href="../round-5/results/luna/submission/">Play</a></div></div>
+            <div class="model-shot"><img src="./round-5/results/operator/luna/screenshots/first-frame-desktop.png" data-desktop="./round-5/results/operator/luna/screenshots/first-frame-desktop.png" data-portrait="./round-5/results/operator/luna/screenshots/first-frame-portrait.png" alt="Luna Round 5 desktop operator capture"></div>
+            <div class="model-copy"><div class="model-name"><h3>Luna</h3><span>Visual 22 / 30</span></div><p>Real enemy movement. Reversed lateral ship heading.</p><div class="score-strip"><span class="chip good">Functional</span><span class="chip warn">Odd</span></div><div class="action-row"><a class="action primary" href="./round-5/results/luna/submission/">Play</a></div></div>
           </article>
           <article class="model-card" data-model="terra" data-view="desktop">
-            <div class="model-shot"><img src="../round-5/results/operator/terra/screenshots/first-frame-desktop.png" data-desktop="../round-5/results/operator/terra/screenshots/first-frame-desktop.png" data-portrait="../round-5/results/operator/terra/screenshots/first-frame-portrait.png" alt="Terra Round 5 desktop operator capture"></div>
-            <div class="model-copy"><div class="model-name"><h3>Terra</h3><span>Visual 19 / 30</span></div><p>Bright presentation. Static enemies. Decorative radar.</p><div class="score-strip"><span class="chip bad">Contract drift</span><span class="chip warn">Odd</span></div><div class="action-row"><a class="action primary" href="../round-5/results/terra/submission/">Play</a></div></div>
+            <div class="model-shot"><img src="./round-5/results/operator/terra/screenshots/first-frame-desktop.png" data-desktop="./round-5/results/operator/terra/screenshots/first-frame-desktop.png" data-portrait="./round-5/results/operator/terra/screenshots/first-frame-portrait.png" alt="Terra Round 5 desktop operator capture"></div>
+            <div class="model-copy"><div class="model-name"><h3>Terra</h3><span>Visual 19 / 30</span></div><p>Bright presentation. Static enemies. Decorative radar.</p><div class="score-strip"><span class="chip bad">Contract drift</span><span class="chip warn">Odd</span></div><div class="action-row"><a class="action primary" href="./round-5/results/terra/submission/">Play</a></div></div>
           </article>
           <article class="model-card" data-model="sol" data-view="desktop">
-            <div class="model-shot"><img src="../round-5/results/operator/sol/screenshots/first-frame-desktop.png" data-desktop="../round-5/results/operator/sol/screenshots/first-frame-desktop.png" data-portrait="../round-5/results/operator/sol/screenshots/first-frame-portrait.png" alt="Sol Round 5 desktop operator capture"></div>
-            <div class="model-copy"><div class="model-name"><h3>Sol</h3><span>Visual 26 / 30</span></div><p>Best visual match. Live radar. Inconsistent loot.</p><div class="score-strip"><span class="chip good">Winner</span><span class="chip good">Good</span></div><div class="action-row"><a class="action primary" href="../round-5/results/sol/submission/">Play</a></div></div>
+            <div class="model-shot"><img src="./round-5/results/operator/sol/screenshots/first-frame-desktop.png" data-desktop="./round-5/results/operator/sol/screenshots/first-frame-desktop.png" data-portrait="./round-5/results/operator/sol/screenshots/first-frame-portrait.png" alt="Sol Round 5 desktop operator capture"></div>
+            <div class="model-copy"><div class="model-name"><h3>Sol</h3><span>Visual 26 / 30</span></div><p>Best visual match. Live radar. Inconsistent loot.</p><div class="score-strip"><span class="chip good">Winner</span><span class="chip good">Good</span></div><div class="action-row"><a class="action primary" href="./round-5/results/sol/submission/">Play</a></div></div>
           </article>
         </div>
-        <div class="action-row"><a class="action" href="https://github.com/Shoozes/public-html5-demos/blob/main/round-5/REPORT.md">Full findings</a><a class="action" href="https://github.com/Shoozes/public-html5-demos/blob/main/round-5/results/operator/VISUAL_REVIEW.md">Visual review</a></div>
+        <div class="action-row"><a class="action" href="https://github.com/Shoozes/public-html5-demos/blob/main/rounds/round-5/REPORT.md">Full findings</a><a class="action" href="https://github.com/Shoozes/public-html5-demos/blob/main/rounds/round-5/results/operator/VISUAL_REVIEW.md">Visual review</a></div>
+      </section>
+
+      <section class="tab-panel" id="panel-round-5-5" role="tabpanel" aria-labelledby="tab-round-5-5" hidden>
+        <div class="section-heading"><h2>GPT-6, same contract</h2><p>Planned. No candidate runs or scores yet.</p></div>
+        <div class="proof-grid">
+          <article class="proof-card"><strong>Luna</strong><h3>GPT-6 Luna</h3><p>Fresh Work arm, High reasoning.</p></article>
+          <article class="proof-card"><strong>Sol</strong><h3>GPT-6 Sol</h3><p>Same packet, tools and repair budget.</p></article>
+          <article class="proof-card"><strong>Astra</strong><h3>GPT-6 Astra</h3><p>Reserved for a standalone Codex thread.</p></article>
+          <article class="proof-card"><strong>Gate</strong><h3>Preflight blocked</h3><p>Required browser unavailable. No prior-solution access and no lowered thresholds.</p></article>
+        </div>
+        <p>Work and Codex results will retain their host differences. The historical Round 5 scores remain unchanged.</p>
+        <div class="action-row"><a class="action primary" href="https://github.com/Shoozes/public-html5-demos/blob/main/rounds/round-5-5/PLAN.md">Round 5.5 protocol</a><a class="action" href="https://github.com/Shoozes/public-html5-demos/blob/main/rounds/round-5-5/PREFLIGHT.md">Preflight evidence</a></div>
       </section>
 
       <section class="tab-panel" id="panel-round-6" role="tabpanel" aria-labelledby="tab-round-6" hidden>
-        <div class="section-heading"><h2>Next flight plan</h2><p>Normal versus Goal mode, with the missing play-feel checks finally frozen.</p></div>
+        <div class="section-heading"><h2>After Round 5.5</h2><p>Normal versus Goal mode. These play-feel checks must be frozen before dispatch.</p></div>
         <div class="proof-grid">
           <article class="proof-card"><strong>01</strong><h3>Visible heading</h3><p>Nose follows velocity.</p></article>
           <article class="proof-card"><strong>02</strong><h3>Enemy motion</h3><p>Patrol and pursuit move.</p></article>
           <article class="proof-card"><strong>03</strong><h3>Live radar</h3><p>Contacts mirror the world.</p></article>
           <article class="proof-card"><strong>04</strong><h3>Loot parity</h3><p>Every shard obeys one rule.</p></article>
         </div>
-        <div class="action-row"><a class="action primary" href="https://github.com/Shoozes/public-html5-demos/blob/main/round-6/PLAN.md">Open protocol</a><a class="action" href="https://github.com/Shoozes/public-html5-demos/blob/main/round-6/GOAL.md">Goal contract</a></div>
+        <div class="action-row"><a class="action primary" href="https://github.com/Shoozes/public-html5-demos/blob/main/rounds/round-6/PLAN.md">Open protocol</a><a class="action" href="https://github.com/Shoozes/public-html5-demos/blob/main/rounds/round-6/GOAL.md">Goal contract</a></div>
       </section>
 
       <section class="tab-panel" id="panel-docs" role="tabpanel" aria-labelledby="tab-docs" hidden>
         <div class="section-heading"><h2>Deep archive</h2><p>The page stays short. The repository keeps the receipts.</p></div>
         <div class="doc-grid">
-          <a class="doc-card" href="https://github.com/Shoozes/public-html5-demos/blob/main/round-5/REPORT.md"><span>Experiment</span><strong>Round 5 report</strong><p>Scores, evidence, owner notes.</p></a>
-          <a class="doc-card" href="https://github.com/Shoozes/public-html5-demos/blob/main/round-5/PASSDOWN.md"><span>Protocol</span><strong>Pass-down package</strong><p>The exact builder brief.</p></a>
-          <a class="doc-card" href="https://github.com/Shoozes/public-html5-demos/blob/main/round-5/RUBRIC.md"><span>Scoring</span><strong>Frozen rubric</strong><p>Gates and thresholds.</p></a>
-          <a class="doc-card" href="https://github.com/Shoozes/public-html5-demos/blob/main/round-5/HOSTILE_SPACE_REFERENCE.md"><span>Lineage</span><strong>Hostile Space</strong><p>Behavioral inspiration.</p></a>
-          <a class="doc-card" href="https://github.com/Shoozes/public-html5-demos/blob/main/round-5/STARBLAST_REFERENCE.md"><span>Lineage</span><strong>Starblast</strong><p>3D presentation cues.</p></a>
-          <a class="doc-card" href="https://github.com/Shoozes/public-html5-demos/blob/main/design-qa.md"><span>Design proof</span><strong>Flight Log QA</strong><p>Desktop and mobile verdict.</p></a>
+          <a class="doc-card" href="https://github.com/Shoozes/public-html5-demos/blob/main/rounds/round-5/REPORT.md"><span>Experiment</span><strong>Round 5 report</strong><p>Scores, evidence, owner notes.</p></a>
+          <a class="doc-card" href="https://github.com/Shoozes/public-html5-demos/blob/main/rounds/round-5/PASSDOWN.md"><span>Protocol</span><strong>Pass-down package</strong><p>The exact builder brief.</p></a>
+          <a class="doc-card" href="https://github.com/Shoozes/public-html5-demos/blob/main/rounds/round-5/RUBRIC.md"><span>Scoring</span><strong>Frozen rubric</strong><p>Gates and thresholds.</p></a>
+          <a class="doc-card" href="https://github.com/Shoozes/public-html5-demos/blob/main/rounds/round-5/HOSTILE_SPACE_REFERENCE.md"><span>Lineage</span><strong>Hostile Space</strong><p>Behavioral inspiration.</p></a>
+          <a class="doc-card" href="https://github.com/Shoozes/public-html5-demos/blob/main/rounds/round-5/STARBLAST_REFERENCE.md"><span>Lineage</span><strong>Starblast</strong><p>3D presentation cues.</p></a>
+          <a class="doc-card" href="https://github.com/Shoozes/public-html5-demos/blob/main/docs/design-qa.md"><span>Design proof</span><strong>Flight Log QA</strong><p>Desktop and mobile verdict.</p></a>
           <a class="doc-card" href="https://github.com/Shoozes/public-html5-demos/blob/main/docs/APP_STATE.md"><span>Repository</span><strong>Current state</strong><p>What works and what is next.</p></a>
         </div>
       </section>

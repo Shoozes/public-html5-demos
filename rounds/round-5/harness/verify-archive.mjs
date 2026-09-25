@@ -4,8 +4,8 @@ import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const manifestPath = path.join(root, 'round-5', 'EXPERIMENT.json');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+const manifestPath = path.join(root, 'rounds', 'round-5', 'EXPERIMENT.json');
 const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
 const failures = [];
 const check = (condition, message) => { if (!condition) failures.push(message); };
@@ -65,12 +65,12 @@ if (baselineCommit) {
         `archived checksum drift: ${relative}`
       );
     }
-    const currentPath = resolveInsideRoot(relative);
+    const currentPath = resolveInsideRoot(relative.replace(/^round-([45])\//, 'rounds/round-$1/'));
     check(currentPath && (await stat(currentPath).catch(() => null))?.isFile(), `current archive path is missing: ${relative}`);
   }
 
   for (const [name, expected] of Object.entries(manifest.references || {})) {
-    const currentPath = resolveInsideRoot(expected.path);
+    const currentPath = resolveInsideRoot(expected.path.replace(/^round-([45])\//, 'rounds/round-$1/'));
     const currentBytes = currentPath ? await readFile(currentPath).catch(() => null) : null;
     const archivedBytes = readAtRevision(baseline, expected.path);
     check(currentBytes !== null, `current ${name} reference is missing`);

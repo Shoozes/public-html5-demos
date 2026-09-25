@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const demoPath = path.join(root, 'ragdoll-math-lab', 'index.html');
+const demoPath = path.join(root, 'projects', 'ragdoll-math-lab', 'index.html');
 const galleryPath = path.join(root, 'index.html');
 const soldierAsset = path.join(root, 'assets', 'glb', 'Soldier.glb');
 const html = (await readFile(demoPath, 'utf8')).replace(/\r\n/g, '\n');
@@ -14,11 +14,11 @@ for (const value of [
   "import * as THREE from 'three';",
   "import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';",
   "import { OrbitControls } from 'three/addons/controls/OrbitControls.js';",
-  "from '../shared/ragdoll-core/spec.mjs';",
-  "from '../shared/ragdoll-parity/protocol.mjs';",
+  "from '../../shared/ragdoll-core/spec.mjs';",
+  "from '../../shared/ragdoll-parity/protocol.mjs';",
   'solvePointEffectiveMass as solveSharedPointEffectiveMass',
   'solvePairPointEffectiveMass as solveSharedPairPointEffectiveMass',
-  "const MODEL_URL = '../assets/glb/Soldier.glb';",
+  "const MODEL_URL = '../../assets/glb/Soldier.glb';",
   'const MAX_STEPS_PER_FRAME = 3;',
   "const manualStepMode = searchParams.get('manual') === '1';",
   'const segmentDefinitions = SHARED_SEGMENTS.map',
@@ -155,7 +155,7 @@ if (/const releaseRigidRagdoll = \(\) => \{\s*if \(active\) return;/.test(html))
 if (html.includes('centerRadius + body.radius - STAGE_RADIUS') || html.includes('multiplyScalar(-sidePenetration')) {
   throw new Error('Ragdoll Math Lab must not restore the inward-growing stage rim correction.');
 }
-if (!gallery.includes('href="./ragdoll-math-lab/"')) {
+if (!gallery.includes('href="./projects/ragdoll-math-lab/"')) {
   throw new Error('Gallery does not link to Soldier Ragdoll Math Lab.');
 }
 

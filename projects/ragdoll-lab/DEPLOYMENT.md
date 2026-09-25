@@ -4,13 +4,19 @@ This document is the operating contract for agents changing or deploying Soldier
 
 ## Authority and deployment targets
 
-- `ragdoll-lab/index.html` and its referenced files under `assets/` are the authoritative implementation.
-- GitHub Pages publishes `main` directly at <https://shoozes.github.io/public-html5-demos/ragdoll-lab/>.
+- `projects/ragdoll-lab/index.html` and its referenced files under `assets/` are the authoritative implementation.
+- GitHub Pages publishes `main` directly at <https://shoozes.github.io/public-html5-demos/projects/ragdoll-lab/>.
 - ChatGPT Sites is an additional deployment target at <https://ragdoll-physics-demo.shoozes.chatgpt.site>.
 - The existing GitHub Pages deployment must remain intact.
 - Never make a behavior or asset change only in the generated Sites copy.
 
 The ChatGPT Sites checkout has its own deployment repository and a one-way synchronization script. Its `source/ragdoll-manifest.json` records the exact upstream commit and hashes of every copied file.
+
+The legacy `ragdoll-lab/index.html` remains a generated executable export because
+that Site currently fetches the old raw source path. Edit the canonical project,
+then run `node tools/sync-legacy-routes.mjs` and its `--check` mode before committing.
+The export rebases asset/import paths without changing runtime behavior. Do not
+replace it with a redirect until the separate Site sync allowlist has migrated.
 
 ## Standard update flow
 
@@ -18,7 +24,7 @@ The ChatGPT Sites checkout has its own deployment repository and a one-way synch
 
 Work in this repository. Limit changes to the ragdoll demo and assets it actually uses:
 
-- `ragdoll-lab/index.html`
+- `projects/ragdoll-lab/index.html`
 - `assets/glb/Soldier.glb`
 - `assets/ogg/music/backroom-static-track.ogg`
 - `assets/ogg/sfx/YEET.ogg`
@@ -32,6 +38,7 @@ From this repository root:
 
 ```bash
 node tests/ragdoll-lab-smoke.mjs
+node tools/sync-legacy-routes.mjs --check
 ```
 
 Perform browser interaction and responsive checks when behavior, rendering, input, audio, or layout changed.

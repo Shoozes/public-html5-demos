@@ -1,7 +1,7 @@
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { openBrowserHarness } from '../../tools/browser-harness.mjs';
+import { openBrowserHarness } from '../../../tools/browser-harness.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const evidence = path.join(root, 'submission', 'evidence');

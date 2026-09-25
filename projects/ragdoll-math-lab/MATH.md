@@ -6,7 +6,7 @@ quaternion adapters; the portable JavaScript/TypeScript core owns the physics
 contracts. Rapier is not a runtime dependency of this page.
 
 For the reusable process behind this implementation, read
-[Clone Behavior, Not Constants](../docs/parity/CLONE_BEHAVIOR_NOT_CONSTANTS.md).
+[Clone Behavior, Not Constants](../../docs/parity/CLONE_BEHAVIOR_NOT_CONSTANTS.md).
 
 ## Solver boundary
 

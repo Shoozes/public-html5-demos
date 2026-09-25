@@ -1,8 +1,8 @@
 # HAIO Flight Log Design QA
 
-- Source visual truth: `round-5/mockups/desktop-reference-v2.png`
+- Source visual truth: `rounds/round-5/mockups/desktop-reference-v2.png`
 - Desktop source SHA-256: `2e9daebefeaaa8b9e4a801365305d54a4d8d903d0cd1ea69c6605fd0cc28c92d`
-- Mobile source truth: `round-5/mockups/portrait-reference-v2.png`
+- Mobile source truth: `rounds/round-5/mockups/portrait-reference-v2.png`
 - Mobile source SHA-256: `750a786019ddf5383ad09e4a8c834f3a97f89c755f4e37583a3a1373e84a6547`
 - Implementation: `rounds/index.html`
 - Interpreter: native image view
@@ -26,7 +26,7 @@ The fixed references and rendered implementation were inspected alone, together 
 ## Visual review
 
 - Screenshot: `output/playwright/flight-log/rounds-desktop-overview.png`
-- Reference: `round-5/mockups/desktop-reference-v2.png` and SHA-256 above
+- Reference: `rounds/round-5/mockups/desktop-reference-v2.png` and SHA-256 above
 - Viewport/state: 1440 x 900, Overview, no seed
 - Interpreter: native image view
 - Verdict: GOOD

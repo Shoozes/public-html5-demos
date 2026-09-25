@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "round": "5.5",
+  "status": "blocked-preflight",
+  "sourceContentCommit": "591530a153eac58d4dfdfed05162cd65a7b9cc78",
+  "sourceManifest": "rounds/round-5/EXPERIMENT.json",
+  "reasoningEffort": "high",
+  "arms": [
+    { "id": "luna", "model": "gpt-6-luna", "host": "ChatGPT Work", "status": "not-started" },
+    { "id": "sol", "model": "gpt-6-sol", "host": "ChatGPT Work", "status": "not-started" },
+    { "id": "astra", "model": "gpt-6-astra", "host": "standalone Codex thread", "status": "reserved-not-started" }
+  ],
+  "requiredEnvironment": {
+    "node": "26.5.0",
+    "playwright": "1.62.1",
+    "browserVersion": "152.0.7977.65",
+    "visualInterpreter": "native_image_view",
+    "externalCritic": "must-be-fixed-and-preflighted-before-dispatch"
+  },
+  "budgets": {
+    "wallTimeMinutes": 60,
+    "visualRepairsPerCheckpoint": 3,
+    "visualRepairsTotal": 12,
+    "functionalRepairsTotal": 8
+  },
+  "thresholds": { "functional": 90, "visual": 24, "workflow": 16 },
+  "contextFork": "none",
+  "builderWorkspace": "allowlisted export outside the source checkout, without Git history",
+  "isolationLimit": "Work subagents share filesystem and tools; allowlists are instructions, not enforced filesystem isolation",
+  "results": [],
+  "comparisonPolicy": "Luna versus Sol is the intended within-Work comparison. Astra in Codex and historical Round 5 are host-confounded comparisons unless the environment is independently matched."
+}

@@ -2,9 +2,9 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { openBrowserHarness } from '../../tools/browser-harness.mjs';
+import { openBrowserHarness } from '../../../tools/browser-harness.mjs';
 
-const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const output = path.join(repositoryRoot, 'output', 'playwright', 'round-5-oracle-review');
 const harness = await openBrowserHarness(repositoryRoot);
 const { address, browser } = harness;
@@ -26,7 +26,7 @@ try {
       };
       const page = await browser.newPage({ viewport });
       const filter = mode === 'grayscale' ? 'filter:grayscale(1);' : '';
-      await page.setContent(`<!doctype html><html><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#02050c}img{display:block;width:100%;height:100%;object-fit:cover;${filter}}</style><img alt="${reference.name} reference" src="http://127.0.0.1:${address.port}/round-5/mockups/${reference.file}"></html>`);
+      await page.setContent(`<!doctype html><html><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#02050c}img{display:block;width:100%;height:100%;object-fit:cover;${filter}}</style><img alt="${reference.name} reference" src="http://127.0.0.1:${address.port}/rounds/round-5/mockups/${reference.file}"></html>`);
       await page.locator('img').evaluate((image) => image.complete ? true : new Promise((resolve, reject) => {
         image.addEventListener('load', () => resolve(true), { once: true });
         image.addEventListener('error', () => reject(new Error('reference failed to load')), { once: true });
