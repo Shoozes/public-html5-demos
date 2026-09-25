@@ -37,7 +37,7 @@ try {
   assert.equal(galleryResponse?.status(), 200);
   assert.equal(await gallery.title(), 'Public HTML5 Demos');
   const links = await gallery.locator('.open-demo').evaluateAll((anchors) => anchors.map((anchor) => anchor.getAttribute('href')));
-  assert.deepEqual(links, ['./rounds/', './projects/ragdoll-lab/', './projects/ragdoll-math-lab/', './projects/anthrocybernetics/']);
+  assert.deepEqual(links, ['./rounds/', './projects/3d-stuff/ragdoll-lab/', './projects/3d-stuff/ragdoll-math-lab/']);
   await assertImagesDecoded(gallery);
   assert.equal(galleryErrors.length, 0, galleryErrors.join(' | '));
   await gallery.close();
@@ -80,45 +80,48 @@ try {
   assert.equal(roundsPortraitErrors.length, 0, roundsPortraitErrors.join(' | '));
   await roundsPortrait.close();
 
-  const anthro = await browser.newPage({ viewport: { width: 1280, height: 800 } });
-  const anthroErrors = runtimeErrors(anthro);
-  const anthroResponse = await anthro.goto(`http://127.0.0.1:${address.port}/projects/anthrocybernetics/`, { waitUntil: 'domcontentloaded' });
-  assert.equal(anthroResponse?.status(), 200);
-  await anthro.waitForFunction(() => document.querySelector('#runtime-badge')?.textContent !== 'Loading visual', null, { timeout: 15_000 });
-  await anthro.getByRole('button', { name: 'Start' }).click();
-  await anthro.locator('#system-input').fill('A local agent loses its task memory after every restart, so the team repeats setup work.');
-  await anthro.getByRole('button', { name: 'Map this situation' }).click();
-  await anthro.waitForFunction(() => document.querySelector('.slide.is-active')?.dataset.slide === '2');
-  assert.match(await anthro.locator('#system-summary').textContent(), /system|map|signal|pattern|feedback/i);
-  await anthro.getByRole('button', { name: 'Advanced' }).click();
-  assert.equal(await anthro.locator('body').getAttribute('class'), 'advanced-mode');
-  await anthro.locator('.progress-dot').nth(4).click();
-  const downloadPromise = anthro.waitForEvent('download');
-  await anthro.getByRole('button', { name: 'Export map' }).click();
-  const download = await downloadPromise;
-  const downloaded = JSON.parse(await readFile(await download.path(), 'utf8'));
-  assert.equal(downloaded.map?.type, 'five_foci_field_map');
-  await anthro.locator('#import-file').setInputFiles({
-    name: 'invalid.json',
-    mimeType: 'application/json',
-    buffer: Buffer.from('{}')
-  });
-  await anthro.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('not a Five-Foci map'));
-  await anthro.getByRole('button', { name: 'Clear local state' }).click();
-  assert.equal(await anthro.evaluate(() => localStorage.length), 0);
-  assert.equal(anthroErrors.length, 0, anthroErrors.join(' | '));
-  await anthro.close();
+  if (process.argv.includes('--include-archive')) {
+    const anthro = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const anthroErrors = runtimeErrors(anthro);
+    const anthroResponse = await anthro.goto(`http://127.0.0.1:${address.port}/the-gravyard/anthrocybernetics/`, { waitUntil: 'domcontentloaded' });
+    assert.equal(anthroResponse?.status(), 200);
+    await anthro.waitForFunction(() => document.querySelector('#runtime-badge')?.textContent !== 'Loading visual', null, { timeout: 15_000 });
+    await anthro.getByRole('button', { name: 'Start' }).click();
+    await anthro.locator('#system-input').fill('A local agent loses its task memory after every restart, so the team repeats setup work.');
+    await anthro.getByRole('button', { name: 'Map this situation' }).click();
+    await anthro.waitForFunction(() => document.querySelector('.slide.is-active')?.dataset.slide === '2');
+    assert.match(await anthro.locator('#system-summary').textContent(), /system|map|signal|pattern|feedback/i);
+    await anthro.getByRole('button', { name: 'Advanced' }).click();
+    assert.equal(await anthro.locator('body').getAttribute('class'), 'advanced-mode');
+    await anthro.locator('.progress-dot').nth(4).click();
+    const downloadPromise = anthro.waitForEvent('download');
+    await anthro.getByRole('button', { name: 'Export map' }).click();
+    const download = await downloadPromise;
+    const downloaded = JSON.parse(await readFile(await download.path(), 'utf8'));
+    assert.equal(downloaded.map?.type, 'five_foci_field_map');
+    await anthro.locator('#import-file').setInputFiles({
+      name: 'invalid.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from('{}')
+    });
+    await anthro.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('not a Five-Foci map'));
+    await anthro.getByRole('button', { name: 'Clear local state' }).click();
+    assert.equal(await anthro.evaluate(() => localStorage.length), 0);
+    assert.equal(anthroErrors.length, 0, anthroErrors.join(' | '));
+    await anthro.close();
 
-  const portrait = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  const portraitErrors = runtimeErrors(portrait);
-  await portrait.goto(`http://127.0.0.1:${address.port}/projects/anthrocybernetics/`, { waitUntil: 'domcontentloaded' });
-  await portrait.waitForFunction(() => window.__anthroViewportProfile?.orientation === 'portrait');
-  const overflow = await portrait.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  assert.ok(overflow <= 1, `portrait layout overflows by ${overflow}px`);
-  assert.equal(portraitErrors.length, 0, portraitErrors.join(' | '));
-  await portrait.close();
+    const portrait = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const portraitErrors = runtimeErrors(portrait);
+    await portrait.goto(`http://127.0.0.1:${address.port}/the-gravyard/anthrocybernetics/`, { waitUntil: 'domcontentloaded' });
+    await portrait.waitForFunction(() => window.__anthroViewportProfile?.orientation === 'portrait');
+    const overflow = await portrait.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    assert.ok(overflow <= 1, `portrait layout overflows by ${overflow}px`);
+    assert.equal(portraitErrors.length, 0, portraitErrors.join(' | '));
+    await portrait.close();
+  }
+
 } finally {
   await harness.close();
 }
 
-console.log('Site browser contract passed: gallery, visual experiment tabs, desktop/portrait switching, Anthrocybernetics workflow, export/import error path, persistence reset, and portrait layouts.');
+console.log('Site browser contract passed: active gallery, visual experiment tabs, desktop/portrait switching and portrait layouts.' + (process.argv.includes('--include-archive') ? ' Archived Anthrocybernetics workflow also passed.' : ' Archive workflow is opt-in via --include-archive.'));

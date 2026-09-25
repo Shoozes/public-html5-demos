@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const demoPath = path.join(root, 'projects', 'ragdoll-lab', 'index.html');
+const demoPath = path.join(root, 'projects', '3d-stuff', 'ragdoll-lab', 'index.html');
 const galleryPath = path.join(root, 'index.html');
 const readmePath = path.join(root, 'README.md');
 const soldierAsset = path.join(root, 'assets', 'glb', 'Soldier.glb');
@@ -23,15 +23,15 @@ const requiredMarkup = [
   'id="humanoid-joint-limits-toggle" type="checkbox" checked',
   'id="music-toggle"',
   'id="sound-toggle"',
-  '../../assets/glb/Soldier.glb',
-  '../../assets/ogg/sfx/YEET.ogg',
-  '../../assets/ogg/music/backroom-static-track.ogg'
+  '../../../assets/glb/Soldier.glb',
+  '../../../assets/ogg/sfx/YEET.ogg',
+  '../../../assets/ogg/music/backroom-static-track.ogg'
 ];
 
 for (const value of requiredMarkup) {
   if (!html.includes(value)) throw new Error(`Missing required demo markup: ${value}`);
 }
-if (!gallery.includes('href="./projects/ragdoll-lab/"')) {
+if (!gallery.includes('href="./projects/3d-stuff/ragdoll-lab/"')) {
   throw new Error('Gallery does not link to Soldier Ragdoll Lab.');
 }
 if (!readme.includes('rigid neck/head link, framed limb hinges, selective head collision, and higher solver budget')) {
@@ -42,8 +42,8 @@ if (html.includes('raw.githubusercontent.com') || html.includes('github.com/mrdo
 }
 
 const requiredPhysicsTuning = [
-  "from '../../shared/ragdoll-core/spec.mjs';",
-  "from '../../shared/ragdoll-parity/protocol.mjs';",
+  "from '../../../shared/ragdoll-core/spec.mjs';",
+  "from '../../../shared/ragdoll-parity/protocol.mjs';",
   'if (parityMode || manualStepMode) {\n      introStarted = true;\n      introSplash.hidden = true;',
   "introSplash.style.display = 'none';",
   'const segmentDefinitions = SHARED_SEGMENTS.map',

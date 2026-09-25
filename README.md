@@ -4,27 +4,31 @@ A public GitHub Pages collection for browser-ready HTML-all-in-one demos, experi
 
 - Gallery: https://shoozes.github.io/public-html5-demos/
 - Visual experiment flight log: https://shoozes.github.io/public-html5-demos/rounds/
-- Anthrocybernetics demo: https://shoozes.github.io/public-html5-demos/projects/anthrocybernetics/
+- 3D projects: https://shoozes.github.io/public-html5-demos/projects/3d-stuff/
+- Retired projects: https://shoozes.github.io/public-html5-demos/the-gravyard/
 
 ## Repository contract
 
-Maintained demos live under `projects/`; experiment protocols and evidence live under `rounds/`. Each demo has one canonical entry file:
+Maintained demos live under `projects/<category>/`; experiment protocols and evidence live under `rounds/`; retired work lives in `the-gravyard/`. Each demo has one canonical entry file:
 
 ```text
-projects/demo-slug/index.html
+projects/3d-stuff/demo-slug/index.html
 rounds/round-5-5/PLAN.md
+the-gravyard/anthrocybernetics/index.html
 ```
 
 HAIO is the default. Keep HTML, CSS, and JavaScript in `index.html` when practical. A demo may use pinned HTTPS CDN dependencies. Add local assets only when embedding them would make the file impractical.
 
 See [repository layout and compatibility routes](docs/REPOSITORY_LAYOUT.md). The small legacy root folders preserve published URLs; `ragdoll-lab/index.html` is a generated export for the existing Sites sync. Edit only the canonical project and refresh exports with `node tools/sync-legacy-routes.mjs`.
 
+The [3D stuff category](projects/3d-stuff/README.md) groups scenes, physics and rendering work. Three.js, WebGL and WebGPU are implementation labels; they do not require overlapping folder trees. Add new categories when real projects need them.
+
 ## Publishing a demo
 
-1. Create a lowercase kebab-case folder such as `projects/my-demo/`.
-2. Place the complete playable file at `projects/my-demo/index.html`.
+1. Choose an existing category, or add one when justified, and create a lowercase kebab-case folder such as `projects/3d-stuff/my-demo/`.
+2. Place the complete playable file at `projects/3d-stuff/my-demo/index.html`.
 3. Use relative paths for any local assets.
-4. Add the demo to the root `index.html` gallery.
+4. Add the demo to its category index and the root `index.html` gallery.
 5. Run `node tests/site-contract.mjs` and relevant project checks, then commit to `main`.
 
 GitHub Pages publishes directly from the repository root on `main`. No proxy, package installation, build command, or deployment workflow is required.
@@ -32,7 +36,7 @@ GitHub Pages publishes directly from the repository root on `main`. No proxy, pa
 The resulting URL is:
 
 ```text
-https://shoozes.github.io/public-html5-demos/projects/my-demo/
+https://shoozes.github.io/public-html5-demos/projects/3d-stuff/my-demo/
 ```
 
 ## Demo requirements
@@ -66,21 +70,19 @@ The image-led [HAIO Flight Log](https://shoozes.github.io/public-html5-demos/rou
 - [Completed milestone index](docs/HISTORY.md)
 - [Focused context routes](summary_bank.json)
 
-## Current demos
+## Active 3D demos
 
 ### Soldier Ragdoll Lab
 
-A mobile- and desktop-friendly Three.js physics playground using the local Soldier GLB asset. Grab and throw the character, orbit the scene, or reset the ragdoll. Its rigid neck/head link, framed limb hinges, selective head collision, and higher solver budget keep the figure proportionate during limb holds. It includes optional music and sound effects, enabled from a tap-to-start splash screen. Share the authoritative GitHub Pages version at [Soldier Ragdoll Lab](https://shoozes.github.io/public-html5-demos/projects/ragdoll-lab/) or the additional [ChatGPT Site](https://ragdoll-physics-demo.shoozes.chatgpt.site). Agents must follow the scoped [ragdoll deployment workflow](projects/ragdoll-lab/DEPLOYMENT.md) when changing or deploying it.
+A mobile- and desktop-friendly Three.js physics playground using the local Soldier GLB asset. Grab and throw the character, orbit the scene, or reset the ragdoll. Its rigid neck/head link, framed limb hinges, selective head collision, and higher solver budget keep the figure proportionate during limb holds. It includes optional music and sound effects, enabled from a tap-to-start splash screen. Share the authoritative GitHub Pages version at [Soldier Ragdoll Lab](https://shoozes.github.io/public-html5-demos/projects/3d-stuff/ragdoll-lab/) or the additional [ChatGPT Site](https://ragdoll-physics-demo.shoozes.chatgpt.site). Agents must follow the scoped [ragdoll deployment workflow](projects/3d-stuff/ragdoll-lab/DEPLOYMENT.md) when changing or deploying it.
 
 ### Soldier Ragdoll Math Lab
 
-A separate Three.js-rendered, custom-physics implementation of the Soldier ragdoll. Its portable JavaScript/TypeScript core owns mass and inertia, impulses, damping, and point effective-mass kernels; Three.js remains the rendering and adapter layer, with no Rapier runtime dependency. Start with [Clone Behavior, Not Constants](docs/parity/CLONE_BEHAVIOR_NOT_CONSTANTS.md) for the reusable oracle-driven cloning tutorial, then see [the portable solver math and current limits](projects/ragdoll-math-lab/MATH.md) and [the parity pitfalls ledger](docs/parity/PITFALLS.md). Open [Soldier Ragdoll Math Lab](https://shoozes.github.io/public-html5-demos/projects/ragdoll-math-lab/). The pinned Playwright dependency is development-only and used by the local parity harness.
+A separate Three.js-rendered, custom-physics implementation of the Soldier ragdoll. Its portable JavaScript/TypeScript core owns mass and inertia, impulses, damping, and point effective-mass kernels; Three.js remains the rendering and adapter layer, with no Rapier runtime dependency. Start with [Clone Behavior, Not Constants](docs/parity/CLONE_BEHAVIOR_NOT_CONSTANTS.md) for the reusable oracle-driven cloning tutorial, then see [the portable solver math and current limits](projects/3d-stuff/ragdoll-math-lab/MATH.md) and [the parity pitfalls ledger](docs/parity/PITFALLS.md). Open [Soldier Ragdoll Math Lab](https://shoozes.github.io/public-html5-demos/projects/3d-stuff/ragdoll-math-lab/). The pinned Playwright dependency is development-only and used by the local parity harness.
 
-### Anthrocybernetics Guided Demo
+## Retired projects
 
-A mobile-first interactive presentation explaining feedback loops, the five observation lenses, evidence labels, and what actually moves when a cloud agent is ported to a local model.
-
-Open it at `projects/anthrocybernetics/index.html` or through the public gallery.
+[Anthrocybernetics](the-gravyard/anthrocybernetics/index.html) is preserved in [The Gravyard](the-gravyard/README.md). It was removed from the active gallery on 2026-09-25; the original implementation and legacy entry URLs remain available.
 
 ## Research notes
 

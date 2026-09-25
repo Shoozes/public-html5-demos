@@ -77,6 +77,9 @@
       margin-top: 20px;
     }
 
+    .collection-link { color: var(--text); padding: 10px 13px; border: 1px solid var(--line); border-radius: 6px; text-decoration: none; }
+    .collection-link:hover, .collection-link:focus-visible { border-color: var(--gold); color: var(--gold); }
+
     .meta-row span,
     .status {
       display: inline-flex;
@@ -231,6 +234,7 @@
       <p class="kicker">Shoozes · Public Lab</p>
       <h1>Public HTML5 Demos</h1>
       <p class="lead">Playable experiments, visual explainers, and prototypes shared as self-contained HTML-all-in-one demos. Open a card and run it directly in the browser.</p>
+      <nav class="meta-row" aria-label="Collections"><a class="collection-link" href="./projects/3d-stuff/">3D stuff</a><a class="collection-link" href="./rounds/">Experiment rounds</a><a class="collection-link" href="./the-gravyard/">The Gravyard</a></nav>
       <div class="meta-row" aria-label="Repository format">
         <span>Static HTML</span>
         <span>No install</span>
@@ -258,34 +262,25 @@
       </article>
       <article class="demo-card">
         <div class="card-top">
-          <p class="eyebrow">Interactive physics</p>
+          <p class="eyebrow">3D stuff · Physics</p>
           <span class="status">Live</span>
         </div>
         <h2>Soldier Ragdoll Lab</h2>
         <p class="card-copy">A hands-on Three.js physics playground. Grab Soldier, pull a limb, let go, and watch the rigged character react.</p>
-        <a class="open-demo" href="./projects/ragdoll-lab/">Open demo</a>
+        <a class="open-demo" href="./projects/3d-stuff/ragdoll-lab/">Open demo</a>
       </article>
       <article class="demo-card">
         <div class="card-top">
-          <p class="eyebrow">Physics study</p>
+          <p class="eyebrow">3D stuff · Solver study</p>
           <span class="status">New</span>
         </div>
         <h2>Soldier Ragdoll Math Lab</h2>
         <p class="card-copy">A Three.js-only ragdoll study with explicit capsule rigid bodies, quaternion integration, projected joints, finite-stage contact, and solver diagnostics.</p>
-        <a class="open-demo" href="./projects/ragdoll-math-lab/">Open math lab</a>
-      </article>
-      <article class="demo-card">
-        <div class="card-top">
-          <p class="eyebrow">Interactive presentation</p>
-          <span class="status">Live</span>
-        </div>
-        <h2>Anthrocybernetics Guided Demo</h2>
-        <p class="card-copy">A plain-language, slide-style explanation of feedback loops, five observation lenses, evidence labels, and cloud-to-local agent portability.</p>
-        <a class="open-demo" href="./projects/anthrocybernetics/">Open demo</a>
+        <a class="open-demo" href="./projects/3d-stuff/ragdoll-math-lab/">Open math lab</a>
       </article>
     </section>
 
-    <footer>Each published demo lives at <code>demo-slug/index.html</code> and is served directly from the repository.</footer>
+    <footer>Active demos live under <code>projects/</code>. Retired work stays accessible in <a class="collection-link" href="./the-gravyard/">The Gravyard</a>.</footer>
   </main>
 </body>
 </html>

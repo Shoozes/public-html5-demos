@@ -23,15 +23,23 @@ for (const name of names) {
 }
 // One-time migration proof; future legitimate project edits must remain possible.
 for (const demo of process.argv.includes('--migration') ? ['anthrocybernetics', 'ragdoll-lab', 'ragdoll-math-lab'] : []) {
+  const canonical = demo === 'anthrocybernetics'
+    ? `the-gravyard/${demo}/index.html` : `projects/3d-stuff/${demo}/index.html`;
+  const prefix = '../'.repeat(canonical.split('/').length - 1);
   const expected = original(`${demo}/index.html`).toString()
-    .replaceAll('../assets/', '../../assets/').replaceAll('../shared/', '../../shared/');
-  assert.equal(await readFile(path.join(root, 'projects', demo, 'index.html'), 'utf8'), expected, `${demo}: change exceeds dependency-path rebase`);
+    .replaceAll('../assets/', `${prefix}assets/`).replaceAll('../shared/', `${prefix}shared/`);
+  assert.equal(await readFile(path.join(root, canonical), 'utf8'), expected, `${demo}: change exceeds dependency-path rebase`);
 }
-for (const [canonical, legacy] of Object.entries({
-  'rounds/round-4/submission/index.html': 'round-4/submission/index.html',
-  'rounds/round-5/results/luna/submission/index.html': 'round-5/results/luna/submission/index.html',
-  'rounds/round-5/results/terra/submission/index.html': 'round-5/results/terra/submission/index.html',
-  'rounds/round-5/results/sol/submission/index.html': 'round-5/results/sol/submission/index.html'
+for (const [legacy, canonical] of Object.entries({
+  'anthrocybernetics/index.html': 'the-gravyard/anthrocybernetics/index.html',
+  'projects/anthrocybernetics/index.html': 'the-gravyard/anthrocybernetics/index.html',
+  'ragdoll-math-lab/index.html': 'projects/3d-stuff/ragdoll-math-lab/index.html',
+  'projects/ragdoll-math-lab/index.html': 'projects/3d-stuff/ragdoll-math-lab/index.html',
+  'projects/ragdoll-lab/index.html': 'projects/3d-stuff/ragdoll-lab/index.html',
+  'round-4/submission/index.html': 'rounds/round-4/submission/index.html',
+  'round-5/results/luna/submission/index.html': 'rounds/round-5/results/luna/submission/index.html',
+  'round-5/results/terra/submission/index.html': 'rounds/round-5/results/terra/submission/index.html',
+  'round-5/results/sol/submission/index.html': 'rounds/round-5/results/sol/submission/index.html'
 })) {
   assert.ok((await stat(path.join(root, canonical))).isFile());
   const redirect = await readFile(path.join(root, legacy), 'utf8');
@@ -42,5 +50,10 @@ for (const [canonical, legacy] of Object.entries({
   assert.equal(new URL(redirected, `https://example.test/public-html5-demos/${legacy}`).href,
     `https://example.test/public-html5-demos/${canonical}?seed=42#demo`);
 }
+const gallery = await readFile(path.join(root, 'index.html'), 'utf8');
+assert.ok(!gallery.includes('Anthrocybernetics'), 'Retired demo must not be promoted in the active gallery');
+assert.ok(gallery.includes('href="./the-gravyard/"'), 'Archive must remain discoverable');
+const archive = await readFile(path.join(root, 'the-gravyard/index.html'), 'utf8');
+assert.ok(archive.includes('href="./anthrocybernetics/"'));
 execFileSync(process.execPath, ['tools/sync-legacy-routes.mjs', '--check'], { cwd: root, stdio: 'inherit' });
 console.log(`Layout passed: ${preserved} historical records unchanged; legacy routes preserved.${process.argv.includes('--migration') ? ' Migration proof: 3 demos changed only dependency paths.' : ''}`);

@@ -4,8 +4,8 @@ This document is the operating contract for agents changing or deploying Soldier
 
 ## Authority and deployment targets
 
-- `projects/ragdoll-lab/index.html` and its referenced files under `assets/` are the authoritative implementation.
-- GitHub Pages publishes `main` directly at <https://shoozes.github.io/public-html5-demos/projects/ragdoll-lab/>.
+- `projects/3d-stuff/ragdoll-lab/index.html` and its referenced files under `assets/` are the authoritative implementation.
+- GitHub Pages publishes `main` directly at <https://shoozes.github.io/public-html5-demos/projects/3d-stuff/ragdoll-lab/>.
 - ChatGPT Sites is an additional deployment target at <https://ragdoll-physics-demo.shoozes.chatgpt.site>.
 - The existing GitHub Pages deployment must remain intact.
 - Never make a behavior or asset change only in the generated Sites copy.
@@ -24,7 +24,7 @@ replace it with a redirect until the separate Site sync allowlist has migrated.
 
 Work in this repository. Limit changes to the ragdoll demo and assets it actually uses:
 
-- `projects/ragdoll-lab/index.html`
+- `projects/3d-stuff/ragdoll-lab/index.html`
 - `assets/glb/Soldier.glb`
 - `assets/ogg/music/backroom-static-track.ogg`
 - `assets/ogg/sfx/YEET.ogg`

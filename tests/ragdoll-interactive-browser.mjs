@@ -381,7 +381,7 @@ const runDragCase = async (page, label) => {
 let failed = false;
 const results = {};
 try {
-  for (const folder of ['projects/ragdoll-lab/', 'projects/ragdoll-math-lab/']) {
+  for (const folder of ['projects/3d-stuff/ragdoll-lab/', 'projects/3d-stuff/ragdoll-math-lab/']) {
     const backend = folder.split('/').filter(Boolean).at(-1);
     const { page, errors } = await openBackend(folder);
     const drop = await runSettlingCase(page, `${backend}-drop`, async () => {

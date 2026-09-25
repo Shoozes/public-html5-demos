@@ -28,7 +28,8 @@
         "tests/site-browser.mjs",
         "tests/browser-harness.mjs",
         "tools/browser-harness.mjs",
-        "docs/REPOSITORY_LAYOUT.md"
+        "docs/REPOSITORY_LAYOUT.md",
+        "projects/README.md"
       ]
     },
     "feature__experiment_gallery": {
@@ -49,22 +50,25 @@
       ]
     },
     "demo__anthrocybernetics": {
-      "description": "Implementation and browser proof for the guided Anthrocybernetics presentation, persistence, and portable-map workflow.",
+      "description": "Archived Anthrocybernetics reference preserved in the-gravyard; excluded from active demos. Optional browser proof uses --include-archive.",
       "paths": [
-        "projects/anthrocybernetics/index.html",
+        "the-gravyard/README.md",
+        "the-gravyard/anthrocybernetics/index.html",
         "docs/APP_STATE.md",
         "tests/site-contract.mjs",
         "tests/site-browser.mjs",
         "tools/browser-harness.mjs",
         "tools/browser-runtime.mjs",
         "tools/ragdoll-parity/static-server.mjs"
-      ]
+      ],
+      "_archived": true
     },
     "feature__ragdoll_lab": {
       "description": "Rapier Soldier ragdoll implementation, deployment contract, direct smoke proof, and shared browser/runtime seams.",
       "paths": [
-        "projects/ragdoll-lab/index.html",
-        "projects/ragdoll-lab/DEPLOYMENT.md",
+        "projects/3d-stuff/README.md",
+        "projects/3d-stuff/ragdoll-lab/index.html",
+        "projects/3d-stuff/ragdoll-lab/DEPLOYMENT.md",
         "tests/ragdoll-lab-smoke.mjs",
         "tests/ragdoll-interactive-browser.mjs",
         "shared/ragdoll-parity/protocol.mjs",
@@ -76,8 +80,8 @@
     "feature__ragdoll_math_lab": {
       "description": "Custom Soldier physics implementation, portable core contracts, math authority, and focused behavior proof.",
       "paths": [
-        "projects/ragdoll-math-lab/index.html",
-        "projects/ragdoll-math-lab/MATH.md",
+        "projects/3d-stuff/ragdoll-math-lab/index.html",
+        "projects/3d-stuff/ragdoll-math-lab/MATH.md",
         "shared/ragdoll-core/**",
         "tests/ragdoll-math-lab-smoke.mjs",
         "tests/ragdoll-core-contract.mjs",

@@ -1,5 +1,15 @@
 # Completed Work
 
+## 2026-09-25 — Active categories and retired-project archive
+
+Both ragdoll sources moved to `projects/3d-stuff/`, with current Three.js/WebGL
+stacks labeled explicitly. Anthrocybernetics moved unchanged to `the-gravyard/`
+and left the active gallery. Category/archive browsing, ownership documentation,
+context routing, workflow filters and path checks follow the new locations.
+Existing root and previous `projects/` entry URLs remain compatible. The separate
+Ragdoll Site source export is unchanged. Archived interaction tests are opt-in;
+historical benchmark records and the Round 5.5 protocol are unchanged.
+
 
 ## 2026-09-25 — Repository layout and Round 5.5 preparation
 

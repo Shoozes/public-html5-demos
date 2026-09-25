@@ -15,7 +15,7 @@ const expectType = async (pathname, pattern) => {
 
 try {
   await expectType('/index.html', /text\/html/);
-  await expectType('/projects/ragdoll-lab/', /text\/html/);
+  await expectType('/projects/3d-stuff/ragdoll-lab/', /text\/html/);
   const moduleResponse = await expectType('/tests/ragdoll-lab-smoke.mjs', /application\/javascript/);
   assert.equal(moduleResponse.headers.get('x-content-type-options'), 'nosniff');
   await expectType('/assets/glb/Soldier.glb', /model\/gltf/);

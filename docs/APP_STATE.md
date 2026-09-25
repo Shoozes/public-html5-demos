@@ -6,14 +6,20 @@ This is the canonical concise description of what the repository currently runs 
 
 ## Published surface
 
-The root GitHub Pages gallery publishes four stable browser surfaces:
+The root GitHub Pages gallery promotes the Flight Log and two active 3D demos:
 
 | Demo | Canonical entry | Current behavior |
 | --- | --- | --- |
 | HAIO Flight Log | `rounds/index.html` | Image-led experiment archive with Overview, Round 4, Round 5, Round 5.5, Round 6, and Docs tabs; desktop/portrait operator comparisons; playable frozen submissions; and GitHub-rendered deep evidence. |
-| Soldier Ragdoll Lab | `projects/ragdoll-lab/index.html` | Rapier-backed Soldier rig with grab, throw, orbit, reset, audio, mobile input, finite-stage collision, and parity diagnostics. |
-| Soldier Ragdoll Math Lab | `projects/ragdoll-math-lab/index.html` | Three.js-rendered custom rigid-body/joint solver sharing portable mass, impulse, inertia, damping, and effective-mass kernels. |
-| Anthrocybernetics Guided Demo | `projects/anthrocybernetics/index.html` | Six-step responsive presentation with local analysis, Five-Foci visualization, evidence labels, JSON export/import, persistence, 3D visualization, and timed 2D fallback. |
+| Soldier Ragdoll Lab | `projects/3d-stuff/ragdoll-lab/index.html` | Rapier-backed Soldier rig with grab, throw, orbit, reset, audio, mobile input, finite-stage collision, and parity diagnostics. |
+| Soldier Ragdoll Math Lab | `projects/3d-stuff/ragdoll-math-lab/index.html` | Three.js-rendered custom rigid-body/joint solver sharing portable mass, impulse, inertia, damping, and effective-mass kernels. |
+
+The active category index is `projects/3d-stuff/index.html`. Anthrocybernetics is
+retired from the active gallery and preserved unchanged at
+`the-gravyard/anthrocybernetics/index.html`, discoverable through
+`the-gravyard/index.html`. It retains its six-step presentation, map export/import
+and original dependencies. Its context-bank group is marked archived; browser
+workflow checks require the explicit `--include-archive` option.
 
 The gallery, flight log, and demos use relative paths and pinned CDN dependencies. Soldier media, the GLB rig, experiment references, and operator screenshots are local assets. No build step is required for publication. Legacy playable routes remain generated compatibility entries; the Ragdoll Lab export also preserves the separate Site sync source path. See `REPOSITORY_LAYOUT.md`.
 
@@ -59,6 +65,7 @@ Browser checks discover Playwright from a local install, `CODEX_NODE_MODULES`, e
 
 ```powershell
 node tests/site-browser.mjs
+node tests/site-browser.mjs --include-archive # Optional retired-demo workflow
 node tests/ragdoll-interactive-browser.mjs
 node rounds/round-4/harness/run-scenarios.mjs
 node rounds/round-5/harness/capture-reference-review.mjs
